@@ -7,7 +7,6 @@
 
     <Grid RowDefinitions="Auto,Auto,*,Auto">
 
-        <!-- Header -->
         <Grid Grid.Row="0" Padding="6,12,12,10" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="4">
             <Button Grid.Column="0" Text="←" FontSize="22" Clicked="OnBackClicked"
                     BackgroundColor="Transparent" TextColor="{x:Static local:Theme.TextPrimary}"
@@ -23,29 +22,53 @@
                     Padding="10,0" VerticalOptions="Center" />
         </Grid>
 
-        <!-- Divider -->
         <BoxView Grid.Row="1" HeightRequest="1" Color="{x:Static local:Theme.Border}" />
 
-        <!-- Chat -->
         <ScrollView Grid.Row="2" x:Name="ChatScroll" Padding="16,12">
             <VerticalStackLayout x:Name="ChatStack" Spacing="10" />
         </ScrollView>
 
-        <!-- Input bar -->
-        <Grid Grid.Row="3" Padding="12,8,12,12" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <Border Grid.Column="0" StrokeShape="RoundRectangle 22" StrokeThickness="1"
-                    Stroke="{x:Static local:Theme.Border}" BackgroundColor="{x:Static local:Theme.Surface}"
-                    Padding="10,2" VerticalOptions="End">
-                <Editor x:Name="QuestionEntry" Placeholder="Ask about dinosaurs or space..."
-                        PlaceholderColor="{x:Static local:Theme.TextSecondary}"
-                        AutoSize="TextChanges" MaximumHeightRequest="120"
-                        BackgroundColor="Transparent" FontSize="15"
-                        TextColor="{x:Static local:Theme.TextPrimary}" />
-            </Border>
-            <Button Grid.Column="1" x:Name="SendButton" Text="Send" Clicked="OnSendClicked"
-                    BackgroundColor="#512BD4" TextColor="White"
-                    CornerRadius="22" Padding="18,0" HeightRequest="46" VerticalOptions="End" />
+        <Grid Grid.Row="2" x:Name="DownloadOverlay" IsVisible="False" Padding="28">
+            <VerticalStackLayout VerticalOptions="Center" Spacing="16">
+                <Label Text="Meet NovaSaur" FontSize="24" FontAttributes="Bold"
+                       HorizontalOptions="Center" TextColor="{x:Static local:Theme.TextPrimary}" />
+                <Label x:Name="DownloadIntroLabel"
+                       Text="An offline AI that answers your dinosaur and space questions, right on your phone. It needs a one-time download of about 3 GB, so use wifi if you can."
+                       FontSize="14" HorizontalTextAlignment="Center"
+                       TextColor="{x:Static local:Theme.TextSecondary}" />
+                <Button x:Name="DownloadButton" Text="Download NovaSaur" Clicked="OnDownloadClicked"
+                        BackgroundColor="#512BD4" TextColor="White" CornerRadius="24" HeightRequest="50" />
+                <VerticalStackLayout x:Name="DownloadProgressArea" IsVisible="False" Spacing="10">
+                    <ProgressBar x:Name="DownloadProgress" Progress="0" ProgressColor="#512BD4" />
+                    <Label x:Name="DownloadStatus" Text="Downloading NovaSaur... 0%"
+                           FontSize="15" FontAttributes="Bold" HorizontalOptions="Center"
+                           TextColor="{x:Static local:Theme.TextPrimary}" />
+                    <Label Text="Feel free to leave and keep using the app — the download keeps going in the background. Come back anytime to check progress."
+                           FontSize="13" HorizontalTextAlignment="Center"
+                           TextColor="{x:Static local:Theme.TextSecondary}" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
         </Grid>
+
+        <VerticalStackLayout Grid.Row="3" x:Name="InputArea" Spacing="8" Padding="12,8,12,12">
+            <ScrollView x:Name="SuggestionScroll" Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                <HorizontalStackLayout x:Name="SuggestionStack" Spacing="8" />
+            </ScrollView>
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <Border Grid.Column="0" StrokeShape="RoundRectangle 22" StrokeThickness="1"
+                        Stroke="{x:Static local:Theme.Border}" BackgroundColor="{x:Static local:Theme.Surface}"
+                        Padding="10,2" VerticalOptions="End">
+                    <Editor x:Name="QuestionEntry" Placeholder="Ask about dinosaurs or space..."
+                            PlaceholderColor="{x:Static local:Theme.TextSecondary}"
+                            AutoSize="TextChanges" MaximumHeightRequest="120"
+                            BackgroundColor="Transparent" FontSize="15"
+                            TextColor="{x:Static local:Theme.TextPrimary}" />
+                </Border>
+                <Button Grid.Column="1" x:Name="SendButton" Text="Send" Clicked="OnSendClicked"
+                        BackgroundColor="#512BD4" TextColor="White"
+                        CornerRadius="22" Padding="18,0" HeightRequest="46" VerticalOptions="End" />
+            </Grid>
+        </VerticalStackLayout>
 
     </Grid>
 </ContentPage>

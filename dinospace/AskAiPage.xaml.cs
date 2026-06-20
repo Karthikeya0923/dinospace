@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
+using System.Linq;
 using Microsoft.Maui.Storage;
+using Microsoft.Maui.ApplicationModel;
 
 namespace dinospace
 {
@@ -7,7 +9,8 @@ namespace dinospace
     {
         private const string HistoryKey = "nova_chat_history";
         private bool _busy = false;
-        private bool _initStarted = false;
+        private bool _chatStarted = false;
+        private bool _subscribed = false;
         private List<ChatMessage> _messages = new List<ChatMessage>();
 
         public AskAiPage()
@@ -18,11 +21,103 @@ namespace dinospace
         protected override void OnAppearing()
         {
             base.OnAppearing();
-            if (_initStarted) return;
-            _initStarted = true;
+
+            if (ModelManager.IsModelDownloaded())
+            {
+                StartChat();
+                return;
+            }
+
+            ShowDownloadState();
+            Subscribe();
+            RefreshDownloadUi();
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            Unsubscribe();   // the download itself keeps running in ModelManager
+        }
+
+        // ---------- DOWNLOAD ----------
+
+        private void Subscribe()
+        {
+            if (_subscribed) return;
+            ModelManager.Changed += OnDownloadChanged;
+            _subscribed = true;
+        }
+
+        private void Unsubscribe()
+        {
+            if (!_subscribed) return;
+            ModelManager.Changed -= OnDownloadChanged;
+            _subscribed = false;
+        }
+
+        private void OnDownloadChanged() => MainThread.BeginInvokeOnMainThread(RefreshDownloadUi);
+
+        private void ShowDownloadState()
+        {
+            ChatScroll.IsVisible = false;
+            InputArea.IsVisible = false;
+            DownloadOverlay.IsVisible = true;
+        }
+
+        private void RefreshDownloadUi()
+        {
+            switch (ModelManager.State)
+            {
+                case DownloadState.Completed:
+                    Unsubscribe();
+                    StartChat();
+                    break;
+
+                case DownloadState.Downloading:
+                    DownloadIntroLabel.IsVisible = false;
+                    DownloadButton.IsVisible = false;
+                    DownloadProgressArea.IsVisible = true;
+                    DownloadProgress.Progress = ModelManager.Progress;
+                    DownloadStatus.Text = $"Downloading NovaSaur... {(int)(ModelManager.Progress * 100)}%";
+                    break;
+
+                case DownloadState.Failed:
+                    DownloadIntroLabel.IsVisible = true;
+                    DownloadIntroLabel.Text = "The download stopped. Tap retry and it picks up where it left off.";
+                    DownloadButton.IsVisible = true;
+                    DownloadButton.IsEnabled = true;
+                    DownloadButton.Text = "Retry download";
+                    DownloadProgressArea.IsVisible = false;
+                    break;
+
+                default: // NotStarted
+                    DownloadIntroLabel.IsVisible = true;
+                    DownloadButton.IsVisible = true;
+                    DownloadButton.IsEnabled = true;
+                    DownloadButton.Text = "Download NovaSaur";
+                    DownloadProgressArea.IsVisible = false;
+                    break;
+            }
+        }
+
+        private void OnDownloadClicked(object sender, EventArgs e)
+        {
+            ModelManager.Start();
+            RefreshDownloadUi();
+        }
+
+        private void StartChat()
+        {
+            if (_chatStarted) return;
+            _chatStarted = true;
+            DownloadOverlay.IsVisible = false;
+            ChatScroll.IsVisible = true;
+            InputArea.IsVisible = true;
             LoadHistory();
             InitModel();
         }
+
+        // ---------- MODEL ----------
 
         private async void InitModel()
         {
@@ -40,10 +135,12 @@ namespace dinospace
                 SendButton.IsEnabled = true;
                 if (_messages.Count == 0)
                     AddNovaBubble("Hi, I'm NovaSaur. Ask me anything about dinosaurs or space.");
+                ShowSuggestions();
             }
             catch (Exception ex)
             {
-                AddNovaBubble("Sorry, I couldn't wake up. " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("NovaSaur init error: " + ex);
+                AddNovaBubble("Sorry, I couldn't start up. Your device may not have enough free memory to run NovaSaur. Try closing other apps and reopening this page.");
                 SendButton.IsEnabled = false;
             }
 #else
@@ -81,8 +178,9 @@ namespace dinospace
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("NovaSaur ask error: " + ex);
                 RemoveBubble(thinking);
-                AddNovaBubble("Error: " + ex.Message);
+                AddNovaBubble("Something went wrong answering that. Please try again.");
             }
 #else
             RemoveBubble(thinking);
@@ -90,12 +188,10 @@ namespace dinospace
             await ScrollToBottom();
             _busy = false;
             SendButton.IsEnabled = true;
+            ShowSuggestions();
         }
 
-        private async void OnBackClicked(object sender, EventArgs e)
-        {
-            await Navigation.PopAsync();
-        }
+        private async void OnBackClicked(object sender, EventArgs e) => await Navigation.PopAsync();
 
         private void OnClearClicked(object sender, EventArgs e)
         {
@@ -103,7 +199,51 @@ namespace dinospace
             Preferences.Remove(HistoryKey);
             ChatStack.Children.Clear();
             AddNovaBubble("Hi, I'm NovaSaur. Ask me anything about dinosaurs or space.");
+            ShowSuggestions();
         }
+
+        // ---------- SUGGESTIONS ----------
+
+        private void ShowSuggestions()
+        {
+            if (SuggestedQuestions.All == null || SuggestedQuestions.All.Count == 0)
+            {
+                SuggestionScroll.IsVisible = false;
+                return;
+            }
+
+            SuggestionStack.Children.Clear();
+            foreach (var q in SuggestedQuestions.All.OrderBy(_ => Guid.NewGuid()).Take(3))
+            {
+                var chip = new Button
+                {
+                    Text = q,
+                    FontSize = 13,
+                    Padding = new Thickness(12, 6),
+                    CornerRadius = 16,
+                    HeightRequest = 36,
+                    BackgroundColor = Theme.Surface,
+                    TextColor = Theme.TextPrimary,
+                    BorderColor = Theme.Border,
+                    BorderWidth = 1
+                };
+                chip.Clicked += OnSuggestionClicked;
+                SuggestionStack.Children.Add(chip);
+            }
+            SuggestionScroll.IsVisible = true;
+        }
+
+        private void OnSuggestionClicked(object sender, EventArgs e)
+        {
+            if (_busy) return;
+            if (sender is Button b)
+            {
+                QuestionEntry.Text = b.Text;
+                OnSendClicked(b, EventArgs.Empty);
+            }
+        }
+
+        // ---------- HISTORY ----------
 
         private void AddUserBubble(string text) => AddMessage(text, true);
         private void AddNovaBubble(string text) => AddMessage(text, false);
@@ -135,6 +275,8 @@ namespace dinospace
             }
             catch { }
         }
+
+        // ---------- UI HELPERS ----------
 
         private View BuildBubble(string text, bool isUser)
         {

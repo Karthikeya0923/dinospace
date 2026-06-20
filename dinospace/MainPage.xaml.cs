@@ -1,4 +1,5 @@
-﻿namespace dinospace
+﻿using Microsoft.Maui.Storage;
+namespace dinospace
 {
     public partial class MainPage : ContentPage
     {
@@ -8,6 +9,7 @@
 
         // Cached reference to the most-viewed entry for tap navigation
         private object _mostViewedObject = null;
+
 
         public MainPage()
         {
