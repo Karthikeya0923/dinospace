@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="dinospace.MainPage"
+             Background="{AppThemeBinding Light={StaticResource PageBgBrushLight}, Dark={StaticResource BackdropBrush}}"
+             Title="DinoSpace">
+    <Grid>
+        <Image Source="mainbackground.png" Aspect="AspectFill" InputTransparent="True"/>
+
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="16,16,16,0" RowSpacing="16">
+
+        <Image Grid.Row="0"
+               Source="applogo.png"
+               HeightRequest="110"
+               Aspect="AspectFit"
+               HorizontalOptions="Center"
+               Margin="0,8,0,0"/>
+
+        <Frame Grid.Row="1" Padding="6,0" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False">
+            <Entry x:Name="SearchEntry"
+                   Placeholder="Search dinosaurs, planets, stars..."
+                   TextChanged="OnSearchTextChanged"
+                   ClearButtonVisibility="WhileEditing"/>
+        </Frame>
+
+        <!-- Overlap area: scrollable content + tap-away layer + dropdown -->
+        <Grid Grid.Row="2">
+
+            <ScrollView>
+                <VerticalStackLayout x:Name="BrowseContent" Spacing="20" Padding="0,0,0,16">
+
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+
+                        <Frame Grid.Column="0" Grid.Row="0" Padding="14" CornerRadius="16" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False" HeightRequest="172">
+                            <VerticalStackLayout VerticalOptions="Center" Spacing="6">
+                                <Image Source="dinopedia.png" HeightRequest="60" Aspect="AspectFit" HorizontalOptions="Center"/>
+                                <Label Text="DinoPedia" FontSize="16" FontAttributes="Bold" FontFamily="Baloo" HorizontalOptions="Center"/>
+                                <Label Text="Explore the prehistoric world" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" HorizontalOptions="Center" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"/>
+                            </VerticalStackLayout>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnDinoPediaTapped"/>
+                            </Frame.GestureRecognizers>
+                        </Frame>
+
+                        <Frame Grid.Column="1" Grid.Row="0" Padding="14" CornerRadius="16" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False" HeightRequest="172">
+                            <VerticalStackLayout VerticalOptions="Center" Spacing="6">
+                                <Image Source="spacepedia.png" HeightRequest="60" Aspect="AspectFit" HorizontalOptions="Center"/>
+                                <Label Text="SpacePedia" FontSize="16" FontAttributes="Bold" FontFamily="Baloo" HorizontalOptions="Center"/>
+                                <Label Text="Explore the universe" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" HorizontalOptions="Center" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"/>
+                            </VerticalStackLayout>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnSpacePediaTapped"/>
+                            </Frame.GestureRecognizers>
+                        </Frame>
+
+                        <Frame Grid.Column="0" Grid.Row="1" Padding="14" CornerRadius="16" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False" HeightRequest="172">
+                            <VerticalStackLayout VerticalOptions="Center" Spacing="6">
+                                <Image Source="askai.png" HeightRequest="60" Aspect="AspectFit" HorizontalOptions="Center"/>
+                                <Label Text="Ask AI" FontSize="16" FontAttributes="Bold" FontFamily="Baloo" HorizontalOptions="Center"/>
+                                <Label Text="Ask anything with our AI" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" HorizontalOptions="Center" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"/>
+                            </VerticalStackLayout>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnAskAiTapped"/>
+                            </Frame.GestureRecognizers>
+                        </Frame>
+
+                        <Frame Grid.Column="1" Grid.Row="1" Padding="14" CornerRadius="16" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False" HeightRequest="172">
+                            <VerticalStackLayout VerticalOptions="Center" Spacing="6">
+                                <Image Source="scansky.png" HeightRequest="60" Aspect="AspectFit" HorizontalOptions="Center"/>
+                                <Label Text="Scan Sky" FontSize="16" FontAttributes="Bold" FontFamily="Baloo" HorizontalOptions="Center"/>
+                                <Label Text="Point your camera at the sky" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" HorizontalOptions="Center" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"/>
+                            </VerticalStackLayout>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnScanSkyTapped"/>
+                            </Frame.GestureRecognizers>
+                        </Frame>
+
+                    </Grid>
+
+                    <Label Text="Today's Highlights" FontSize="20" FontFamily="Baloo" FontAttributes="Bold"/>
+                    <VerticalStackLayout x:Name="HighlightStack" Spacing="8"/>
+
+                    <!-- Most Viewed + Daily Streak -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,4,0,0">
+
+                        <Frame Grid.Column="0" Padding="14" CornerRadius="16" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Most Viewed" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                                <Label x:Name="MostViewedNameLabel" Text="None yet" FontSize="16" FontAttributes="Bold" FontFamily="Baloo"/>
+                                <Label x:Name="MostViewedSubLabel" Text="Open an entry to start" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                            </VerticalStackLayout>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnMostViewedTapped"/>
+                            </Frame.GestureRecognizers>
+                        </Frame>
+
+                        <Frame Grid.Column="1" Padding="14" CornerRadius="16" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Daily Streak" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                                <Label x:Name="StreakNumberLabel" Text="0" FontSize="26" FontAttributes="Bold"/>
+                                <Label x:Name="StreakSubLabel" Text="days in a row" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                            </VerticalStackLayout>
+                        </Frame>
+
+                    </Grid>
+
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <BoxView x:Name="DismissLayer"
+                     BackgroundColor="#01000000"
+                     IsVisible="False">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnDismissTapped"/>
+                </BoxView.GestureRecognizers>
+            </BoxView>
+
+            <!-- ScrollView removed — VerticalStackLayout sizes the Frame directly -->
+            <Frame x:Name="SearchDropdown"
+                   IsVisible="False"
+                   VerticalOptions="Start"
+                   Padding="0"
+                   CornerRadius="14"
+                   BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
+                   BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
+                   HasShadow="True"
+                   MaximumHeightRequest="320">
+                <VerticalStackLayout x:Name="DropdownStack"/>
+            </Frame>
+
+        </Grid>
+
+    </Grid>
+
+    </Grid>
+</ContentPage>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+	<style name="AppTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+		<!-- Material Design TextAppearance attributes -->
+		<item name="textAppearanceHeadline1">@android:style/TextAppearance.Material.Headline1</item>
+		<item name="textAppearanceHeadline2">@android:style/TextAppearance.Material.Headline2</item>
+		<item name="textAppearanceHeadline3">@android:style/TextAppearance.Material.Headline3</item>
+		<item name="textAppearanceHeadline4">@android:style/TextAppearance.Material.Headline4</item>
+		<item name="textAppearanceHeadline5">@android:style/TextAppearance.Material.Headline5</item>
+		<item name="textAppearanceHeadline6">@android:style/TextAppearance.Material.Headline6</item>
+		<item name="textAppearanceSubtitle1">@android:style/TextAppearance.Material.Subtitle1</item>
+		<item name="textAppearanceSubtitle2">@android:style/TextAppearance.Material.Subtitle2</item>
+		<item name="textAppearanceBody1">@android:style/TextAppearance.Material.Body1</item>
+		<item name="textAppearanceBody2">@android:style/TextAppearance.Material.Body2</item>
+		<item name="textAppearanceCaption">@android:style/TextAppearance.Material.Caption</item>
+		<item name="textAppearanceButton">@android:style/TextAppearance.Material.Button</item>
+		<item name="textAppearanceOverline">@android:style/TextAppearance.Material.Overline</item>
+	</style>
+
+	<style name="Maui.SplashTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+		<item name="android:windowBackground">@drawable/splash</item>
+		<item name="android:windowNoTitle">true</item>
+		<item name="android:windowActionBar">false</item>
+		<item name="android:windowFullscreen">false</item>
+		<item name="android:windowDrawsSystemBarBackgrounds">false</item>
+		<!-- Material Design TextAppearance attributes for splash screen -->
+		<item name="textAppearanceHeadline1">@android:style/TextAppearance.Material.Headline1</item>
+		<item name="textAppearanceHeadline2">@android:style/TextAppearance.Material.Headline2</item>
+		<item name="textAppearanceHeadline3">@android:style/TextAppearance.Material.Headline3</item>
+		<item name="textAppearanceHeadline4">@android:style/TextAppearance.Material.Headline4</item>
+		<item name="textAppearanceHeadline5">@android:style/TextAppearance.Material.Headline5</item>
+		<item name="textAppearanceHeadline6">@android:style/TextAppearance.Material.Headline6</item>
+		<item name="textAppearanceSubtitle1">@android:style/TextAppearance.Material.Subtitle1</item>
+		<item name="textAppearanceSubtitle2">@android:style/TextAppearance.Material.Subtitle2</item>
+		<item name="textAppearanceBody1">@android:style/TextAppearance.Material.Body1</item>
+		<item name="textAppearanceBody2">@android:style/TextAppearance.Material.Body2</item>
+		<item name="textAppearanceCaption">@android:style/TextAppearance.Material.Caption</item>
+		<item name="textAppearanceButton">@android:style/TextAppearance.Material.Button</item>
+		<item name="textAppearanceOverline">@android:style/TextAppearance.Material.Overline</item>
+	</style>
+</resources>

@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="dinospace.AboutPage"
+             Background="{AppThemeBinding Light={StaticResource PageBgBrushLight}, Dark={StaticResource BackdropBrush}}"
+             Title="About DinoSpace">
+    <Grid>
+        <Image Source="mainbackground.png" Aspect="AspectFill" InputTransparent="True"/>
+
+
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="16">
+
+                <Label Text="DinoSpace"
+                   FontSize="28"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   Margin="0,8,0,0"/>
+
+                <Label Text="A dinosaur and space encyclopedia for kids and the curious."
+                   FontSize="14"
+                   TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"/>
+
+                <Frame Padding="16" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False">
+                    <VerticalStackLayout Spacing="14">
+
+                        <Label Text="Why I Built This" FontSize="17" FontFamily="Baloo" FontAttributes="Bold"/>
+
+                        <Label Text="DinoSpace started with a kid who couldn't stop watching YouTube videos about black holes, dinosaur battles, and what if videos on science. That kid was me."
+                           FontSize="14"
+                           LineHeight="1.6"
+                           TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"/>
+                        <Label Text=" " FontSize="8"/>
+
+                        <Label Text="Growing up, space and prehistoric life weren't just interests — they were the first things I ran to after school. I never did anything with that passion until after my first year of Software Engineering when I realized I needed to bring something that actually meant something to me into my degree."
+                           FontSize="14"
+                           LineHeight="1.6"
+                           TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"/>
+                        <Label Text=" " FontSize="8"/>
+
+                        <Label Text="DinoSpace is that something. I built it entirely from scratch with no prior app development experience, driven by the idea that learning about dinosaurs and space should feel exciting — not like reading a textbook. Building it gave me a genuine interest in software development I didn't have before, and showed me that the best work comes from combining what you love with what you're learning."
+                           FontSize="14"
+                           LineHeight="1.6"
+                           TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"/>
+                        <Label Text=" " FontSize="8"/>
+
+                        <Label Text="My hope is simple. Somewhere out there is a kid on their parent's tablet, the same way I used to be, about to have their mind blown by a fact about black holes or Megalodon. I built DinoSpace for that kid."
+                           FontSize="14"
+                           LineHeight="1.6"
+                           TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"/>
+                        <Label Text=" " FontSize="8"/>
+
+                        <Label Text="Made with passion"
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"
+                           FontAttributes="Italic"/>
+
+                    </VerticalStackLayout>
+                </Frame>
+
+                <Frame Padding="16" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False">
+                    <VerticalStackLayout Spacing="10">
+
+                        <Label Text="Links" FontSize="17" FontFamily="Baloo" FontAttributes="Bold"/>
+
+                        <Label Text="GitHub Repository"
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"
+                           TextDecorations="Underline">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnGitHubTapped"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+
+                        <Label Text="Contact: dinospace.app@gmail.com"
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"
+                           TextDecorations="Underline">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnEmailTapped"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+
+                    </VerticalStackLayout>
+                </Frame>
+
+                <Label Text="Made with passion by Karthikeya"
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light={StaticResource TextHintLight}, Dark={StaticResource TextHintDark}}"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,24"/>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>

@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="dinospace.SpaceDetailPage"
+             Background="{AppThemeBinding Light={StaticResource PageBgBrushLight}, Dark={StaticResource StarsBrush}}">
+    <Grid>
+        <Image Source="spacebackground.png" Aspect="AspectFill" InputTransparent="True"/>
+
+
+        <Grid RowDefinitions="Auto,*">
+
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Padding="12,10" BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}">
+                <Label Grid.Column="0" Text="‹ Back" FontSize="17" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" VerticalOptions="Center">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped"/>
+                    </Label.GestureRecognizers>
+                </Label>
+                <Image Grid.Column="2" x:Name="BookmarkImage" Source="bookmark.png"
+                   WidthRequest="28" HeightRequest="28" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBookmarkClicked"/>
+                    </Image.GestureRecognizers>
+                </Image>
+            </Grid>
+
+            <ScrollView Grid.Row="1" x:Name="DetailScroll" Scrolled="OnScrolled">
+                <VerticalStackLayout Spacing="0">
+
+                    <Image x:Name="HeroImage" HeightRequest="220" Aspect="AspectFill" BackgroundColor="{AppThemeBinding Light={StaticResource ImgPlaceholderLight}, Dark={StaticResource ImgPlaceholderDark}}"/>
+
+                    <VerticalStackLayout Padding="16" Spacing="14">
+
+                        <VerticalStackLayout Spacing="3">
+                            <Label x:Name="NameLabel" FontSize="28" FontAttributes="Bold" FontFamily="Baloo"/>
+                            <Label x:Name="PronunciationLabel" FontSize="13" FontAttributes="Italic" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                            <Label x:Name="SubtitleLabel" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                        </VerticalStackLayout>
+
+                        <HorizontalStackLayout x:Name="ChipRow" Spacing="8"/>
+
+                        <Frame Padding="14" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False">
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="14">
+                                <VerticalStackLayout Grid.Column="0" Grid.Row="0" Spacing="2">
+                                    <Label x:Name="Stat1Label" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                                    <Label x:Name="Stat1Value" FontSize="15" FontAttributes="Bold"/>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1" Grid.Row="0" Spacing="2">
+                                    <Label x:Name="Stat2Label" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                                    <Label x:Name="Stat2Value" FontSize="15" FontAttributes="Bold"/>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="0" Grid.Row="1" Spacing="2">
+                                    <Label x:Name="Stat3Label" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                                    <Label x:Name="Stat3Value" FontSize="15" FontAttributes="Bold"/>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1" Grid.Row="1" Spacing="2">
+                                    <Label x:Name="Stat4Label" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                                    <Label x:Name="Stat4Value" FontSize="15" FontAttributes="Bold"/>
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Frame>
+
+                        <Frame Padding="14" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False">
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="About" FontSize="16" FontFamily="Baloo" FontAttributes="Bold"/>
+                                <Label x:Name="AboutLabel" FontSize="14" LineHeight="1.5" TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"/>
+                            </VerticalStackLayout>
+                        </Frame>
+
+                        <Frame Padding="14" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False">
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="Key Features" FontSize="16" FontFamily="Baloo" FontAttributes="Bold"/>
+                                <Label x:Name="KeyFeaturesLabel" FontSize="14" LineHeight="1.5" TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"/>
+                            </VerticalStackLayout>
+                        </Frame>
+
+                        <Frame Padding="14" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False">
+                            <VerticalStackLayout Spacing="6">
+                                <Label x:Name="OrbitHeaderLabel" FontSize="16" FontAttributes="Bold"/>
+                                <Label x:Name="OrbitLabel" FontSize="14" LineHeight="1.5" TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"/>
+                            </VerticalStackLayout>
+                        </Frame>
+
+                        <Frame Padding="14" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False">
+                            <VerticalStackLayout Spacing="6">
+                                <Label x:Name="SurfaceHeaderLabel" FontSize="16" FontAttributes="Bold"/>
+                                <Label x:Name="SurfaceLabel" FontSize="14" LineHeight="1.5" TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"/>
+                            </VerticalStackLayout>
+                        </Frame>
+
+                        <Frame Padding="14" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False" Margin="0,0,0,24">
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="Fun Facts" FontSize="16" FontFamily="Baloo" FontAttributes="Bold"/>
+                                <Label x:Name="FunFactsLabel" FontSize="14" LineHeight="1.5" TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"/>
+                            </VerticalStackLayout>
+                        </Frame>
+
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <Button Grid.Row="1"
+                x:Name="BackToTopButton"
+                Text="↑ Top"
+                IsVisible="False"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                Margin="0,0,16,20"
+                Padding="14,8"
+                CornerRadius="20"
+                FontSize="13"
+                BackgroundColor="{AppThemeBinding Light={StaticResource AccentLight}, Dark={StaticResource AccentDark}}"
+                TextColor="White"
+                Clicked="OnBackToTopClicked"/>
+
+        </Grid>
+
+    </Grid>
+</ContentPage>

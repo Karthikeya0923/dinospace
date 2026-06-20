@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="dinospace.CreditsPage"
+             Background="{AppThemeBinding Light={StaticResource PageBgBrushLight}, Dark={StaticResource BackdropBrush}}"
+             Title="Credits">
+    <Grid>
+        <Image Source="mainbackground.png" Aspect="AspectFill" InputTransparent="True"/>
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="16">
+                <Label Text="Credits" FontSize="28" FontFamily="Baloo" FontAttributes="Bold" HorizontalOptions="Center" Margin="0,8,0,0"/>
+                <Label Text="The people who made DinoSpace possible." FontSize="14" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                <Frame Padding="16" CornerRadius="14" HasShadow="False">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="The Team" FontSize="17" FontFamily="Baloo" FontAttributes="Bold"/>
+                        <Label Text="Here are the credits:" FontSize="14" LineHeight="1.5"/>
+                        <Label Text="Development &amp; Design - Karthik" FontSize="14" LineHeight="1.5"/>
+                        <Label Text="Artwork &amp; Background - Jayden" FontSize="14" LineHeight="1.5"/>
+                        <Label Text="(Add emails later)" FontSize="13" FontAttributes="Italic" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                    </VerticalStackLayout>
+                </Frame>
+                <Label Text="Thank you for using DinoSpace" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource TextHintLight}, Dark={StaticResource TextHintDark}}" HorizontalOptions="Center" Margin="0,0,0,24"/>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="dinospace/dinospace.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
+  <Project Path="NovaSaur.Binding/NovaSaur.Binding/NovaSaur.Binding/NovaSaur.Binding.csproj" />
+</Solution>

@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="dinospace.DinoPediaPage"
+             Background="{AppThemeBinding Light={StaticResource PageBgBrushLight}, Dark={StaticResource StoneBrush}}"
+             Title="DinoPedia">
+    <Grid>
+        <Image Source="dinobackground.png" Aspect="AspectFill" InputTransparent="True"/>
+
+
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="14">
+
+                <Image Source="dinopedialogo.png" HeightRequest="64" Aspect="AspectFit" HorizontalOptions="Center"/>
+                <Label Text="Explore the prehistoric world" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" HorizontalOptions="Center"/>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Frame Grid.Column="0" Padding="6,0" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False">
+                        <Entry x:Name="SearchEntry"
+                           Placeholder="Search dinosaurs..."
+                           Completed="OnSearchCompleted"
+                           TextChanged="OnSearchChanged"
+                           ClearButtonVisibility="WhileEditing"/>
+                    </Frame>
+                    <Button Grid.Column="1" x:Name="FilterButton" Text="Filters" FontSize="13" Padding="14,0" Clicked="OnFilterToggle" BackgroundColor="#E8D5B0" TextColor="#1B1000"/>
+                </Grid>
+
+                <Frame x:Name="FilterPanel" IsVisible="False" Padding="14" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False">
+                    <VerticalStackLayout x:Name="FilterChips" Spacing="12"/>
+                </Frame>
+
+                <VerticalStackLayout x:Name="ResultsStack" Spacing="8"/>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>

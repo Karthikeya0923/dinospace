@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="dinospace.CollectionPage"
+             Background="{AppThemeBinding Light={StaticResource PageBgBrushLight}, Dark={StaticResource BackdropBrush}}"
+             Title="Collection">
+    <Grid>
+        <Image Source="mainbackground.png" Aspect="AspectFill" InputTransparent="True"/>
+
+
+        <Grid RowDefinitions="Auto,*">
+
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="12,10" BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}">
+                <Label Grid.Column="0" Text="‹ Back" FontSize="17" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" VerticalOptions="Center">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBackTapped"/>
+                    </Label.GestureRecognizers>
+                </Label>
+            </Grid>
+
+            <ScrollView Grid.Row="1">
+                <VerticalStackLayout Padding="16" Spacing="14">
+                    <Label x:Name="TitleLabel" FontSize="26" FontAttributes="Bold"/>
+                    <Label x:Name="SubtitleLabel" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                    <VerticalStackLayout x:Name="ListStack" Spacing="8"/>
+                </VerticalStackLayout>
+            </ScrollView>
+
+        </Grid>
+
+    </Grid>
+</ContentPage>
