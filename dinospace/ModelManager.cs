@@ -9,7 +9,7 @@ using Microsoft.Maui.Storage;
 
 namespace dinospace
 {
-    public enum DownloadState { NotStarted, Downloading, Completed, Failed }
+    public enum DownloadState { NotStarted, Downloading, Paused, Completed, Failed }
 
     public static class ModelManager
     {
@@ -21,10 +21,12 @@ namespace dinospace
         private static string TempPath => ModelPath + ".part";
 
         public static DownloadState State { get; private set; } = DownloadState.NotStarted;
-        public static double Progress { get; private set; } = 0;   // 0.0 - 1.0
-        public static event Action Changed;                        // fires on progress/state changes
+        public static double Progress { get; private set; } = 0;
+        public static event Action Changed;
 
         private static readonly object _lock = new object();
+        private static CancellationTokenSource _cts;
+        private static bool _stopAndDelete = false;
 
         public static bool IsModelDownloaded()
         {
@@ -36,21 +38,56 @@ namespace dinospace
             catch { return false; }
         }
 
-        // Starts the download in the background. Safe to call repeatedly.
+        public static bool HasPartialDownload()
+        {
+            try { return File.Exists(TempPath); } catch { return false; }
+        }
+
+        // Start or resume the download. Safe to call repeatedly.
         public static void Start()
         {
             lock (_lock)
             {
                 if (IsModelDownloaded()) { State = DownloadState.Completed; Notify(); return; }
-                if (State == DownloadState.Downloading) return;   // already running
+                if (State == DownloadState.Downloading) return;
                 State = DownloadState.Downloading;
-                Progress = 0;
-                _ = Task.Run(DownloadLoopAsync);
+                _stopAndDelete = false;
+                _cts = new CancellationTokenSource();
+                var token = _cts.Token;
+                _ = Task.Run(() => DownloadLoopAsync(token));
+            }
+            StartKeepAliveService();
+            Notify();
+        }
+
+        // Pause: stop downloading but keep the partial file for later resume.
+        public static void Pause()
+        {
+            lock (_lock)
+            {
+                if (State != DownloadState.Downloading) return;
+                _stopAndDelete = false;
+                _cts?.Cancel();
+                State = DownloadState.Paused;
             }
             Notify();
         }
 
-        private static async Task DownloadLoopAsync()
+        // Stop: cancel and delete the partial file (start over next time).
+        public static void Stop()
+        {
+            lock (_lock)
+            {
+                _stopAndDelete = true;
+                _cts?.Cancel();
+                State = DownloadState.NotStarted;
+                Progress = 0;
+            }
+            try { if (File.Exists(TempPath)) File.Delete(TempPath); } catch { }
+            Notify();
+        }
+
+        private static async Task DownloadLoopAsync(CancellationToken token)
         {
             try
             {
@@ -62,9 +99,9 @@ namespace dinospace
 
                 var request = new HttpRequestMessage(HttpMethod.Get, ModelUrl);
                 if (existing > 0)
-                    request.Headers.Range = new RangeHeaderValue(existing, null);   // resume
+                    request.Headers.Range = new RangeHeaderValue(existing, null);
 
-                using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
 
                 bool resuming = response.StatusCode == HttpStatusCode.PartialContent;
                 if (!resuming && existing > 0)
@@ -76,17 +113,17 @@ namespace dinospace
 
                 long total = (response.Content.Headers.ContentLength ?? 0) + (resuming ? existing : 0);
 
-                using var input = await response.Content.ReadAsStreamAsync();
-                using var output = new FileStream(TempPath,
-                    resuming ? FileMode.Append : FileMode.Create, FileAccess.Write);
+                using var input = await response.Content.ReadAsStreamAsync(token);
+                using var output = new FileStream(TempPath, resuming ? FileMode.Append : FileMode.Create, FileAccess.Write);
 
                 var buffer = new byte[1 << 20]; // 1 MB
                 long done = existing;
                 int lastPct = -1;
                 int read;
-                while ((read = await input.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                while ((read = await input.ReadAsync(buffer, 0, buffer.Length, token)) > 0)
                 {
-                    await output.WriteAsync(buffer, 0, read);
+                    await output.WriteAsync(buffer, 0, read, token);
+                    await output.FlushAsync(token);   // keep the .part consistent so resume is safe
                     done += read;
                     if (total > 0)
                     {
@@ -96,7 +133,6 @@ namespace dinospace
                     }
                 }
 
-                await output.FlushAsync();
                 output.Dispose();
 
                 if (File.Exists(ModelPath)) File.Delete(ModelPath);
@@ -106,12 +142,36 @@ namespace dinospace
                 State = DownloadState.Completed;
                 Notify();
             }
-            catch
+            catch (OperationCanceledException)
             {
-                // Keep the .part file so a retry resumes instead of restarting.
-                State = DownloadState.Failed;
+                // Paused keeps the .part; Stop already deleted it. State was set by the caller.
+                if (_stopAndDelete)
+                {
+                    try { if (File.Exists(TempPath)) File.Delete(TempPath); } catch { }
+                }
                 Notify();
             }
+            catch
+            {
+                State = DownloadState.Failed;   // keep the .part so retry resumes
+                Notify();
+            }
+        }
+
+        private static void StartKeepAliveService()
+        {
+#if ANDROID
+            try
+            {
+                var ctx = Android.App.Application.Context;
+                var intent = new Android.Content.Intent(ctx, typeof(ModelDownloadService));
+                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.O)
+                    ctx.StartForegroundService(intent);
+                else
+                    ctx.StartService(intent);
+            }
+            catch { }
+#endif
         }
 
         private static void Notify()

@@ -43,7 +43,15 @@
                     <Label x:Name="DownloadStatus" Text="Downloading NovaSaur... 0%"
                            FontSize="15" FontAttributes="Bold" HorizontalOptions="Center"
                            TextColor="{x:Static local:Theme.TextPrimary}" />
-                    <Label Text="Feel free to leave and keep using the app — the download keeps going in the background. Come back anytime to check progress."
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button Grid.Column="0" x:Name="PauseResumeButton" Text="Pause" Clicked="OnPauseResumeClicked"
+                                BackgroundColor="{x:Static local:Theme.Surface}" TextColor="{x:Static local:Theme.TextPrimary}"
+                                BorderColor="{x:Static local:Theme.Border}" BorderWidth="1" CornerRadius="22" HeightRequest="46" />
+                        <Button Grid.Column="1" x:Name="StopButton" Text="Stop" Clicked="OnStopClicked"
+                                BackgroundColor="{x:Static local:Theme.Surface}" TextColor="#C0392B"
+                                BorderColor="{x:Static local:Theme.Border}" BorderWidth="1" CornerRadius="22" HeightRequest="46" />
+                    </Grid>
+                    <Label Text="Feel free to leave and keep using the app. The download keeps going in the background, even if you close DinoSpace."
                            FontSize="13" HorizontalTextAlignment="Center"
                            TextColor="{x:Static local:Theme.TextSecondary}" />
                 </VerticalStackLayout>

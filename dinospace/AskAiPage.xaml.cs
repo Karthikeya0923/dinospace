@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 using System.Linq;
 using Microsoft.Maui.Storage;
 using Microsoft.Maui.ApplicationModel;
@@ -8,10 +9,17 @@ namespace dinospace
     public partial class AskAiPage : ContentPage
     {
         private const string HistoryKey = "nova_chat_history";
-        private bool _busy = false;
         private bool _chatStarted = false;
         private bool _subscribed = false;
         private List<ChatMessage> _messages = new List<ChatMessage>();
+
+        // streaming state
+        private bool _streaming = false;
+        private Label _streamLabel;
+        private readonly StringBuilder _streamBuf = new StringBuilder();
+#if ANDROID
+        private StreamCallback _callback;
+#endif
 
         public AskAiPage()
         {
@@ -36,7 +44,7 @@ namespace dinospace
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
-            Unsubscribe();   // the download itself keeps running in ModelManager
+            Unsubscribe();
         }
 
         // ---------- DOWNLOAD ----------
@@ -79,22 +87,33 @@ namespace dinospace
                     DownloadProgressArea.IsVisible = true;
                     DownloadProgress.Progress = ModelManager.Progress;
                     DownloadStatus.Text = $"Downloading NovaSaur... {(int)(ModelManager.Progress * 100)}%";
+                    PauseResumeButton.Text = "Pause";
+                    break;
+
+                case DownloadState.Paused:
+                    DownloadIntroLabel.IsVisible = false;
+                    DownloadButton.IsVisible = false;
+                    DownloadProgressArea.IsVisible = true;
+                    DownloadProgress.Progress = ModelManager.Progress;
+                    DownloadStatus.Text = $"Paused at {(int)(ModelManager.Progress * 100)}%";
+                    PauseResumeButton.Text = "Resume";
                     break;
 
                 case DownloadState.Failed:
                     DownloadIntroLabel.IsVisible = true;
-                    DownloadIntroLabel.Text = "The download stopped. Tap retry and it picks up where it left off.";
+                    DownloadIntroLabel.Text = "The download stopped. Tap resume and it picks up where it left off.";
                     DownloadButton.IsVisible = true;
                     DownloadButton.IsEnabled = true;
-                    DownloadButton.Text = "Retry download";
+                    DownloadButton.Text = "Resume download";
                     DownloadProgressArea.IsVisible = false;
                     break;
 
                 default: // NotStarted
                     DownloadIntroLabel.IsVisible = true;
+                    DownloadIntroLabel.Text = "An offline AI that answers your dinosaur and space questions, right on your phone. It needs a one-time download of about 3 GB, so use wifi if you can.";
                     DownloadButton.IsVisible = true;
                     DownloadButton.IsEnabled = true;
-                    DownloadButton.Text = "Download NovaSaur";
+                    DownloadButton.Text = ModelManager.HasPartialDownload() ? "Resume download" : "Download NovaSaur";
                     DownloadProgressArea.IsVisible = false;
                     break;
             }
@@ -105,6 +124,43 @@ namespace dinospace
             ModelManager.Start();
             RefreshDownloadUi();
         }
+
+        private void OnPauseResumeClicked(object sender, EventArgs e)
+        {
+            if (ModelManager.State == DownloadState.Downloading)
+                ModelManager.Pause();
+            else
+                ModelManager.Start();   // resume from where it left off
+            RefreshDownloadUi();
+        }
+
+        private async void OnStopClicked(object sender, EventArgs e)
+        {
+            bool sure = await DisplayAlert(
+                "Stop download?",
+                "This deletes what has downloaded so far, and you would start over next time.",
+                "Stop", "Keep downloading");
+            if (!sure) return;
+            ModelManager.Stop();
+            RefreshDownloadUi();
+        }
+
+#if ANDROID
+        private void RequestNotificationPermission()
+        {
+            try
+            {
+                if (Android.OS.Build.VERSION.SdkInt < Android.OS.BuildVersionCodes.Tiramisu) return;
+                var activity = Platform.CurrentActivity;
+                if (activity == null) return;
+                if (activity.CheckSelfPermission("android.permission.POST_NOTIFICATIONS") != Android.Content.PM.Permission.Granted)
+                    activity.RequestPermissions(new[] { "android.permission.POST_NOTIFICATIONS" }, 1001);
+            }
+            catch { }
+        }
+#else
+        private void RequestNotificationPermission() { }
+#endif
 
         private void StartChat()
         {
@@ -117,7 +173,7 @@ namespace dinospace
             InitModel();
         }
 
-        // ---------- MODEL ----------
+        // ---------- MODEL INIT ----------
 
         private async void InitModel()
         {
@@ -150,43 +206,90 @@ namespace dinospace
 #endif
         }
 
-        private async void OnSendClicked(object sender, EventArgs e)
+        // ---------- SEND / STREAM ----------
+
+        private void OnSendClicked(object sender, EventArgs e)
         {
-            if (_busy) return;
+            if (_streaming) return;
+
             string question = (QuestionEntry.Text ?? "").Trim();
             if (string.IsNullOrEmpty(question)) return;
 
-            _busy = true;
-            SendButton.IsEnabled = false;
-
             AddUserBubble(question);
             QuestionEntry.Text = "";
-            await ScrollToBottom();
+            StartStreaming(question);
+        }
 
-            var thinking = AddStatus("NovaSaur is thinking...");
-            await ScrollToBottom();
-
+        private async void StartStreaming(string question)
+        {
 #if ANDROID
+            _streaming = true;
+            _streamBuf.Clear();
+            SendButton.IsEnabled = false;
+
+            _streamLabel = StartNovaBubble("...");
+            await ScrollToBottom();
+
+            _callback = new StreamCallback
+            {
+                Token = t => MainThread.BeginInvokeOnMainThread(() => OnToken(t)),
+                Done = () => MainThread.BeginInvokeOnMainThread(OnStreamDone),
+                Failed = msg => MainThread.BeginInvokeOnMainThread(() => OnStreamError(msg))
+            };
+
+            string prompt = RagService.BuildPrompt(question);
             try
             {
-                string raw = await Task.Run(() => Com.Novasaur.NovaSaurModule.Ask(RagService.BuildPrompt(question)));
-                string answer = RagService.CleanAnswer(raw);
-                RemoveBubble(thinking);
-                AddNovaBubble(string.IsNullOrWhiteSpace(answer)
-                    ? "Hmm, I didn't catch that. Try asking another way."
-                    : answer);
+                await Task.Run(() => Com.Novasaur.NovaSaurModule.AskStream(prompt, _callback));
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("NovaSaur ask error: " + ex);
-                RemoveBubble(thinking);
-                AddNovaBubble("Something went wrong answering that. Please try again.");
+                System.Diagnostics.Debug.WriteLine("NovaSaur stream error: " + ex);
+                OnStreamError("Something went wrong answering that. Please try again.");
             }
 #else
-            RemoveBubble(thinking);
+            AddNovaBubble("NovaSaur runs on Android only right now.");
 #endif
-            await ScrollToBottom();
-            _busy = false;
+        }
+
+        private void OnToken(string token)
+        {
+            _streamBuf.Append(token);
+            if (_streamLabel != null) _streamLabel.Text = _streamBuf.ToString();
+            _ = ChatScroll.ScrollToAsync(0, ChatStack.Height, false);
+        }
+
+        private void OnStreamDone()
+        {
+            string final = RagService.CleanAnswer(_streamBuf.ToString());
+            if (string.IsNullOrWhiteSpace(final))
+                final = "Hmm, I didn't catch that. Try asking another way.";
+            if (_streamLabel != null) _streamLabel.Text = final;
+
+            _messages.Add(new ChatMessage { IsUser = false, Text = final });
+            SaveHistory();
+
+            _streaming = false;
+            _streamLabel = null;
+            SendButton.IsEnabled = true;
+            ShowSuggestions();
+            _ = ScrollToBottom();
+        }
+
+        private void OnStreamError(string msg)
+        {
+            string partial = RagService.CleanAnswer(_streamBuf.ToString());
+            string text = string.IsNullOrWhiteSpace(partial) ? msg : partial;
+            if (_streamLabel != null) _streamLabel.Text = text;
+
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                _messages.Add(new ChatMessage { IsUser = false, Text = text });
+                SaveHistory();
+            }
+
+            _streaming = false;
+            _streamLabel = null;
             SendButton.IsEnabled = true;
             ShowSuggestions();
         }
@@ -195,6 +298,7 @@ namespace dinospace
 
         private void OnClearClicked(object sender, EventArgs e)
         {
+            if (_streaming) return;
             _messages.Clear();
             Preferences.Remove(HistoryKey);
             ChatStack.Children.Clear();
@@ -235,7 +339,7 @@ namespace dinospace
 
         private void OnSuggestionClicked(object sender, EventArgs e)
         {
-            if (_busy) return;
+            if (_streaming) return;
             if (sender is Button b)
             {
                 QuestionEntry.Text = b.Text;
@@ -301,6 +405,32 @@ namespace dinospace
             };
         }
 
+        private Label StartNovaBubble(string initial)
+        {
+            var label = new Label
+            {
+                Text = initial,
+                TextColor = Theme.TextPrimary,
+                FontSize = 15,
+                LineHeight = 1.35
+            };
+
+            var frame = new Frame
+            {
+                Content = label,
+                Padding = new Thickness(12, 10),
+                CornerRadius = 16,
+                HasShadow = false,
+                BackgroundColor = Theme.Surface,
+                BorderColor = Theme.Border,
+                HorizontalOptions = LayoutOptions.Start,
+                MaximumWidthRequest = 320
+            };
+
+            ChatStack.Children.Add(frame);
+            return label;
+        }
+
         private View AddStatus(string text)
         {
             var label = new Label
@@ -333,4 +463,17 @@ namespace dinospace
         public bool IsUser { get; set; }
         public string Text { get; set; } = "";
     }
+
+#if ANDROID
+    class StreamCallback : Java.Lang.Object, Com.Novasaur.IStreamCallback
+    {
+        public Action<string> Token;
+        public Action Done;
+        public Action<string> Failed;
+
+        public void OnToken(string token) => Token?.Invoke(token);
+        public void OnDone() => Done?.Invoke();
+        public void OnError(string error) => Failed?.Invoke(error);
+    }
+#endif
 }

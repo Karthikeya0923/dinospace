@@ -80,9 +80,6 @@
 
 
 	<ItemGroup>
-	  <Compile Update="AboutPage.xaml.cs">
-	    <DependentUpon>AboutPage.xaml</DependentUpon>
-	  </Compile>
 	  <Compile Update="AskAiPage.xaml.cs">
 	    <DependentUpon>AskAiPage.xaml</DependentUpon>
 	  </Compile>
@@ -128,9 +125,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <MauiXaml Update="AboutPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
 	  <MauiXaml Update="AskAiPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

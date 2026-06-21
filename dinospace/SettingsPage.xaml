@@ -54,20 +54,6 @@
                 <Frame Padding="0" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False" Margin="0,0,0,20">
                     <VerticalStackLayout Spacing="0">
 
-                        <!-- About DinoSpace -->
-                        <Grid Padding="16,14" ColumnDefinitions="*,Auto">
-                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
-                                <Label Text="About DinoSpace" FontSize="15" FontAttributes="Bold"/>
-                                <Label Text="The story behind the app" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
-                            </VerticalStackLayout>
-                            <Label Grid.Column="1" Text="›" FontSize="22" TextColor="{AppThemeBinding Light={StaticResource TextHintLight}, Dark={StaticResource TextHintDark}}" VerticalOptions="Center"/>
-                            <Grid.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnAboutTapped"/>
-                            </Grid.GestureRecognizers>
-                        </Grid>
-
-                        <BoxView HeightRequest="1" Color="#22FFFFFF" Margin="16,0"/>
-
                         <!-- What's New -->
                         <Grid Padding="16,14" ColumnDefinitions="*,Auto">
                             <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">

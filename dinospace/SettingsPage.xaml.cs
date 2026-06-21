@@ -24,11 +24,6 @@
             await Shell.Current.Navigation.PushAsync(new CreditsPage());
         }
 
-        private async void OnAboutTapped(object sender, EventArgs e)
-        {
-            await Shell.Current.Navigation.PushAsync(new AboutPage());
-        }
-
         private async void OnWhatsNewTapped(object sender, EventArgs e)
         {
             await Shell.Current.Navigation.PushAsync(new WhatsNewPage());
