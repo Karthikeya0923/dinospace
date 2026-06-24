@@ -1,8 +1,10 @@
 ﻿using System.Text;
 using System.Text.Json;
 using System.Linq;
+using System.Threading;
 using Microsoft.Maui.Storage;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Dispatching;
 
 namespace dinospace
 {
@@ -13,13 +15,18 @@ namespace dinospace
         private bool _subscribed = false;
         private List<ChatMessage> _messages = new List<ChatMessage>();
 
-        // streaming state
-        private bool _streaming = false;
-        private Label _streamLabel;
-        private readonly StringBuilder _streamBuf = new StringBuilder();
-#if ANDROID
-        private StreamCallback _callback;
-#endif
+        // answering state
+        private bool _busy = false;
+        private int _gen = 0;
+        private static readonly SemaphoreSlim _aiLock = new SemaphoreSlim(1, 1);
+
+        // word-by-word reveal
+        private View _thinkingStatus;
+        private Label _revealLabel;
+        private string[] _revealWords;
+        private int _revealIndex;
+        private readonly StringBuilder _revealSb = new StringBuilder();
+        private IDispatcherTimer _revealTimer;
 
         public AskAiPage()
         {
@@ -108,7 +115,7 @@ namespace dinospace
                     DownloadProgressArea.IsVisible = false;
                     break;
 
-                default: // NotStarted
+                default:
                     DownloadIntroLabel.IsVisible = true;
                     DownloadIntroLabel.Text = "An offline AI that answers your dinosaur and space questions, right on your phone. It needs a one-time download of about 3 GB, so use wifi if you can.";
                     DownloadButton.IsVisible = true;
@@ -130,7 +137,7 @@ namespace dinospace
             if (ModelManager.State == DownloadState.Downloading)
                 ModelManager.Pause();
             else
-                ModelManager.Start();   // resume from where it left off
+                ModelManager.Start();
             RefreshDownloadUi();
         }
 
@@ -144,23 +151,6 @@ namespace dinospace
             ModelManager.Stop();
             RefreshDownloadUi();
         }
-
-#if ANDROID
-        private void RequestNotificationPermission()
-        {
-            try
-            {
-                if (Android.OS.Build.VERSION.SdkInt < Android.OS.BuildVersionCodes.Tiramisu) return;
-                var activity = Platform.CurrentActivity;
-                if (activity == null) return;
-                if (activity.CheckSelfPermission("android.permission.POST_NOTIFICATIONS") != Android.Content.PM.Permission.Granted)
-                    activity.RequestPermissions(new[] { "android.permission.POST_NOTIFICATIONS" }, 1001);
-            }
-            catch { }
-        }
-#else
-        private void RequestNotificationPermission() { }
-#endif
 
         private void StartChat()
         {
@@ -206,99 +196,115 @@ namespace dinospace
 #endif
         }
 
-        // ---------- SEND / STREAM ----------
+        // ---------- ASK ----------
 
         private void OnSendClicked(object sender, EventArgs e)
         {
-            if (_streaming) return;
-
+            if (_busy) return;
             string question = (QuestionEntry.Text ?? "").Trim();
             if (string.IsNullOrEmpty(question)) return;
 
             AddUserBubble(question);
             QuestionEntry.Text = "";
-            StartStreaming(question);
+            Answer(question);
         }
 
-        private async void StartStreaming(string question)
+        private async void Answer(string question)
         {
 #if ANDROID
-            _streaming = true;
-            _streamBuf.Clear();
+            _busy = true;
             SendButton.IsEnabled = false;
+            int myGen = ++_gen;
 
-            _streamLabel = StartNovaBubble("...");
+            _thinkingStatus = AddStatus("NovaSaur is thinking...");
             await ScrollToBottom();
 
-            _callback = new StreamCallback
-            {
-                Token = t => MainThread.BeginInvokeOnMainThread(() => OnToken(t)),
-                Done = () => MainThread.BeginInvokeOnMainThread(OnStreamDone),
-                Failed = msg => MainThread.BeginInvokeOnMainThread(() => OnStreamError(msg))
-            };
-
-            string prompt = RagService.BuildPrompt(question);
+            string answer = null;
+            await _aiLock.WaitAsync();
             try
             {
-                await Task.Run(() => Com.Novasaur.NovaSaurModule.AskStream(prompt, _callback));
+                string prompt = RagService.BuildPrompt(question);
+                string raw = await Task.Run(() => Com.Novasaur.NovaSaurModule.Ask(prompt));
+                answer = RagService.CleanAnswer(raw);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("NovaSaur stream error: " + ex);
-                OnStreamError("Something went wrong answering that. Please try again.");
+                System.Diagnostics.Debug.WriteLine("NovaSaur ask error: " + ex);
             }
+            finally
+            {
+                _aiLock.Release();
+            }
+
+            // a Clear or a newer question happened while generating -> drop this result
+            if (myGen != _gen) return;
+
+            if (_thinkingStatus != null) { RemoveBubble(_thinkingStatus); _thinkingStatus = null; }
+
+            if (string.IsNullOrWhiteSpace(answer))
+                answer = "Something went wrong answering that. Please try again.";
+
+            RevealAnswer(answer);
 #else
             AddNovaBubble("NovaSaur runs on Android only right now.");
 #endif
         }
 
-        private void OnToken(string token)
+        // Types the finished answer out word by word.
+        private void RevealAnswer(string text)
         {
-            _streamBuf.Append(token);
-            if (_streamLabel != null) _streamLabel.Text = _streamBuf.ToString();
-            _ = ChatScroll.ScrollToAsync(0, ChatStack.Height, false);
-        }
+            _revealWords = text.Split(' ');
+            _revealIndex = 0;
+            _revealSb.Clear();
+            _revealLabel = StartNovaBubble("");
 
-        private void OnStreamDone()
-        {
-            string final = RagService.CleanAnswer(_streamBuf.ToString());
-            if (string.IsNullOrWhiteSpace(final))
-                final = "Hmm, I didn't catch that. Try asking another way.";
-            if (_streamLabel != null) _streamLabel.Text = final;
-
-            _messages.Add(new ChatMessage { IsUser = false, Text = final });
-            SaveHistory();
-
-            _streaming = false;
-            _streamLabel = null;
-            SendButton.IsEnabled = true;
-            ShowSuggestions();
-            _ = ScrollToBottom();
-        }
-
-        private void OnStreamError(string msg)
-        {
-            string partial = RagService.CleanAnswer(_streamBuf.ToString());
-            string text = string.IsNullOrWhiteSpace(partial) ? msg : partial;
-            if (_streamLabel != null) _streamLabel.Text = text;
-
-            if (!string.IsNullOrWhiteSpace(text))
+            if (_revealTimer == null)
             {
-                _messages.Add(new ChatMessage { IsUser = false, Text = text });
-                SaveHistory();
+                _revealTimer = Dispatcher.CreateTimer();
+                _revealTimer.Interval = TimeSpan.FromMilliseconds(45);
+                _revealTimer.Tick += (s, e) => RevealTick();
+            }
+            _revealTimer.Start();
+        }
+
+        private void RevealTick()
+        {
+            if (_revealWords == null || _revealIndex >= _revealWords.Length)
+            {
+                _revealTimer?.Stop();
+                string full = _revealSb.ToString().Trim();
+                if (!string.IsNullOrEmpty(full))
+                {
+                    _messages.Add(new ChatMessage { IsUser = false, Text = full });
+                    SaveHistory();
+                }
+                _revealLabel = null;
+                _busy = false;
+                SendButton.IsEnabled = true;
+                ShowSuggestions();
+                _ = ScrollToBottom();
+                return;
             }
 
-            _streaming = false;
-            _streamLabel = null;
-            SendButton.IsEnabled = true;
-            ShowSuggestions();
+            _revealSb.Append(_revealWords[_revealIndex]);
+            if (_revealIndex < _revealWords.Length - 1) _revealSb.Append(' ');
+            _revealIndex++;
+            if (_revealLabel != null) _revealLabel.Text = _revealSb.ToString();
+            _ = ChatScroll.ScrollToAsync(0, ChatStack.Height, false);
         }
 
         private async void OnBackClicked(object sender, EventArgs e) => await Navigation.PopAsync();
 
+        // Clear works at any moment, even mid-answer.
         private void OnClearClicked(object sender, EventArgs e)
         {
-            if (_streaming) return;
+            _gen++;                 // invalidate any in-flight answer
+            _revealTimer?.Stop();   // stop a reveal in progress
+            _revealLabel = null;
+            if (_thinkingStatus != null) { RemoveBubble(_thinkingStatus); _thinkingStatus = null; }
+            _busy = false;
+            SendButton.IsEnabled = true;
+
             _messages.Clear();
             Preferences.Remove(HistoryKey);
             ChatStack.Children.Clear();
@@ -339,7 +345,7 @@ namespace dinospace
 
         private void OnSuggestionClicked(object sender, EventArgs e)
         {
-            if (_streaming) return;
+            if (_busy) return;
             if (sender is Button b)
             {
                 QuestionEntry.Text = b.Text;
@@ -463,17 +469,4 @@ namespace dinospace
         public bool IsUser { get; set; }
         public string Text { get; set; } = "";
     }
-
-#if ANDROID
-    class StreamCallback : Java.Lang.Object, Com.Novasaur.IStreamCallback
-    {
-        public Action<string> Token;
-        public Action Done;
-        public Action<string> Failed;
-
-        public void OnToken(string token) => Token?.Invoke(token);
-        public void OnDone() => Done?.Invoke();
-        public void OnError(string error) => Failed?.Invoke(error);
-    }
-#endif
 }

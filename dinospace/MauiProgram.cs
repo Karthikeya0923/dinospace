@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Sharpnado.MaterialFrame;
 
 namespace dinospace
 {
@@ -9,6 +10,7 @@ namespace dinospace
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseSharpnadoMaterialFrame(false, false)
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

@@ -39,8 +39,8 @@
     <!-- ===== DinoSpace single theme: white text, translucent frosted panels ===== -->
     <Color x:Key="PageBgLight">#000000</Color>
     <Color x:Key="PageBgDark">#000000</Color>
-    <Color x:Key="SurfaceLight">#E0000000</Color>
-    <Color x:Key="SurfaceDark">#E0000000</Color>
+    <Color x:Key="SurfaceLight">#66000000</Color>
+    <Color x:Key="SurfaceDark">#66000000</Color>
     <Color x:Key="BorderLight">#30FFFFFF</Color>
     <Color x:Key="BorderDark">#30FFFFFF</Color>
     <Color x:Key="DividerLight">#22FFFFFF</Color>

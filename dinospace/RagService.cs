@@ -87,7 +87,7 @@ namespace dinospace
                 if (score > 0) hits.Add((score, SpaceContext(s)));
             }
 
-            if (hits.Count == 0) return "";
+            if (hits.Count == 0) return SuperlativeContext(q);
 
             var top = hits.OrderByDescending(h => h.score).Take(3).Select(h => h.text);
             return string.Join("\n", top);
@@ -168,6 +168,64 @@ namespace dinospace
         {
             if (!string.IsNullOrWhiteSpace(label) && !string.IsNullOrWhiteSpace(value))
                 sb.AppendLine(label + ": " + value);
+        }
+
+        // Handles "what is the biggest/fastest/etc. dinosaur" questions that name
+        // no entry, by grounding them in the dinosaur that wins that stat.
+        // Dinosaurs only - their stats share fields; space stats are too varied.
+        private static string SuperlativeContext(string normalizedQuestion)
+        {
+            string q = " " + normalizedQuestion + " ";
+            if (!q.Contains(" dinosaur ") && !q.Contains(" dino ") && !q.Contains(" dinosaurs "))
+                return "";
+
+            Func<Dinosaur, string> stat;
+            bool max;
+
+            if (HasWord(q, "biggest", "largest", "longest")) { stat = d => d.Length; max = true; }
+            else if (HasWord(q, "smallest", "shortest")) { stat = d => d.Length; max = false; }
+            else if (HasWord(q, "heaviest")) { stat = d => d.Weight; max = true; }
+            else if (HasWord(q, "lightest")) { stat = d => d.Weight; max = false; }
+            else if (HasWord(q, "tallest")) { stat = d => d.Height; max = true; }
+            else if (HasWord(q, "fastest")) { stat = d => d.Speed; max = true; }
+            else if (HasWord(q, "slowest")) { stat = d => d.Speed; max = false; }
+            else if (HasWord(q, "strongest")) { stat = d => d.Strength.ToString(); max = true; }
+            else return "";
+
+            Dinosaur best = null;
+            double bestVal = max ? double.MinValue : double.MaxValue;
+
+            foreach (var d in DinosaurData.GetAll())
+            {
+                double? parsed = ParseLeadingNumber(stat(d));
+                if (parsed == null) continue;
+                double v = parsed.Value;
+                if ((max && v > bestVal) || (!max && v < bestVal)) { bestVal = v; best = d; }
+            }
+
+            return best == null ? "" : DinoContext(best);
+        }
+
+        private static bool HasWord(string paddedQuestion, params string[] words)
+        {
+            foreach (var w in words)
+                if (paddedQuestion.Contains(" " + w + " ")) return true;
+            return false;
+        }
+
+        // Pulls the first number out of a stat string like "50 feet" or "7,500 kg".
+        private static double? ParseLeadingNumber(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return null;
+            var sb = new StringBuilder();
+            bool started = false;
+            foreach (char c in text.Replace(",", ""))
+            {
+                if (char.IsDigit(c) || (c == '.' && started)) { sb.Append(c); started = true; }
+                else if (started) break;
+            }
+            if (sb.Length == 0) return null;
+            return double.TryParse(sb.ToString(), out var val) ? val : (double?)null;
         }
 
         private static string Normalize(string text)
