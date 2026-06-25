@@ -133,7 +133,7 @@
                    Padding="0"
                    CornerRadius="14"
                    HasShadow="True"
-                   BackgroundColor="Transparent"
+                   BackgroundColor="#B3000000"
                    BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
                    MaximumHeightRequest="320">
                     <VerticalStackLayout x:Name="DropdownStack"/>
