@@ -5,6 +5,11 @@
              Background="{AppThemeBinding Light={StaticResource PageBgBrushLight}, Dark={StaticResource BackdropBrush}}"
              Title="Saved">
     <Grid>
+        <Grid.GestureRecognizers>
+            <SwipeGestureRecognizer Direction="Left" Swiped="OnSwipeLeft"/>
+            <SwipeGestureRecognizer Direction="Right" Swiped="OnSwipeRight"/>
+        </Grid.GestureRecognizers>
+
         <Image Source="mainbackground.png" Aspect="AspectFill" InputTransparent="True"/>
 
 

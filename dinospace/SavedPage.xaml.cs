@@ -25,6 +25,13 @@
             SelectFilter(_currentFilter); // rebuild list in case saves changed while away
         }
 
+        // Swipe left -> next tab right (Settings); swipe right -> previous tab (Explore)
+        private async void OnSwipeLeft(object sender, SwipedEventArgs e)
+            => await Shell.Current.GoToAsync("//SettingsPage");
+
+        private async void OnSwipeRight(object sender, SwipedEventArgs e)
+            => await Shell.Current.GoToAsync("//ExplorePage");
+
         // Filter tab handlers
         private void OnFilterAll(object sender, EventArgs e) => SelectFilter("All");
         private void OnFilterDino(object sender, EventArgs e) => SelectFilter("Dinosaurs");

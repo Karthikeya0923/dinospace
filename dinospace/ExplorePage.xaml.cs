@@ -33,6 +33,13 @@
             RefreshProgress();
         }
 
+        // Swipe left -> next tab right (Saved); swipe right -> previous tab (Home)
+        private async void OnSwipeLeft(object sender, SwipedEventArgs e)
+            => await Shell.Current.GoToAsync("//SavedPage");
+
+        private async void OnSwipeRight(object sender, SwipedEventArgs e)
+            => await Shell.Current.GoToAsync("//MainPage");
+
         // ===== Did You Know =====
 
         // Pick a random fact from the facts list and display it

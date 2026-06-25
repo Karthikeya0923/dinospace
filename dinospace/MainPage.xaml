@@ -5,6 +5,10 @@
              Background="{AppThemeBinding Light={StaticResource PageBgBrushLight}, Dark={StaticResource BackdropBrush}}"
              Title="DinoSpace">
     <Grid>
+        <Grid.GestureRecognizers>
+            <SwipeGestureRecognizer Direction="Left" Swiped="OnSwipeLeft"/>
+        </Grid.GestureRecognizers>
+
         <Image Source="mainbackground.png" Aspect="AspectFill" InputTransparent="True"/>
 
         <Grid RowDefinitions="Auto,Auto,*" Padding="16,16,16,0" RowSpacing="16">

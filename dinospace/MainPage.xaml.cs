@@ -28,6 +28,10 @@ namespace dinospace
             BuildHighlights();
         }
 
+        // Swipe left -> next tab to the right (Explore)
+        private async void OnSwipeLeft(object sender, SwipedEventArgs e)
+            => await Shell.Current.GoToAsync("//ExplorePage");
+
         // ===== Today's Highlights =====
         // One dino, one space object, one fact — rotates daily using day-of-year as seed
 

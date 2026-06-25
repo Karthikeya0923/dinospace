@@ -14,6 +14,10 @@
             VersionLabel.Text = $"DinoSpace v{AppInfo.VersionString}";
         }
 
+        // Swipe right -> previous tab (Saved). Settings is the rightmost tab, so no left-swipe.
+        private async void OnSwipeRight(object sender, SwipedEventArgs e)
+            => await Shell.Current.GoToAsync("//SavedPage");
+
         private async void OnClearDataTapped(object sender, EventArgs e)
         {
             await Shell.Current.Navigation.PushAsync(new ClearDataPage());
