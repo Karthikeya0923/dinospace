@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<ResourceDictionary
+<ResourceDictionary 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
@@ -22,6 +22,7 @@
     <Color x:Key="Gray600">#404040</Color>
     <Color x:Key="Gray900">#212121</Color>
     <Color x:Key="Gray950">#141414</Color>
+
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
     <SolidColorBrush x:Key="TertiaryBrush" Color="{StaticResource Tertiary}"/>
@@ -39,10 +40,10 @@
     <!-- ===== DinoSpace single theme: white text, translucent frosted panels ===== -->
     <Color x:Key="PageBgLight">#000000</Color>
     <Color x:Key="PageBgDark">#000000</Color>
-    <Color x:Key="SurfaceLight">#66000000</Color>
-    <Color x:Key="SurfaceDark">#66000000</Color>
-    <Color x:Key="BorderLight">#30FFFFFF</Color>
-    <Color x:Key="BorderDark">#30FFFFFF</Color>
+    <Color x:Key="SurfaceLight">#E0000000</Color>
+    <Color x:Key="SurfaceDark">#E0000000</Color>
+    <Color x:Key="BorderLight">#CCFFFFFF</Color>
+    <Color x:Key="BorderDark">#CCFFFFFF</Color>
     <Color x:Key="DividerLight">#22FFFFFF</Color>
     <Color x:Key="DividerDark">#22FFFFFF</Color>
     <Color x:Key="TextPrimaryLight">#F5F7FB</Color>
@@ -67,4 +68,5 @@
     <SolidColorBrush x:Key="StarsBrush" Color="#000000"/>
     <SolidColorBrush x:Key="StoneBrush" Color="#000000"/>
     <SolidColorBrush x:Key="BackdropBrush" Color="#000000"/>
+
 </ResourceDictionary>
