@@ -7,7 +7,7 @@ namespace dinospace
     public static class Theme
     {
         public static Color Surface => Color.FromArgb("#66000000"); // frosted black panel
-        public static Color Border => Color.FromArgb("#CCFFFFFF"); // thin white border
+        public static Color Border => Color.FromArgb("#4DFFFFFF"); // faint white hairline
         public static Color TextPrimary => Color.FromArgb("#F5F7FB");   // near-white body text
         public static Color TextSecondary => Color.FromArgb("#AEB6C6");   // muted secondary text
         public static Color TextHint => Color.FromArgb("#7E8696");   // placeholder / hint text

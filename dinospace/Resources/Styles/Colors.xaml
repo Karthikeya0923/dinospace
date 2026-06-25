@@ -42,8 +42,8 @@
     <Color x:Key="PageBgDark">#000000</Color>
     <Color x:Key="SurfaceLight">#E0000000</Color>
     <Color x:Key="SurfaceDark">#E0000000</Color>
-    <Color x:Key="BorderLight">#CCFFFFFF</Color>
-    <Color x:Key="BorderDark">#CCFFFFFF</Color>
+    <Color x:Key="BorderLight">#4DFFFFFF</Color>
+    <Color x:Key="BorderDark">#4DFFFFFF</Color>
     <Color x:Key="DividerLight">#22FFFFFF</Color>
     <Color x:Key="DividerDark">#22FFFFFF</Color>
     <Color x:Key="TextPrimaryLight">#F5F7FB</Color>
