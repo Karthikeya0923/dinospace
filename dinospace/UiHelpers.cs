@@ -6,7 +6,7 @@ namespace dinospace
     // UI built in code reads these; XAML uses the matching {StaticResource ...Light/...Dark} keys.
     public static class Theme
     {
-        public static Color Surface => Color.FromArgb("#E0000000"); // frosted black panel
+        public static Color Surface => Color.FromArgb("#66000000"); // frosted black panel
         public static Color Border => Color.FromArgb("#30FFFFFF"); // subtle white border
         public static Color TextPrimary => Color.FromArgb("#F5F7FB");   // near-white body text
         public static Color TextSecondary => Color.FromArgb("#AEB6C6");   // muted secondary text
