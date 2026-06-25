@@ -22,13 +22,23 @@
             StartQuiz();
         }
 
-        // Shuffle and slice the question pool, then show the first question
+        // Build this run's question set, then show the first question
         private void StartQuiz()
         {
-            _questions = LoadQuestions(_mode)
-                .OrderBy(_ => Guid.NewGuid())
-                .Take(_count)
-                .ToList();
+            if (_mode == "Mixed")
+            {
+                // Mixed is already shuffled + interleaved (dino, space, dino...) in QuizData.
+                // Don't re-shuffle here or the alternation breaks — just take from the front.
+                _questions = QuizData.GetMixedQuestions().Take(_count).ToList();
+            }
+            else
+            {
+                // Dino-only / Space-only: shuffle the pool and take the requested count.
+                _questions = LoadQuestions(_mode)
+                    .OrderBy(_ => Guid.NewGuid())
+                    .Take(_count)
+                    .ToList();
+            }
 
             _index = 0;
             _score = 0;

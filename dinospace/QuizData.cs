@@ -1,5 +1,4 @@
-﻿
-namespace dinospace
+﻿namespace dinospace
 {
     public static class QuizData
     {
@@ -107,97 +106,6 @@ namespace dinospace
         };
 
         // ============================================================
-        //  MIXED QUIZ (dinosaurs and space together)
-        // ============================================================
-        public static List<QuizQuestion> GetMixedQuestions() => new List<QuizQuestion>
-        {
-            new QuizQuestion
-            {
-                Question = "What does the name \"Tyrannosaurus Rex\" mean?",
-                OptionA = "Tyrant Lizard King",
-                OptionB = "Giant Fast Runner",
-                OptionC = "Three-Horned Face",
-                OptionD = "Spine Lizard",
-                Correct = "A"
-            },
-            new QuizQuestion
-            {
-                Question = "What was the speed of an Allosaurus?",
-                OptionA = "40km/h",
-                OptionB = "50km/h",
-                OptionC = "30km/h",
-                OptionD = "20km/h",
-                Correct = "B"
-            },
-            new QuizQuestion
-            {
-                Question = "How fast does Earth move around the Sun?",
-                OptionA = "42,000km/h",
-                OptionB = "126,000km/h",
-                OptionC = "107,000 km/h",
-                OptionD = "89,500km/h",
-                Correct = "C"
-            },
-            new QuizQuestion
-            {
-                Question = "Megalodon was a type of...?",
-                OptionA = "Dinosaur",
-                OptionB = "Shark",
-                OptionC = "Whale",
-                OptionD = "Flying reptile",
-                Correct = "B"
-            },
-            new QuizQuestion
-            {
-                Question = "Birds are living dinosaurs.",
-                IsTrueFalse = true,
-                TrueFalseAnswer = true
-            },
-            new QuizQuestion
-            {
-                Question = "\"Stegosaurus\" was a herbivore. How did it protect itself from enemies?",
-                OptionA = "Sat on them",
-                OptionB = "Bit them with sharp teeth",
-                OptionC = "Smacked them with its spiky tail",
-                OptionD = "Stomped on them",
-                Correct = "C"
-            },
-            new QuizQuestion
-            {
-                Question = "What is the closest planet to our Sun?",
-                OptionA = "Earth",
-                OptionB = "Mercury",
-                OptionC = "Venus",
-                OptionD = "Mars",
-                Correct = "B"
-            },
-            new QuizQuestion
-            {
-                Question = "Which of these lived in the ocean?",
-                OptionA = "Stegosaurus",
-                OptionB = "Mosasaurus",
-                OptionC = "Pteranodon",
-                OptionD = "Brachiosaurus",
-                Correct = "B"
-            },
-            new QuizQuestion
-            {
-                Question = "T. Rex and Stegosaurus lived at the same time.",
-                IsTrueFalse = true,
-                TrueFalseAnswer = false
-            },
-            new QuizQuestion
-            {
-                Question = "Which of these is a constellation?",
-                OptionA = "Orion",
-                OptionB = "Mars",
-                OptionC = "Megalodon",
-                OptionD = "Stegosaurus",
-                Correct = "A"
-            },
-        };
-
-        // ============================================================
         //  SPACE QUIZ
         // ============================================================
         public static List<QuizQuestion> GetSpaceQuestions() => new List<QuizQuestion>
@@ -249,12 +157,6 @@ namespace dinospace
             },
             new QuizQuestion
             {
-                Question = "The Moon is larger than the Sun.",
-                IsTrueFalse = true,
-                TrueFalseAnswer = false
-            },
-            new QuizQuestion
-            {
                 Question = "Which planet's strong gravity helps shield Earth by pulling in many comets and asteroids?",
                 OptionA = "Saturn",
                 OptionB = "Uranus",
@@ -270,12 +172,6 @@ namespace dinospace
                 OptionC = "Jupiter",
                 OptionD = "Saturn",
                 Correct = "B"
-            },
-            new QuizQuestion
-            {
-                Question = "The Sun is actually a star.",
-                IsTrueFalse = true,
-                TrueFalseAnswer = true
             },
             new QuizQuestion
             {
@@ -296,5 +192,31 @@ namespace dinospace
                 Correct = "B"
             },
         };
+
+        // ============================================================
+        //  MIXED QUIZ — built automatically from the two pools above.
+        //  Each pool is shuffled, then interleaved. The starting type
+        //  (dino or space) is random each run, then they alternate.
+        // ============================================================
+        public static List<QuizQuestion> GetMixedQuestions()
+        {
+            var rng = new Random();
+            var dinos = GetDinoQuestions().OrderBy(_ => rng.Next()).ToList();
+            var space = GetSpaceQuestions().OrderBy(_ => rng.Next()).ToList();
+
+            // Coin flip: true = start with a dinosaur, false = start with space
+            bool dinoFirst = rng.Next(2) == 0;
+            var first = dinoFirst ? dinos : space;
+            var second = dinoFirst ? space : dinos;
+
+            var mixed = new List<QuizQuestion>();
+            int max = Math.Max(first.Count, second.Count);
+            for (int i = 0; i < max; i++)
+            {
+                if (i < first.Count) mixed.Add(first[i]);
+                if (i < second.Count) mixed.Add(second[i]);
+            }
+            return mixed;
+        }
     }
 }
