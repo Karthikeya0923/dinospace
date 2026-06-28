@@ -142,6 +142,80 @@ namespace dinospace
             return frame;
         }
 
+        // ===== CollectionView item builders =====
+        // These return the SAME visual row but for use inside a CollectionView.ItemTemplate.
+        // No per-row TapGestureRecognizer — the CollectionView handles selection.
+
+        // Build a dino row from the bound item (used by CollectionView ItemTemplate)
+        public static View BuildDinoRowTemplate(Dinosaur dino)
+        {
+            var image = new Image
+            {
+                Source = dino.ImageFile,
+                WidthRequest = 56,
+                HeightRequest = 56,
+                Aspect = Aspect.AspectFill,
+                BackgroundColor = Theme.ImgPlaceholder
+            };
+
+            var name = new Label
+            {
+                Text = dino.Name,
+                FontSize = 17,
+                FontAttributes = FontAttributes.Bold,
+                FontFamily = "Baloo",
+                TextColor = Theme.TextPrimary,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            var titleRow = new HorizontalStackLayout { Spacing = 8 };
+            titleRow.Add(name);
+            titleRow.Add(Chip(dino.Group));
+
+            var sub = new Label { Text = dino.ShortDescription, FontSize = 12, TextColor = Theme.TextSecondary };
+
+            var info = new VerticalStackLayout { Spacing = 3, VerticalOptions = LayoutOptions.Center };
+            info.Add(titleRow);
+            info.Add(sub);
+
+            return WrapTemplate(image, info);
+        }
+
+        // Build a space row from the bound item (used by CollectionView ItemTemplate)
+        public static View BuildSpaceRowTemplate(SpaceObject obj)
+        {
+            var image = new Image
+            {
+                Source = obj.ImageFile,
+                WidthRequest = 56,
+                HeightRequest = 56,
+                Aspect = Aspect.AspectFill,
+                BackgroundColor = Theme.ImgPlaceholder
+            };
+
+            var name = new Label
+            {
+                Text = obj.Name,
+                FontSize = 17,
+                FontAttributes = FontAttributes.Bold,
+                FontFamily = "Baloo",
+                TextColor = Theme.TextPrimary,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            var titleRow = new HorizontalStackLayout { Spacing = 8 };
+            titleRow.Add(name);
+            titleRow.Add(Chip(obj.TypeLabel));
+
+            var desc = new Label { Text = obj.ShortDescription, FontSize = 12, TextColor = Theme.TextSecondary };
+
+            var info = new VerticalStackLayout { Spacing = 3, VerticalOptions = LayoutOptions.Center };
+            info.Add(titleRow);
+            info.Add(desc);
+
+            return WrapTemplate(image, info);
+        }
+
         // Shared card wrapper: thumbnail | info | chevron, inside a frosted Frame
         private static View Wrap(Image image, View info, object data, EventHandler<TappedEventArgs> tapped)
         {
@@ -178,6 +252,40 @@ namespace dinospace
             frame.GestureRecognizers.Add(tap);
             return frame;
         }
+
+        // Same frosted card as Wrap, but no BindingContext/tap — the CollectionView owns those.
+        private static View WrapTemplate(Image image, View info)
+        {
+            var chevron = new Label
+            {
+                Text = "\u203A",
+                FontSize = 22,
+                TextColor = Theme.TextHint,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            var grid = new Grid { ColumnSpacing = 12 };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.Add(image, 0, 0);
+            grid.Add(info, 1, 0);
+            grid.Add(chevron, 2, 0);
+
+            return new Frame
+            {
+                Padding = new Thickness(12),
+                CornerRadius = 14,
+                BorderColor = Theme.Border,
+                BackgroundColor = Theme.Surface,
+                HasShadow = false,
+                Margin = new Thickness(0, 4),
+                Content = grid
+            };
+        }
+
+        // Compact row used in the live search dropdowns (Home + Saved)
+        public static View BuildSearchResultRow_Unused() => null; // placeholder to keep diffs clean
 
         // Small rounded label chip (e.g. "Theropod", "Planet")
         public static View Chip(string text)

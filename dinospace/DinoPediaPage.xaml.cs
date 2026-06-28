@@ -2,12 +2,11 @@
 {
     public partial class DinoPediaPage : ContentPage
     {
-        // Navigation guard to prevent double-taps opening two detail pages
         private bool _isNavigating = false;
         private DateTime _lastNav = DateTime.MinValue;
         private bool _filtersOpen = false;
+        private bool _built = false;
 
-        // Active filter state — "All" means no filter applied for that dimension
         private string _category = "All";
         private string _group = "All";
         private string _diet = "All";
@@ -20,62 +19,51 @@
         public DinoPediaPage()
         {
             InitializeComponent();
-            BuildFilterPanel();
-            UpdateFilterButton();
-            BuildList();
+            SwipeBack.Attach(this);
         }
 
         protected override void OnAppearing()
         {
             base.OnAppearing();
-            // Release nav guard only after a real return (not a spurious re-appear from pushing a detail page)
             if ((DateTime.Now - _lastNav).TotalMilliseconds > 500)
                 _isNavigating = false;
+
+            if (!_built)
+            {
+                _built = true;
+                // Wait for the push animation to finish before doing heavy build work,
+                // so the slide-in isn't blocked and stutters.
+                Dispatcher.Dispatch(async () =>
+                {
+                    await Task.Delay(280);
+                    BuildFilterPanel();
+                    UpdateFilterButton();
+                    BuildList();
+                });
+            }
         }
 
-        // ===== Filter panel =====
-
-        // Toggle filter panel visibility
         private void OnFilterToggle(object sender, EventArgs e)
         {
             _filtersOpen = !_filtersOpen;
             FilterPanel.IsVisible = _filtersOpen;
         }
 
-        // Rebuild all filter chip rows from current filter state
         private void BuildFilterPanel()
         {
             FilterChips.Children.Clear();
 
-            FilterChips.Children.Add(MakeDimension(
-                "Category",
-                new[] { "All", "Land", "Flying", "Sea" },
-                _category,
-                v => { _category = v; OnFilterChanged(); }));
+            FilterChips.Children.Add(MakeDimension("Category", new[] { "All", "Land", "Flying", "Sea" }, _category, v => { _category = v; OnFilterChanged(); }));
 
-            // Group options are derived dynamically from the data
             var groups = new List<string> { "All" };
             groups.AddRange(DinosaurData.GetAll().Select(d => d.Group).Distinct().OrderBy(g => g));
-            FilterChips.Children.Add(MakeDimension(
-                "Group",
-                groups.ToArray(),
-                _group,
-                v => { _group = v; OnFilterChanged(); }));
+            FilterChips.Children.Add(MakeDimension("Group", groups.ToArray(), _group, v => { _group = v; OnFilterChanged(); }));
 
-            FilterChips.Children.Add(MakeDimension(
-                "Diet",
-                new[] { "All", "Carnivore", "Herbivore" },
-                _diet,
-                v => { _diet = v; OnFilterChanged(); }));
+            FilterChips.Children.Add(MakeDimension("Diet", new[] { "All", "Carnivore", "Herbivore" }, _diet, v => { _diet = v; OnFilterChanged(); }));
 
-            FilterChips.Children.Add(MakeDimension(
-                "Size",
-                new[] { "All", SizeSmall, SizeMedium, SizeLarge },
-                _size,
-                v => { _size = v; OnFilterChanged(); }));
+            FilterChips.Children.Add(MakeDimension("Size", new[] { "All", SizeSmall, SizeMedium, SizeLarge }, _size, v => { _size = v; OnFilterChanged(); }));
         }
 
-        // Called whenever any filter value changes
         private void OnFilterChanged()
         {
             BuildFilterPanel();
@@ -83,7 +71,6 @@
             BuildList();
         }
 
-        // Show active filter count on the Filters button (e.g. "Filters (2)")
         private void UpdateFilterButton()
         {
             int active = 0;
@@ -94,7 +81,6 @@
             FilterButton.Text = active == 0 ? "Filters" : $"Filters ({active})";
         }
 
-        // Build one filter row: a label heading + horizontally scrollable chip strip
         private View MakeDimension(string title, string[] options, string current, Action<string> onSelect)
         {
             var head = new Label { Text = title, FontSize = 12, FontAttributes = FontAttributes.Bold, FontFamily = "Baloo", TextColor = Theme.TextSecondary };
@@ -103,12 +89,7 @@
             foreach (var opt in options)
                 row.Add(MakeChip(opt, opt == current, onSelect));
 
-            var scroll = new ScrollView
-            {
-                Orientation = ScrollOrientation.Horizontal,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Never,
-                Content = row
-            };
+            var scroll = new ScrollView { Orientation = ScrollOrientation.Horizontal, HorizontalScrollBarVisibility = ScrollBarVisibility.Never, Content = row };
 
             var box = new VerticalStackLayout { Spacing = 6 };
             box.Add(head);
@@ -116,26 +97,11 @@
             return box;
         }
 
-        // Build a single selectable chip; selected chips use Accent color with dark text
         private View MakeChip(string text, bool selected, Action<string> onSelect)
         {
-            var label = new Label
-            {
-                Text = text,
-                FontSize = 13,
-                TextColor = selected ? Colors.Black : Theme.TextPrimary,
-                VerticalOptions = LayoutOptions.Center
-            };
+            var label = new Label { Text = text, FontSize = 13, TextColor = selected ? Colors.Black : Theme.TextPrimary, VerticalOptions = LayoutOptions.Center };
 
-            var chip = new Frame
-            {
-                Padding = new Thickness(12, 6),
-                CornerRadius = 14,
-                HasShadow = false,
-                BorderColor = Colors.Transparent,
-                BackgroundColor = selected ? Theme.Accent : Theme.ChipBg,
-                Content = label
-            };
+            var chip = new Frame { Padding = new Thickness(12, 6), CornerRadius = 14, HasShadow = false, BorderColor = Colors.Transparent, BackgroundColor = selected ? Theme.Accent : Theme.ChipBg, Content = label };
 
             var tap = new TapGestureRecognizer();
             tap.Tapped += (s, e) => onSelect(text);
@@ -143,15 +109,11 @@
             return chip;
         }
 
-        // ===== Search + list =====
-
         private void OnSearchCompleted(object sender, EventArgs e) => BuildList();
         private void OnSearchChanged(object sender, TextChangedEventArgs e) => BuildList();
 
-        // Filter and display the dinosaur list based on active filters and search query
         private void BuildList()
         {
-            ResultsStack.Children.Clear();
             string query = SearchEntry.Text?.Trim().ToLower() ?? "";
 
             var dinos = DinosaurData.GetAll()
@@ -163,23 +125,9 @@
                 .OrderBy(d => d.Name)
                 .ToList();
 
-            if (dinos.Count == 0)
-            {
-                ResultsStack.Children.Add(new Label
-                {
-                    Text = "No dinosaurs match these filters",
-                    TextColor = Theme.TextSecondary,
-                    HorizontalOptions = LayoutOptions.Center,
-                    Margin = new Thickness(0, 16)
-                });
-                return;
-            }
-
-            foreach (var d in dinos)
-                ResultsStack.Children.Add(UiHelpers.BuildDinoRow(d, OnDinoTapped));
+            ResultsList.ItemsSource = dinos;
         }
 
-        // Match a dinosaur against the active size bucket using its parsed weight
         private bool SizeMatch(Dinosaur d)
         {
             if (_size == "All") return true;
@@ -190,7 +138,6 @@
             return true;
         }
 
-        // Extract the leading numeric value from a weight string like "8,000 kg"
         private double ParseWeight(string s)
         {
             if (string.IsNullOrWhiteSpace(s)) return 0;
@@ -204,6 +151,7 @@
             return double.TryParse(sb.ToString(), out var v) ? v : 0;
         }
 
+        // Tap a row -> read the bound Dinosaur off its BindingContext and open it.
         private async void OnDinoTapped(object sender, EventArgs e)
         {
             if (_isNavigating) return;
@@ -211,7 +159,7 @@
             {
                 _isNavigating = true;
                 _lastNav = DateTime.Now;
-                await Shell.Current.Navigation.PushAsync(new DinoDetailPage(d), false);
+                await Shell.Current.Navigation.PushAsync(new DinoDetailPage(d));
             }
         }
     }

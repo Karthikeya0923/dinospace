@@ -5,6 +5,7 @@ namespace dinospace
         public CreditsPage()
         {
             InitializeComponent();
+            SwipeBack.Attach(this);
         }
     }
 }

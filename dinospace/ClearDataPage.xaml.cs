@@ -16,6 +16,7 @@
         public ClearDataPage()
         {
             InitializeComponent();
+            SwipeBack.Attach(this);
             BuildItems();
         }
 

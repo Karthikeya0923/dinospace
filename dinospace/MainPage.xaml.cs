@@ -1,25 +1,21 @@
 ﻿using Microsoft.Maui.Storage;
+using static Google.Android.Material.Tabs.TabLayout;
 namespace dinospace
 {
-    public partial class MainPage : ContentPage
+    public partial class MainPage : ContentView, ITabView
     {
-        // Navigation guard to prevent double-taps opening two detail pages
         private bool _isNavigating = false;
         private DateTime _lastNav = DateTime.MinValue;
-
-        // Cached reference to the most-viewed entry for tap navigation
         private object _mostViewedObject = null;
-
 
         public MainPage()
         {
             InitializeComponent();
         }
 
-        protected override void OnAppearing()
+        // Called by the host when this tab becomes visible (replaces OnAppearing).
+        public void OnSelected()
         {
-            base.OnAppearing();
-            // Release nav guard only after a real return (not a spurious re-appear from pushing a detail page)
             if ((DateTime.Now - _lastNav).TotalMilliseconds > 500)
                 _isNavigating = false;
 
@@ -27,13 +23,6 @@ namespace dinospace
             RefreshStats();
             BuildHighlights();
         }
-
-        // Swipe left -> next tab to the right (Explore)
-        private async void OnSwipeLeft(object sender, SwipedEventArgs e)
-            => await Shell.Current.GoToAsync("//ExplorePage");
-
-        // ===== Today's Highlights =====
-        // One dino, one space object, one fact — rotates daily using day-of-year as seed
 
         private void BuildHighlights()
         {
@@ -43,7 +32,6 @@ namespace dinospace
             var space = SpaceData.GetAll().Where(IsFilledSpace).ToList();
             var facts = ExploreFacts.Facts;
 
-            // Same seed all day so picks stay consistent until midnight
             var rng = new Random(DateTime.Now.DayOfYear);
 
             if (dinos.Count > 0)
@@ -65,7 +53,6 @@ namespace dinospace
             }
         }
 
-        // Build one highlight row: thumbnail + tag/name/subtitle + chevron
         private View BuildHighlightRow(string tag, string imageFile, string name, string subtitle, object data)
         {
             var thumb = new Image
@@ -109,7 +96,6 @@ namespace dinospace
             return frame;
         }
 
-        // Build the "Did You Know?" fact card
         private View BuildFactCard(string fact)
         {
             var head = new Label { Text = "Did You Know?", FontSize = 12, FontAttributes = FontAttributes.Bold, FontFamily = "Baloo", TextColor = Theme.TextSecondary };
@@ -129,9 +115,6 @@ namespace dinospace
             };
         }
 
-        // ===== Home stats =====
-
-        // Update streak counter and most-viewed entry
         private void RefreshStats()
         {
             int streak = StatsManager.UpdateAndGetStreak();
@@ -151,27 +134,22 @@ namespace dinospace
             MostViewedNameLabel.Text = topName;
             MostViewedSubLabel.Text = count == 1 ? "1 view" : $"{count} views";
 
-            // Resolve name to a dino or space object for navigation on tap
             object obj = DinosaurData.GetAll().FirstOrDefault(d => d.Name == topName);
             if (obj == null) obj = SpaceData.GetAll().FirstOrDefault(s => s.Name == topName);
             _mostViewedObject = obj;
         }
 
-        // Tap the most-viewed card to open that entry's detail page
         private async void OnMostViewedTapped(object sender, EventArgs e)
         {
             if (_isNavigating || _mostViewedObject == null) return;
             _isNavigating = true;
             _lastNav = DateTime.Now;
             if (_mostViewedObject is Dinosaur d)
-                await Shell.Current.Navigation.PushAsync(new DinoDetailPage(d), false);
+                await Shell.Current.Navigation.PushAsync(new DinoDetailPage(d));
             else if (_mostViewedObject is SpaceObject s)
-                await Shell.Current.Navigation.PushAsync(new SpaceDetailPage(s), false);
+                await Shell.Current.Navigation.PushAsync(new SpaceDetailPage(s));
         }
 
-        // ===== Live search dropdown =====
-
-        // Rebuild the dropdown as the user types
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
             string query = (e.NewTextValue ?? "").Trim().ToLower();
@@ -179,7 +157,6 @@ namespace dinospace
 
             if (string.IsNullOrEmpty(query)) { ShowDropdown(false); return; }
 
-            // Up to 3 dinos + 3 space objects matching the query
             var dinos = DinosaurData.GetAll()
                 .Where(d => d.Name.ToLower().Contains(query))
                 .OrderBy(d => d.Name).Take(3).ToList();
@@ -204,7 +181,6 @@ namespace dinospace
             DismissLayer.IsVisible = show;
         }
 
-        // Hide dropdown and clear the search field
         private void CloseDropdown()
         {
             SearchEntry.Text = "";
@@ -218,8 +194,6 @@ namespace dinospace
             SearchEntry.Unfocus();
         }
 
-        // ===== Navigation =====
-
         private async void OnDinoTapped(object sender, EventArgs e)
         {
             if (_isNavigating) return;
@@ -229,7 +203,7 @@ namespace dinospace
                 _lastNav = DateTime.Now;
                 CloseDropdown();
                 SearchEntry.Unfocus();
-                await Shell.Current.Navigation.PushAsync(new DinoDetailPage(d), false);
+                await Shell.Current.Navigation.PushAsync(new DinoDetailPage(d));
             }
         }
 
@@ -242,11 +216,10 @@ namespace dinospace
                 _lastNav = DateTime.Now;
                 CloseDropdown();
                 SearchEntry.Unfocus();
-                await Shell.Current.Navigation.PushAsync(new SpaceDetailPage(s), false);
+                await Shell.Current.Navigation.PushAsync(new SpaceDetailPage(s));
             }
         }
 
-        // Highlight row tap — routes to dino or space detail based on BindingContext type
         private async void OnHighlightTapped(object sender, EventArgs e)
         {
             if (_isNavigating) return;
@@ -256,18 +229,17 @@ namespace dinospace
                 {
                     _isNavigating = true;
                     _lastNav = DateTime.Now;
-                    await Shell.Current.Navigation.PushAsync(new DinoDetailPage(d), false);
+                    await Shell.Current.Navigation.PushAsync(new DinoDetailPage(d));
                 }
                 else if (v.BindingContext is SpaceObject s)
                 {
                     _isNavigating = true;
                     _lastNav = DateTime.Now;
-                    await Shell.Current.Navigation.PushAsync(new SpaceDetailPage(s), false);
+                    await Shell.Current.Navigation.PushAsync(new SpaceDetailPage(s));
                 }
             }
         }
 
-        // Home card navigation
         private async void OnDinoPediaTapped(object sender, EventArgs e)
         {
             if (_isNavigating) return;
@@ -296,7 +268,6 @@ namespace dinospace
             await Shell.Current.Navigation.PushAsync(new ScanSkyPage());
         }
 
-        // Only include entries that have real content (not placeholder text)
         private bool IsFilledDino(Dinosaur d) => !string.IsNullOrEmpty(d.AboutText) && !d.AboutText.StartsWith("Change");
         private bool IsFilledSpace(SpaceObject s) => !string.IsNullOrEmpty(s.AboutText) && !s.AboutText.StartsWith("Change");
     }

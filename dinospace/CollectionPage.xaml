@@ -7,7 +7,6 @@
     <Grid>
         <Image Source="mainbackground.png" Aspect="AspectFill" InputTransparent="True"/>
 
-
         <Grid RowDefinitions="Auto,*">
 
             <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="12,10" BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}">
@@ -18,13 +17,34 @@
                 </Label>
             </Grid>
 
-            <ScrollView Grid.Row="1">
-                <VerticalStackLayout Padding="16" Spacing="14">
-                    <Label x:Name="TitleLabel" FontSize="26" FontAttributes="Bold"/>
-                    <Label x:Name="SubtitleLabel" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
-                    <VerticalStackLayout x:Name="ListStack" Spacing="8"/>
-                </VerticalStackLayout>
-            </ScrollView>
+            <CollectionView Grid.Row="1" x:Name="RankList" SelectionMode="None" VerticalScrollBarVisibility="Never">
+                <CollectionView.Header>
+                    <VerticalStackLayout Padding="16,16,16,4" Spacing="4">
+                        <Label x:Name="TitleLabel" FontSize="26" FontAttributes="Bold"/>
+                        <Label x:Name="SubtitleLabel" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                    </VerticalStackLayout>
+                </CollectionView.Header>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="16,4">
+                            <Frame Padding="12" CornerRadius="14" HasShadow="False" BackgroundColor="#66000000" BorderColor="#4DFFFFFF">
+                                <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="10">
+                                    <Label Grid.Column="0" Text="{Binding RankText}" FontSize="18" FontAttributes="Bold" TextColor="{Binding RankColor}" VerticalOptions="Center" WidthRequest="26" HorizontalTextAlignment="Center"/>
+                                    <Image Grid.Column="1" Source="{Binding ImageFile}" WidthRequest="56" HeightRequest="56" Aspect="AspectFill" BackgroundColor="#26FFFFFF"/>
+                                    <VerticalStackLayout Grid.Column="2" Spacing="3" VerticalOptions="Center">
+                                        <Label Text="{Binding Name}" FontSize="17" FontAttributes="Bold" FontFamily="Baloo" TextColor="#F5F7FB"/>
+                                        <Label Text="{Binding Stat}" FontSize="16" FontAttributes="Bold" TextColor="#F5F7FB"/>
+                                    </VerticalStackLayout>
+                                    <Label Grid.Column="3" Text="›" FontSize="22" TextColor="#7E8696" VerticalOptions="Center"/>
+                                </Grid>
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnRowTapped"/>
+                                </Frame.GestureRecognizers>
+                            </Frame>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
         </Grid>
 

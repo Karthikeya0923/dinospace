@@ -31,6 +31,7 @@ namespace dinospace
         public AskAiPage()
         {
             InitializeComponent();
+            SwipeBack.Attach(this);
         }
 
         protected override void OnAppearing()

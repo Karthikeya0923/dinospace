@@ -72,7 +72,6 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
-		<PackageReference Include="Sharpnado.MaterialFrame.Maui" Version="3.0.2" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -81,6 +80,9 @@
 
 
 	<ItemGroup>
+	  <Compile Update="MainTabsPage.xaml.cs">
+	    <DependentUpon>MainTabsPage.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="AskAiPage.xaml.cs">
 	    <DependentUpon>AskAiPage.xaml</DependentUpon>
 	  </Compile>
@@ -126,6 +128,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiXaml Update="MainTabsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="AskAiPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

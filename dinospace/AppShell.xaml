@@ -1,33 +1,12 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<Shell
-    x:Class="dinospace.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:dinospace"
-    Title="dinospace"
-    Shell.NavBarIsVisible="False">
+<?xml version="1.0" encoding="utf-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:local="clr-namespace:dinospace"
+       x:Class="dinospace.AppShell"
+       FlyoutBehavior="Disabled">
 
-    <TabBar>
-        <Tab Title="Home" Shell.PresentationMode="NotAnimated">
-            <ShellContent Title="Home"
-                          ContentTemplate="{DataTemplate local:MainPage}"
-                          Route="MainPage"/>
-        </Tab>
-        <Tab Title="Explore" Shell.PresentationMode="NotAnimated">
-            <ShellContent Title="Explore"
-                          ContentTemplate="{DataTemplate local:ExplorePage}"
-                          Route="ExplorePage"/>
-        </Tab>
-        <Tab Title="Saved" Shell.PresentationMode="NotAnimated">
-            <ShellContent Title="Saved"
-                          ContentTemplate="{DataTemplate local:SavedPage}"
-                          Route="SavedPage"/>
-        </Tab>
-        <Tab Title="Settings" Shell.PresentationMode="NotAnimated">
-            <ShellContent Title="Settings"
-                          ContentTemplate="{DataTemplate local:SettingsPage}"
-                          Route="SettingsPage"/>
-        </Tab>
-    </TabBar>
+    <ShellContent ContentTemplate="{DataTemplate local:MainTabsPage}"
+                  Route="MainTabsPage"
+                  Shell.NavBarIsVisible="False"/>
 
 </Shell>

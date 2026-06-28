@@ -1,32 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="dinospace.MainPage"
-             Background="{AppThemeBinding Light={StaticResource PageBgBrushLight}, Dark={StaticResource BackdropBrush}}"
-             Title="DinoSpace">
-    <Grid>
-        <Grid.GestureRecognizers>
-            <SwipeGestureRecognizer Direction="Left" Swiped="OnSwipeLeft"/>
-        </Grid.GestureRecognizers>
-
+             x:Class="dinospace.MainPage">
+    <Grid x:Name="RootGrid">
         <Image Source="mainbackground.png" Aspect="AspectFill" InputTransparent="True"/>
 
         <Grid RowDefinitions="Auto,Auto,*" Padding="16,16,16,0" RowSpacing="16">
 
-            <Image Grid.Row="0"
-               Source="applogo.png"
-               HeightRequest="110"
-               Aspect="AspectFit"
-               HorizontalOptions="Center"
-               Margin="0,8,0,0"/>
+            <Image Grid.Row="0" Source="applogo.png" HeightRequest="110" Aspect="AspectFit" HorizontalOptions="Center" Margin="0,8,0,0"/>
 
             <Frame Grid.Row="1" Padding="6,0" CornerRadius="14" HasShadow="False"
                BackgroundColor="#66000000"
                BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}">
-                <Entry x:Name="SearchEntry"
-                   Placeholder="Search dinosaurs, planets, stars..."
-                   TextChanged="OnSearchTextChanged"
-                   ClearButtonVisibility="WhileEditing"/>
+                <Entry x:Name="SearchEntry" Placeholder="Search dinosaurs, planets, stars..." TextChanged="OnSearchTextChanged" ClearButtonVisibility="WhileEditing"/>
             </Frame>
 
             <Grid Grid.Row="2">
@@ -123,20 +109,13 @@
                     </VerticalStackLayout>
                 </ScrollView>
 
-                <BoxView x:Name="DismissLayer"
-                     BackgroundColor="#01000000"
-                     IsVisible="False">
+                <BoxView x:Name="DismissLayer" BackgroundColor="#01000000" IsVisible="False">
                     <BoxView.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnDismissTapped"/>
                     </BoxView.GestureRecognizers>
                 </BoxView>
 
-                <Frame x:Name="SearchDropdown"
-                   IsVisible="False"
-                   VerticalOptions="Start"
-                   Padding="0"
-                   CornerRadius="14"
-                   HasShadow="True"
+                <Frame x:Name="SearchDropdown" IsVisible="False" VerticalOptions="Start" Padding="0" CornerRadius="14" HasShadow="True"
                    BackgroundColor="#B3000000"
                    BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
                    MaximumHeightRequest="320">
@@ -148,4 +127,4 @@
         </Grid>
 
     </Grid>
-</ContentPage>
+</ContentView>

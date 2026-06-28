@@ -2,6 +2,10 @@
 {
     public partial class ScanSkyPage : ContentPage
     {
-        public ScanSkyPage() { InitializeComponent(); }
+        public ScanSkyPage()
+        {
+            InitializeComponent();
+            SwipeBack.Attach(this);
+        }
     }
 }

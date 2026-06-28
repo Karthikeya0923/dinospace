@@ -1,12 +1,11 @@
-﻿namespace dinospace
+﻿using static Google.Android.Material.Tabs.TabLayout;
+
+namespace dinospace
 {
-    public partial class SavedPage : ContentPage
+    public partial class SavedPage : ContentView, ITabView
     {
-        // Navigation guard to prevent double-taps opening two detail pages
         private bool _isNavigating = false;
         private DateTime _lastNav = DateTime.MinValue;
-
-        // Persists the active filter tab across OnAppearing calls
         private string _currentFilter = "All";
 
         public SavedPage()
@@ -14,30 +13,24 @@
             InitializeComponent();
         }
 
-        protected override void OnAppearing()
+        public void OnSelected()
         {
-            base.OnAppearing();
-            // Release nav guard only after a real return (not a spurious re-appear from pushing a detail page)
             if ((DateTime.Now - _lastNav).TotalMilliseconds > 500)
                 _isNavigating = false;
 
             CloseDropdown();
-            SelectFilter(_currentFilter); // rebuild list in case saves changed while away
+
+            Dispatcher.Dispatch(async () =>
+            {
+                await Task.Delay(1);
+                SelectFilter(_currentFilter);
+            });
         }
 
-        // Swipe left -> next tab right (Settings); swipe right -> previous tab (Explore)
-        private async void OnSwipeLeft(object sender, SwipedEventArgs e)
-            => await Shell.Current.GoToAsync("//SettingsPage");
-
-        private async void OnSwipeRight(object sender, SwipedEventArgs e)
-            => await Shell.Current.GoToAsync("//ExplorePage");
-
-        // Filter tab handlers
         private void OnFilterAll(object sender, EventArgs e) => SelectFilter("All");
         private void OnFilterDino(object sender, EventArgs e) => SelectFilter("Dinosaurs");
         private void OnFilterSpace(object sender, EventArgs e) => SelectFilter("Space");
 
-        // Apply the chosen filter: style the buttons and rebuild the list
         private void SelectFilter(string filter)
         {
             _currentFilter = filter;
@@ -47,14 +40,12 @@
             BuildList();
         }
 
-        // Highlight the active tab button in Accent; inactive tabs use ChipBg
         private void StyleButton(Button btn, bool selected)
         {
             btn.BackgroundColor = selected ? Theme.Accent : Theme.ChipBg;
             btn.TextColor = selected ? Colors.Black : Theme.TextPrimary;
         }
 
-        // Rebuild the saved items list for the current filter
         private void BuildList()
         {
             SavedStack.Children.Clear();
@@ -91,7 +82,6 @@
                 }
             }
 
-            // Empty state placeholder
             if (!hasAny)
             {
                 SavedStack.Children.Add(new VerticalStackLayout
@@ -111,9 +101,6 @@
             }
         }
 
-        // ===== Live search dropdown =====
-
-        // Rebuild dropdown as the user types; up to 3 dinos + 3 space objects
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
             string query = (e.NewTextValue ?? "").Trim().ToLower();
@@ -145,7 +132,6 @@
             DismissLayer.IsVisible = show;
         }
 
-        // Clear search field and hide the dropdown
         private void CloseDropdown()
         {
             SearchEntry.Text = "";
@@ -159,7 +145,6 @@
             SearchEntry.Unfocus();
         }
 
-        // Tapping a dropdown result immediately saves that entry
         private void OnResultSelected(object sender, EventArgs e)
         {
             if (sender is View v)
@@ -175,7 +160,6 @@
             }
         }
 
-        // Save button saves the first dino or space object matching the typed query
         private void OnSaveClicked(object sender, EventArgs e)
         {
             string query = SearchEntry.Text?.Trim().ToLower() ?? "";
@@ -194,8 +178,6 @@
             SelectFilter(_currentFilter);
         }
 
-        // ===== Saved item taps =====
-
         private async void OnDinoTapped(object sender, EventArgs e)
         {
             if (_isNavigating) return;
@@ -203,7 +185,7 @@
             {
                 _isNavigating = true;
                 _lastNav = DateTime.Now;
-                await Shell.Current.Navigation.PushAsync(new DinoDetailPage(d), false);
+                await Shell.Current.Navigation.PushAsync(new DinoDetailPage(d));
             }
         }
 
@@ -214,7 +196,7 @@
             {
                 _isNavigating = true;
                 _lastNav = DateTime.Now;
-                await Shell.Current.Navigation.PushAsync(new SpaceDetailPage(s), false);
+                await Shell.Current.Navigation.PushAsync(new SpaceDetailPage(s));
             }
         }
     }
