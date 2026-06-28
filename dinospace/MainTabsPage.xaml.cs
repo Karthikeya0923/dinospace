@@ -1,7 +1,5 @@
 namespace dinospace
 {
-    // Implemented by each tab view so the host can tell it "you're now visible"
-    // (ContentViews have no OnAppearing).
     public interface ITabView
     {
         void OnSelected();
@@ -52,19 +50,41 @@ namespace dinospace
 
                 var cell = new Grid { Children = { label } };
                 var tap = new TapGestureRecognizer();
-                tap.Tapped += (s, e) => Pager.Position = index;
+                tap.Tapped += (s, e) => GoToTab(index);
                 cell.GestureRecognizers.Add(tap);
 
                 TabBar.Add(cell, i, 0);
             }
         }
 
+        // Tab-bar tap: jump WITHOUT the animated multi-page scroll (that scroll was the jank),
+        // then refresh the landed tab one frame later so the switch paints instantly first.
+        private void GoToTab(int index)
+        {
+            if (index == Pager.Position) return;
+
+            // Instant cut to the target page — no slide across intermediate pages.
+            Pager.ScrollTo(index, position: Microsoft.Maui.Controls.ScrollToPosition.Center, animate: false);
+
+            Highlight(index);
+
+            Dispatcher.Dispatch(() =>
+            {
+                if (index >= 0 && index < _tabs.Count)
+                    (_tabs[index] as ITabView)?.OnSelected();
+            });
+        }
+
         private void OnPositionChanged(object sender, PositionChangedEventArgs e)
         {
             int pos = e.CurrentPosition;
             Highlight(pos);
-            if (pos >= 0 && pos < _tabs.Count)
-                (_tabs[pos] as ITabView)?.OnSelected();
+            // Swipe path: defer the rebuild a frame so the swipe settles before heavy work.
+            Dispatcher.Dispatch(() =>
+            {
+                if (pos >= 0 && pos < _tabs.Count)
+                    (_tabs[pos] as ITabView)?.OnSelected();
+            });
         }
 
         private void Highlight(int index)
@@ -75,9 +95,6 @@ namespace dinospace
                 _tabLabels[i].FontAttributes = (i == index) ? FontAttributes.Bold : FontAttributes.None;
             }
         }
-
-        // ===== Android: suppress the system back-gesture on the screen edges =====
-        // so swiping at the very edge changes tabs instead of exiting the app.
 
         protected override void OnHandlerChanged()
         {
