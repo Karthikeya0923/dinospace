@@ -18,7 +18,7 @@ DinoSpace is a mobile encyclopedia app for all ages showcasing the prehistoric w
 - **Saved** — Save your favourite dinosaurs and space objects
 - **Explore** — Explore fun facts, quizzes, and the daily highlights
 - **Settings** — Customize your DinoSpace experience
-- **Ask AI** — Ask anything about dinosaurs or space *(coming soon)*
+- **Ask AI** — Ask anything about dinosaurs or space
 - **Scan Sky** — Point your camera at the sky *(coming soon)*
 - **Fully Offline** — No internet connection needed
 
