@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net10.0-android</TargetFrameworks>
@@ -28,7 +28,7 @@
 		<MauiXamlInflator>SourceGen</MauiXamlInflator>
 
 		<!-- Display name -->
-		<ApplicationTitle>dinospace</ApplicationTitle>
+		<ApplicationTitle>DinoSpace</ApplicationTitle>
 
 		<!-- App Identifier -->
 		<ApplicationId>com.dinospace.kids</ApplicationId>
@@ -56,13 +56,45 @@
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
-		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
-		
+
 		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />
 
 		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<!-- ============================================================
+	     NovaSaur bundled AI model (Play asset packs)
+
+	     The ~3 GB model ships INSIDE the Play Store install, split into
+	     1 GB chunks because Google Play caps each asset pack at 1.5 GB.
+	     Google Play downloads these packs automatically right after the
+	     app installs, so there is no in-app download.
+
+	     Before building the RELEASE .aab, create the chunks with:
+	         python tools/split_model.py path\to\NovaSaur.litertlm
+	     which fills the NovaModelParts folder next to this project file.
+
+	     When the chunk files aren't present (day-to-day dev builds),
+	     these lines quietly do nothing and the app falls back to its
+	     built-in downloader.
+	     ============================================================ -->
+	<ItemGroup Condition="$(TargetFramework.Contains('-android'))">
+		<AndroidAsset Include="NovaModelParts\NovaSaur.litertlm.part1" AssetPack="novamodel1" DeliveryType="FastFollow" Condition="Exists('NovaModelParts\NovaSaur.litertlm.part1')" />
+		<AndroidAsset Include="NovaModelParts\NovaSaur.litertlm.part2" AssetPack="novamodel2" DeliveryType="FastFollow" Condition="Exists('NovaModelParts\NovaSaur.litertlm.part2')" />
+		<AndroidAsset Include="NovaModelParts\NovaSaur.litertlm.part3" AssetPack="novamodel3" DeliveryType="FastFollow" Condition="Exists('NovaModelParts\NovaSaur.litertlm.part3')" />
+		<AndroidAsset Include="NovaModelParts\NovaSaur.litertlm.part4" AssetPack="novamodel4" DeliveryType="FastFollow" Condition="Exists('NovaModelParts\NovaSaur.litertlm.part4')" />
+	</ItemGroup>
+
+	<!-- Google Play asset-pack runtime (locate + free the delivered packs). -->
+	<ItemGroup Condition="$(TargetFramework.Contains('-android'))">
+		<PackageReference Include="Xamarin.Google.Android.Play.Asset.Delivery" Version="2.0.5.*" />
+	</ItemGroup>
+
+	<!-- Keep the Play Core classes through R8 in Release builds. -->
+	<ItemGroup Condition="$(TargetFramework.Contains('-android'))">
+		<ProguardConfiguration Include="ProGuard.cfg" />
 	</ItemGroup>
 
 	<ItemGroup>

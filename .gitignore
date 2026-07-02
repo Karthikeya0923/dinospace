@@ -404,4 +404,7 @@ bin/
 obj/
 .packages
 
+# AI model files
+dinospace/NovaModelParts/*.part*
+
 # End of https://www.toptal.com/developers/gitignore/api/xamarinstudio,csharp

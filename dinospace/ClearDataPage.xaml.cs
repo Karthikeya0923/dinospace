@@ -1,4 +1,4 @@
-﻿namespace dinospace
+namespace dinospace
 {
     public partial class ClearDataPage : ContentPage
     {
@@ -27,6 +27,7 @@
             AddItem("quiz", "Quiz scores", "Your overall quiz accuracy");
             AddItem("streak", "Daily streak", "Your day-streak counter");
             AddItem("views", "Most viewed", "Which entries you've opened most");
+            AddItem("chat", "AI chat history", "Your conversation with NovaSaur");
         }
 
         // Build one row: a checkbox + title/subtitle, wired to a ResetItem
@@ -194,6 +195,11 @@
                     // Clear view-count preference for every dino and space object
                     foreach (var d in DinosaurData.GetAll()) Preferences.Remove($"views_{d.Name}");
                     foreach (var s in SpaceData.GetAll()) Preferences.Remove($"views_{s.Name}");
+                    break;
+
+                case "chat":
+                    // Wipe the NovaSaur conversation
+                    Preferences.Remove("nova_chat_history");
                     break;
             }
         }

@@ -1,5 +1,3 @@
-﻿using static Google.Android.Material.Tabs.TabLayout;
-
 namespace dinospace
 {
     public partial class SavedPage : ContentView, ITabView
@@ -7,6 +5,10 @@ namespace dinospace
         private bool _isNavigating = false;
         private DateTime _lastNav = DateTime.MinValue;
         private string _currentFilter = "All";
+
+        // Fingerprint of what's on screen, so switching to this tab doesn't
+        // rebuild the whole list (rows, images, layout) when nothing changed.
+        private string _lastListSignature = null;
 
         public SavedPage()
         {
@@ -48,10 +50,17 @@ namespace dinospace
 
         private void BuildList()
         {
-            SavedStack.Children.Clear();
-
             var savedDinos = SavedManager.GetSavedDinos();
             var savedSpace = SavedManager.GetSavedSpace();
+
+            // Skip the rebuild when the same filter would show the same items.
+            string signature = _currentFilter + "|"
+                + string.Join(",", savedDinos.OrderBy(n => n)) + "|"
+                + string.Join(",", savedSpace.OrderBy(n => n));
+            if (signature == _lastListSignature) return;
+            _lastListSignature = signature;
+
+            SavedStack.Children.Clear();
             bool hasAny = false;
 
             if (_currentFilter == "All" || _currentFilter == "Dinosaurs")

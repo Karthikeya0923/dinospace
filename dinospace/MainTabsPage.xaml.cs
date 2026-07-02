@@ -10,6 +10,7 @@ namespace dinospace
         private readonly string[] _names = { "Home", "Explore", "Saved", "Settings" };
         private readonly List<View> _tabs = new List<View>();
         private readonly List<Label> _tabLabels = new List<Label>();
+        private bool _warmedUp = false;
 
         public MainTabsPage()
         {
@@ -31,6 +32,14 @@ namespace dinospace
             int pos = Pager.Position;
             if (pos >= 0 && pos < _tabs.Count)
                 (_tabs[pos] as ITabView)?.OnSelected();
+
+            // Quietly pre-build the heavy pages (DinoPedia, SpacePedia, Ask AI)
+            // while the home screen sits idle, so tapping them opens instantly.
+            if (!_warmedUp)
+            {
+                _warmedUp = true;
+                PageCache.Warmup(Dispatcher);
+            }
         }
 
         private void BuildTabBar()

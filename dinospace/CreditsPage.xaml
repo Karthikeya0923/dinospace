@@ -14,10 +14,15 @@
                 <Frame Padding="16" CornerRadius="14" HasShadow="False">
                     <VerticalStackLayout Spacing="12">
                         <Label Text="The Team" FontSize="17" FontFamily="Baloo" FontAttributes="Bold"/>
-                        <Label Text="Here are the credits:" FontSize="14" LineHeight="1.5"/>
-                        <Label Text="Development &amp; Design - Karthik" FontSize="14" LineHeight="1.5"/>
-                        <Label Text="Artwork &amp; Background - Jayden" FontSize="14" LineHeight="1.5"/>
-                        <Label Text="(Add emails later)" FontSize="13" FontAttributes="Italic" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                        <Label Text="Development &amp; Design — Karthik" FontSize="14" LineHeight="1.5"/>
+                        <Label Text="Artwork &amp; Backgrounds — Jayden" FontSize="14" LineHeight="1.5"/>
+                    </VerticalStackLayout>
+                </Frame>
+                <Frame Padding="16" CornerRadius="14" HasShadow="False">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Powered By" FontSize="17" FontFamily="Baloo" FontAttributes="Bold"/>
+                        <Label Text="NovaSaur's answers are created by Google's Gemma model, running entirely on your device with LiteRT-LM. No question ever leaves your phone." FontSize="14" LineHeight="1.5"/>
+                        <Label Text="Built with .NET MAUI." FontSize="14" LineHeight="1.5"/>
                     </VerticalStackLayout>
                 </Frame>
                 <Label Text="Thank you for using DinoSpace" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource TextHintLight}, Dark={StaticResource TextHintDark}}" HorizontalOptions="Center" Margin="0,0,0,24"/>

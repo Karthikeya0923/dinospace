@@ -1,4 +1,4 @@
-﻿using Android.App;
+using Android.App;
 using Android.Content;
 using Android.OS;
 using AndroidX.Core.App;
@@ -21,7 +21,7 @@ namespace dinospace
             ModelManager.Changed -= OnChanged;
             ModelManager.Changed += OnChanged;
 
-            // If nothing is actually downloading, don't hang around.
+            // If nothing is actually running, don't hang around.
             if (ModelManager.State != DownloadState.Downloading)
                 StopSelfSafely();
 
@@ -54,8 +54,11 @@ namespace dinospace
 
         Notification BuildNotification(int pct)
         {
+            // The same service keeps two jobs alive: the quick local setup of
+            // the bundled model, and the fallback download.
+            string title = ModelManager.IsLocalInstall ? "Getting NovaSaur ready" : "Downloading NovaSaur";
             return new NotificationCompat.Builder(this, ChannelId)
-                .SetContentTitle("Downloading NovaSaur")
+                .SetContentTitle(title)
                 .SetContentText($"{pct}% complete - you can close the app, this keeps going")
                 .SetSmallIcon(Android.Resource.Drawable.StatSysDownload)
                 .SetProgress(100, pct, false)

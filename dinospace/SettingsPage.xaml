@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="dinospace.SettingsPage">
@@ -23,6 +23,23 @@
                             <Label Grid.Column="1" Text="›" FontSize="22" TextColor="{AppThemeBinding Light={StaticResource TextHintLight}, Dark={StaticResource TextHintDark}}" VerticalOptions="Center"/>
                             <Grid.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnClearDataTapped"/>
+                            </Grid.GestureRecognizers>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <Label Text="AI" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" Margin="4,0,0,8"/>
+
+                <Frame Padding="0" CornerRadius="14" BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" HasShadow="False" Margin="0,0,0,20">
+                    <VerticalStackLayout Spacing="0">
+                        <Grid Padding="16,14" ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                <Label Text="NovaSaur AI model" FontSize="15" FontFamily="Baloo" FontAttributes="Bold"/>
+                                <Label Text="Check the size or delete the offline AI model" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"/>
+                            </VerticalStackLayout>
+                            <Label Grid.Column="1" Text="›" FontSize="22" TextColor="{AppThemeBinding Light={StaticResource TextHintLight}, Dark={StaticResource TextHintDark}}" VerticalOptions="Center"/>
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnAiModelTapped"/>
                             </Grid.GestureRecognizers>
                         </Grid>
                     </VerticalStackLayout>

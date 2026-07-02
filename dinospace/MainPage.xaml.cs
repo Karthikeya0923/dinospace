@@ -1,5 +1,5 @@
-﻿using Microsoft.Maui.Storage;
-using static Google.Android.Material.Tabs.TabLayout;
+using Microsoft.Maui.Storage;
+
 namespace dinospace
 {
     public partial class MainPage : ContentView, ITabView
@@ -7,6 +7,7 @@ namespace dinospace
         private bool _isNavigating = false;
         private DateTime _lastNav = DateTime.MinValue;
         private object _mostViewedObject = null;
+        private int _highlightsDay = -1;
 
         public MainPage()
         {
@@ -26,6 +27,12 @@ namespace dinospace
 
         private void BuildHighlights()
         {
+            // The highlights only change once a day, so don't tear them down
+            // and rebuild them (images and all) on every single tab visit.
+            int day = DateTime.Now.DayOfYear;
+            if (day == _highlightsDay && HighlightStack.Children.Count > 0) return;
+            _highlightsDay = day;
+
             HighlightStack.Children.Clear();
 
             var dinos = DinosaurData.GetAll().Where(IsFilledDino).ToList();
@@ -240,25 +247,29 @@ namespace dinospace
             }
         }
 
+        // The big feature pages come from PageCache: they're pre-built during
+        // app launch and reused, so these open instantly instead of being
+        // constructed from scratch on every tap.
+
         private async void OnDinoPediaTapped(object sender, EventArgs e)
         {
             if (_isNavigating) return;
             _isNavigating = true; _lastNav = DateTime.Now;
-            await Shell.Current.Navigation.PushAsync(new DinoPediaPage());
+            await PageCache.PushAsync(PageCache.DinoPedia);
         }
 
         private async void OnSpacePediaTapped(object sender, EventArgs e)
         {
             if (_isNavigating) return;
             _isNavigating = true; _lastNav = DateTime.Now;
-            await Shell.Current.Navigation.PushAsync(new SpacePediaPage());
+            await PageCache.PushAsync(PageCache.SpacePedia);
         }
 
         private async void OnAskAiTapped(object sender, EventArgs e)
         {
             if (_isNavigating) return;
             _isNavigating = true; _lastNav = DateTime.Now;
-            await Shell.Current.Navigation.PushAsync(new AskAiPage());
+            await PageCache.PushAsync(PageCache.AskAi);
         }
 
         private async void OnScanSkyTapped(object sender, EventArgs e)

@@ -1,5 +1,3 @@
-﻿using static Google.Android.Material.Tabs.TabLayout;
-
 namespace dinospace
 {
     public partial class ExplorePage : ContentView, ITabView
@@ -11,6 +9,7 @@ namespace dinospace
         private SpaceObject _featuredSpace;
         private readonly Random _rng = new Random();
         private bool _collectionsBuilt = false;
+        private string _shownFeaturedName = null;
 
         public ExplorePage()
         {
@@ -71,8 +70,13 @@ namespace dinospace
 
         private void RefreshFeatured()
         {
+            // Only touch the image when the featured entry actually changed -
+            // re-assigning the same Source made Android reload the bitmap on
+            // every single tab switch.
             if (_showDino && _featuredDino != null)
             {
+                if (_shownFeaturedName == _featuredDino.Name) return;
+                _shownFeaturedName = _featuredDino.Name;
                 FeaturedImage.Source = _featuredDino.ImageFile;
                 FeaturedTag.Text = "Dinosaur of the Day";
                 FeaturedName.Text = _featuredDino.Name;
@@ -80,6 +84,8 @@ namespace dinospace
             }
             else if (!_showDino && _featuredSpace != null)
             {
+                if (_shownFeaturedName == _featuredSpace.Name) return;
+                _shownFeaturedName = _featuredSpace.Name;
                 FeaturedImage.Source = _featuredSpace.ImageFile;
                 FeaturedTag.Text = "Space Object of the Day";
                 FeaturedName.Text = _featuredSpace.Name;
