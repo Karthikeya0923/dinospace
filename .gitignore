@@ -53,6 +53,10 @@ Generated\ Files/
 TestResult.xml
 nunit-*.xml
 
+# Signing keys - never commit these
+*.keystore
+*.jks
+
 # Build Results of an ATL Project
 [Dd]ebugPS/
 [Rr]eleasePS/
