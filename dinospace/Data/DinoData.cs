@@ -1,0 +1,683 @@
+using System.Collections.Generic;
+using System.Linq;
+
+namespace dinospace.Data
+{
+    // The prehistoric-creatures encyclopedia. Stat strings keep a leading
+    // number (feet / kg / km-h) so they parse cleanly for stat bars and for
+    // NovaSaur's "biggest / fastest" lookups.
+    public static class DinoData
+    {
+        private static List<Dinosaur>? _cache;
+        public static List<Dinosaur> All => _cache ??= BuildWithBiteForce();
+
+        public static Dinosaur? ByName(string name)
+            => All.FirstOrDefault(d => d.Name == name);
+
+        // Popular bite-force estimates in PSI. Kept in one table so they're
+        // easy to tune. Creatures not listed have no shown bite force.
+        private static readonly Dictionary<string, string> BiteForcePsi = new()
+        {
+            ["T. Rex"] = "12,800 PSI",
+            ["Spinosaurus"] = "2,000 PSI",
+            ["Megalodon"] = "40,000 PSI",
+            ["Velociraptor"] = "500 PSI",
+            ["Triceratops"] = "1,000 PSI",
+            ["Mosasaurus"] = "13,000 PSI",
+            ["Liopleurodon"] = "15,000 PSI",
+            ["Giganotosaurus"] = "7,500 PSI",
+            ["Carnotaurus"] = "3,300 PSI",
+            ["Allosaurus"] = "3,500 PSI",
+            ["Deinonychus"] = "2,000 PSI",
+            ["Deinosuchus"] = "23,000 PSI",
+            ["Kronosaurus"] = "20,000 PSI",
+            ["Dunkleosteus"] = "8,000 PSI",
+            ["Smilodon"] = "1,000 PSI",
+            ["Baryonyx"] = "2,000 PSI",
+            ["Utahraptor"] = "700 PSI",
+            ["Dilophosaurus"] = "1,500 PSI",
+        };
+
+        private static List<Dinosaur> BuildWithBiteForce()
+        {
+            var list = Build();
+            foreach (var d in list)
+                if (BiteForcePsi.TryGetValue(d.Name, out var psi))
+                    d.BiteForce = psi;
+            return list;
+        }
+
+        private static List<Dinosaur> Build() => new()
+        {
+            new Dinosaur
+            {
+                Name = "T. Rex",
+                Pronunciation = "tie-ran-uh-saw-ruhs reks",
+                Meaning = "Tyrant Lizard King",
+                Era = "Late Cretaceous",
+                Group = "Theropod",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "The fearsome king of the dinosaurs",
+                Length = "42 feet", Height = "13 feet", Weight = "7500kg", Speed = "20km/h", Strength = 95,
+                ImageFile = "trex.png",
+                Aliases = new[] { "trex", "t rex", "rex", "tyrannosaurus", "tyrannosaurus rex", "tyranosaurus" },
+                AboutText = "Tyrannosaurus Rex was one of the largest and most powerful meat-eating dinosaurs to walk the Earth. It lived around 66 to 68 million years ago in what is now North America. With its enormous skull, powerful jaws, and extremely sharp teeth, the T. Rex was one of the top predators of its time.",
+                KeyFeaturesText = "T. Rex had powerful legs, a gigantic head, and a long tail which helped it balance while moving. Its jaws could deliver one of the strongest bites of any land animal in history. Although known for their tiny arms, they were very muscular and helped hold prey.",
+                LifeEnvironmentText = "T. Rex lived in river valleys, forests, and coastal plains in the Late Cretaceous. These environments held a variety of plants, smaller dinosaurs, and large plant-eating species that served as prey. The T. Rex was the apex predator of its time.",
+                BehaviourText = "T. Rex was both a hunter and scavenger. With its excellent sense of smell, strong vision, and powerful bite force, it was well adapted for ambush hunting and dominating its ecosystem.",
+                FunFactsText = "• T. Rex had teeth up to 12 inches long.\n• Its bite force was around 12,800 pounds — strong enough to crush solid bone.\n• Its arms were so short it couldn't reach its own mouth, but they could curl 200kg.\n• Baby and juvenile T. Rex may have had feathers.\n• More than 50 T. Rex skeletons have been discovered."
+            },
+            new Dinosaur
+            {
+                Name = "Spinosaurus",
+                Pronunciation = "spai-now-saw-ruhs",
+                Meaning = "Spine Lizard",
+                Era = "Mid Cretaceous",
+                Group = "Theropod",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "The longest meat-eater ever to walk the Earth",
+                Length = "50 feet", Height = "18 feet", Weight = "7000kg", Speed = "20km/h", Strength = 90,
+                ImageFile = "spinosaurus.png",
+                Aliases = new[] { "spino", "spinosaur" },
+                AboutText = "Spinosaurus was the longest meat-eating dinosaur on Earth. It lived around 95 to 100 million years ago in what is now North Africa. Unlike other large theropods, Spinosaurus spent much of its time near rivers and lakes, catching fish with its sharp teeth and long snout.",
+                KeyFeaturesText = "Spinosaurus had a long crocodile-like snout, cone-like teeth for gripping slippery prey, and a huge sail on its back to attract mates and intimidate rivals. It also had strong arms with large claws and a paddle-like tail which helped it move through water.",
+                LifeEnvironmentText = "Spinosaurus lived in river systems, mangrove forests, swamps, and coastal wetlands. These habitats were home to fish, crocodile-like reptiles, and other prey. Since Spinosaurus were apex predators, nothing ate them.",
+                BehaviourText = "Spinosaurus was a semi-aquatic dinosaur which spent most of its time hunting around and in water. It used its snout to detect prey and could swim efficiently with its powerful tail. Though it mainly ate fish, it also hunted smaller dinosaurs.",
+                FunFactsText = "• Spinosaurus was the longest meat-eating dinosaur ever discovered.\n• It spent more time in water than on land.\n• Its jaws were similar to those of modern crocodiles.\n• It was one of the first known swimming dinosaurs.\n• Spinosaurus fossils were first discovered in Egypt in 1912."
+            },
+            new Dinosaur
+            {
+                Name = "Megalodon",
+                Pronunciation = "meh-guh-luh-daan",
+                Meaning = "Big Tooth",
+                Era = "Miocene to Pliocene",
+                Group = "Shark",
+                Diet = "Carnivore",
+                Category = "Sea",
+                ShortDescription = "A shark the size of a school bus",
+                Length = "60 feet", Width = "8 feet", Weight = "50000kg", Speed = "20km/h", Strength = 98,
+                ImageFile = "megalodon.png",
+                Aliases = new[] { "meg", "giant shark", "megashark", "megalodon shark" },
+                AboutText = "Megalodon was the largest shark to live in Earth's oceans. It lived 3.6 to 23 million years ago, during the Miocene and Pliocene. Megalodon was one of the most fearsome predators in history due to its enormous size, powerful jaws, and massive teeth. It hunted large marine animals, including whales.",
+                KeyFeaturesText = "Megalodon had an enormous mouth filled with rows of razor-sharp teeth designed for cutting through flesh and bone. Its powerful body and strong tail made it a great swimmer. It looked like a scaled-up great white shark with a much more robust body.",
+                LifeEnvironmentText = "Megalodon lived in warm oceans around the world, near coastlines where food was abundant. These environments had plenty of seals, dolphins, whales, and large fish. As the strongest apex predator of its time, it dominated ocean ecosystems.",
+                BehaviourText = "Megalodon was an active hunter that relied on speed, strength, and surprise attacks. Scientists believe it targeted the fins of large whales to disable them before a fatal bite. Its excellent sense of smell helped it locate prey over long distances.",
+                FunFactsText = "• Megalodon teeth could grow over 7 inches long.\n• Its bite force was over 40,000 pounds — the strongest of any creature ever.\n• It had to eat over 1000kg of food each day.\n• We know it mainly from its fossilized teeth and vertebrae.\n• Megalodon lived long after the dinosaurs went extinct."
+            },
+            new Dinosaur
+            {
+                Name = "Velociraptor",
+                Pronunciation = "vuh-laa-si-rap-tr",
+                Meaning = "Speedy Robber",
+                Era = "Late Cretaceous",
+                Group = "Raptor",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "A feathered hunter as small as a turkey",
+                Length = "6.5 feet", Height = "1.5 feet", Weight = "17kg", Speed = "45km/h", Strength = 25,
+                ImageFile = "velociraptor.png",
+                Aliases = new[] { "raptor", "velociraptors" },
+                AboutText = "Velociraptor was a small but very intelligent carnivorous dinosaur that lived 71 to 75 million years ago in what is now China and Mongolia. Despite being famous as a large predator in movies, Velociraptors were only the size of a turkey. Even so, they were fast, agile hunters.",
+                KeyFeaturesText = "Velociraptor had a lightweight body, sickle-shaped claws on each foot that grew up to 3 inches, and long legs built for running. Scientists believe it was covered in feathers, making it closer to modern birds than reptiles. Its long tail helped it balance during sharp turns.",
+                LifeEnvironmentText = "Velociraptor lived in dry deserts, sand dunes, and arid plains in the Late Cretaceous. These environments were home to small dinosaurs, lizards, and mammals. It was often prey to large theropods such as Tarbosaurus.",
+                BehaviourText = "Velociraptor was a quick and active hunter which compensated for its small size. It used its sharp claws to grip and wound prey and its jaws for fast bites. Its bite was fairly weak, so it relied mainly on its claws.",
+                FunFactsText = "• Velociraptor was covered in feathers.\n• It was only about the size of a turkey.\n• A famous fossil shows one fighting a Protoceratops.\n• It was one of the most intelligent dinosaurs.\n• Its movie version is based on the larger Deinonychus."
+            },
+            new Dinosaur
+            {
+                Name = "Triceratops",
+                Pronunciation = "trai-seh-ruh-tops",
+                Meaning = "Three-Horned Face",
+                Era = "Late Cretaceous",
+                Group = "Ceratopsian",
+                Diet = "Herbivore",
+                Category = "Land",
+                ShortDescription = "Three sharp horns and a giant frill",
+                Length = "28 feet", Height = "10 feet", Weight = "10000kg", Speed = "30km/h", Strength = 70,
+                ImageFile = "triceratops.png",
+                Aliases = new[] { "trike", "three horned dinosaur" },
+                AboutText = "Triceratops was one of the most famous plant-eating dinosaurs to ever live. It lived around 66 to 68 million years ago in what is now North America. With its three large horns, enormous skull, and powerful body, Triceratops was well equipped to defend itself and eat tough vegetation.",
+                KeyFeaturesText = "Triceratops had two long horns above its eyes, a shorter horn on its nose, and a large bony frill which protected its neck. Its strong beak cut through tough plants, while rows of teeth helped it chew. Its sturdy body made it one of the strongest herbivores of the Late Cretaceous.",
+                LifeEnvironmentText = "Triceratops lived in forests, river valleys, floodplains, and woodlands with ferns, palms, cycads, and low-growing plants. It shared its habitat with predators such as T. Rex.",
+                BehaviourText = "Triceratops spent most of its day eating plants. It may have lived alone or in small groups. When threatened, it used its horns and sturdy body to defend itself, making it a very difficult target.",
+                FunFactsText = "• Its skull could measure up to 8 feet long — one of the largest of any land animal.\n• Its brow horns could each grow over 3 feet long.\n• Triceratops often defended themselves successfully from T. Rex.\n• It could live up to 30 years.\n• Its fossils are among the most common ever found."
+            },
+            new Dinosaur
+            {
+                Name = "Pteranodon",
+                Pronunciation = "teh-ra-nuh-daan",
+                Meaning = "Toothless Wing",
+                Era = "Late Cretaceous",
+                Group = "Pterosaur",
+                Diet = "Carnivore",
+                Category = "Flying",
+                ShortDescription = "A flying reptile with enormous wings",
+                Length = "23 feet", Height = "6 feet", Weight = "25kg", Speed = "80km/h", Strength = 20,
+                ImageFile = "pteranodon.png",
+                Aliases = new[] { "pterodactyl", "pteranadon", "pterosaur", "flying dinosaur" },
+                AboutText = "Pteranodon was one of the largest flying reptiles on Earth. It lived around 75 to 85 million years ago during the Late Cretaceous in what is now North America. Despite often being called a dinosaur, Pteranodon was a pterosaur. With its enormous wingspan and lightweight body, it spent most of its life soaring over ancient seas.",
+                KeyFeaturesText = "Pteranodon had a long pointed beak without teeth, a large head crest, and a wingspan stretching over 23 feet. Its hollow bones made it lightweight and adapted for flight. The crest helped with balance, steering, and attracting mates.",
+                LifeEnvironmentText = "Pteranodon lived along coastlines, islands, beaches, and shallow inland seas abundant with fish. It nested in large colonies on rocky shores and was preyed on by large marine animals such as Tylosaurus.",
+                BehaviourText = "Pteranodon was an expert glider that used ocean winds to travel long distances with minimal effort. It hunted by diving to catch fish at the surface. It spent most of its time in the air and gathered in groups during breeding season.",
+                FunFactsText = "• Pteranodon was not a dinosaur but a flying reptile.\n• Its wingspan was wider than many small airplanes.\n• It had no teeth despite being a carnivore.\n• Its head crest may have helped with steering.\n• Its hollow bones made it super lightweight."
+            },
+            new Dinosaur
+            {
+                Name = "Brachiosaurus",
+                Pronunciation = "brae-kee-uh-saw-ruhs",
+                Meaning = "Arm Lizard",
+                Era = "Late Jurassic",
+                Group = "Sauropod",
+                Diet = "Herbivore",
+                Category = "Land",
+                ShortDescription = "A gentle giant taller than a house",
+                Length = "80 feet", Height = "40 feet", Weight = "50000kg", Speed = "15km/h", Strength = 60,
+                ImageFile = "brachiosaurus.png",
+                Aliases = new[] { "brachio", "long neck", "longneck" },
+                AboutText = "Brachiosaurus was one of the tallest dinosaurs to ever walk the Earth. It lived around 150 to 154 million years ago during the Late Jurassic in what is now North America. Unlike many long-necked dinosaurs, Brachiosaurus had longer front legs than back legs, helping it reach food high above the ground.",
+                KeyFeaturesText = "Brachiosaurus had an extremely long neck, a massive body, and thick legs. Since its front legs were longer than its back legs, its shoulders sat higher than its hips, letting it browse treetops few other dinosaurs could reach.",
+                LifeEnvironmentText = "Brachiosaurus lived in floodplains, forests, and open woodlands eating tall conifers, cycads, and ferns. Adults had no natural predators, but juveniles were hunted by theropods such as Allosaurus.",
+                BehaviourText = "Brachiosaurus spent most of its day eating leaves from tall trees. It moved slowly across large areas and may have lived in small groups. It had to eat around 750kg of vegetation daily.",
+                FunFactsText = "• It could reach leaves over 40 feet above the ground.\n• It weighed as much as 9 African elephants.\n• Its heart may have weighed over 400kg to pump blood up its neck.\n• It couldn't chew and swallowed food whole.\n• It could live up to 80 years."
+            },
+            new Dinosaur
+            {
+                Name = "Stegosaurus",
+                Pronunciation = "steh-guh-saw-ruhs",
+                Meaning = "Roofed Lizard",
+                Era = "Late Jurassic",
+                Group = "Stegosaur",
+                Diet = "Herbivore",
+                Category = "Land",
+                ShortDescription = "Bony plates and a deadly spiked tail",
+                Length = "25 feet", Height = "12 feet", Weight = "5000kg", Speed = "7km/h", Strength = 55,
+                ImageFile = "stegosaurus.png",
+                Aliases = new[] { "stego", "steg" },
+                AboutText = "Stegosaurus lived around 145 to 155 million years ago during the Late Jurassic in what is now North America and Europe. With its distinctive rows of plates and spiked tail, Stegosaurus is one of the most recognizable dinosaurs ever discovered.",
+                KeyFeaturesText = "Stegosaurus had two rows of large bony plates down its back and four long tail spikes known as a thagomizer. Its small head had a beak for clipping plants. The plates may have been used for display or to help regulate body temperature.",
+                LifeEnvironmentText = "Stegosaurus lived in open woodlands, floodplains, and river valleys with ferns, cycads, and horsetails. It lived near giant sauropods and predators such as Allosaurus and Ceratosaurus.",
+                BehaviourText = "Stegosaurus spent most of its day slowly grazing close to the ground. Though not fast, it could defend itself effectively using its powerful spiked tail. It relied on its size and defensive weapons to deter predators.",
+                FunFactsText = "• It had a brain about the size of a walnut.\n• Its tail spikes could grow over 3 feet long.\n• Its back plates were too thin to be armour.\n• It is the state fossil of Colorado, USA.\n• Its tail could swing with the force of a car crash."
+            },
+            new Dinosaur
+            {
+                Name = "Mosasaurus",
+                Pronunciation = "moh-zuh-saw-ruhs",
+                Meaning = "Meuse Lizard",
+                Era = "Late Cretaceous",
+                Group = "Mosasaur",
+                Diet = "Carnivore",
+                Category = "Sea",
+                ShortDescription = "A giant lizard that ruled the seas",
+                Length = "40 feet", Width = "6 feet", Weight = "12000kg", Speed = "48km/h", Strength = 88,
+                ImageFile = "mosasaurus.png",
+                Aliases = new[] { "mosasaur", "mosa" },
+                AboutText = "Mosasaurus was one of the largest and most powerful marine reptiles to ever live, around 66 to 82 million years ago. Despite often being called a dinosaur, Mosasaurus was a giant marine lizard related to modern monitor lizards and snakes. It surfaced to breathe air like modern whales.",
+                KeyFeaturesText = "Mosasaurus had a long streamlined body, powerful paddle-like flippers, and a strong tail. Its jaws were double-hinged, letting it swallow large prey whole. Rows of backward-curving teeth gripped slippery prey.",
+                LifeEnvironmentText = "Mosasaurus lived in warm shallow seas and inland oceans filled with fish, sharks, ammonites, and turtles. As a top predator, adults had no natural enemies.",
+                BehaviourText = "Mosasaurus was an active hunter that relied on speed, strength, and ambush attacks. It could rapidly accelerate using its powerful tail and hunted anything it could overpower.",
+                FunFactsText = "• It was more related to snakes than to dinosaurs.\n• It had a second set of teeth on the roof of its mouth.\n• It could grow longer than a school bus.\n• Its fossils have been found on every continent, including Antarctica.\n• It belongs to the mosasaur group, which includes Tylosaurus."
+            },
+            new Dinosaur
+            {
+                Name = "Liopleurodon",
+                Pronunciation = "lai-uh-plaw-ruh-daan",
+                Meaning = "Smooth-Sided Teeth",
+                Era = "Mid Jurassic",
+                Group = "Pliosaur",
+                Diet = "Carnivore",
+                Category = "Sea",
+                ShortDescription = "A massive hunter of the ancient oceans",
+                Length = "23 feet", Width = "9 feet", Weight = "2000kg", Speed = "30km/h", Strength = 80,
+                ImageFile = "liopleurodon.png",
+                Aliases = new[] { "liopleuradon" },
+                AboutText = "Liopleurodon was a powerful marine reptile that lived around 155 to 160 million years ago during the Middle Jurassic. It was one of the top predators of the ancient seas over Europe. With its massive head, strong jaws, and powerful flippers, it was perfectly adapted for hunting large prey.",
+                KeyFeaturesText = "Liopleurodon had a huge skull filled with long, sharp, conical teeth. Its streamlined body had four strong flippers for speed and agility. Unlike long-necked marine reptiles, it had a short neck built for sudden bursts.",
+                LifeEnvironmentText = "Liopleurodon lived in warm, shallow seas over what is now England and Europe, home to fish, squid-like creatures, and other marine reptiles. As an apex predator it had no natural enemies.",
+                BehaviourText = "Liopleurodon was an ambush predator that relied on stealth and sudden acceleration. It used its strong sense of smell to detect prey, striking quickly with its powerful jaws.",
+                FunFactsText = "• Some fossils grouped as 'Liopleurodon' may be different animals.\n• Its bite force was around 17,000 pounds.\n• Its nostrils were used for smelling underwater.\n• Its sensory system likely relied on vibration.\n• Its exact size is often debated due to rare fossils."
+            },
+            new Dinosaur
+            {
+                Name = "Giganotosaurus",
+                Pronunciation = "jai-ga-nuh-tuh-saw-ruhs",
+                Meaning = "Giant Southern Lizard",
+                Era = "Mid Cretaceous",
+                Group = "Theropod",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "Even longer than the mighty T. Rex",
+                Length = "43 feet", Height = "13 feet", Weight = "8000kg", Speed = "30km/h", Strength = 92,
+                ImageFile = "giganotosaurus.png",
+                Aliases = new[] { "giga", "giganto", "gigantosaurus" },
+                AboutText = "Giganotosaurus was one of the largest meat-eating dinosaurs ever discovered, even longer than Tyrannosaurus Rex. It lived around 97 to 99 million years ago in what is now Argentina. As an apex predator, it hunted some of the largest dinosaurs that ever lived.",
+                KeyFeaturesText = "Giganotosaurus had a huge skull lined with sharp teeth for slicing flesh. Its long legs made it a fast, efficient hunter, while its strong tail aided balance. Slightly lighter than T. Rex, its length made it one of the most formidable predators of the Cretaceous.",
+                LifeEnvironmentText = "Giganotosaurus lived in forests, floodplains, and river valleys of ancient South America, home to enormous herbivores such as Argentinosaurus. It sat near the top of the food chain.",
+                BehaviourText = "Giganotosaurus relied on speed and possibly coordination to take down large prey. It was likely a solitary hunter, though some scientists debate cooperative hunting. It used ambush tactics rather than long chases.",
+                FunFactsText = "• It had a brain the size of a banana.\n• It may have bled out prey with its slicing bite.\n• Its fossils are rare, so much remains unknown.\n• It may have had camouflage colouration.\n• It wasn't discovered until 1993."
+            },
+            new Dinosaur
+            {
+                Name = "Carnotaurus",
+                Pronunciation = "kaar-noh-taw-ruhs",
+                Meaning = "Meat-Eating Bull",
+                Era = "Late Cretaceous",
+                Group = "Theropod",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "A horned predator built for speed",
+                Length = "27 feet", Height = "9 feet", Weight = "2000kg", Speed = "54km/h", Strength = 68,
+                ImageFile = "carnotaurus.png",
+                Aliases = new[] { "carno", "bull dinosaur" },
+                AboutText = "Carnotaurus was a fast, lightweight carnivorous dinosaur that lived around 69 to 72 million years ago in what is now South America. It is best known for its bull-like horns above its eyes, making it one of the most unusual large theropods. It was built for speed rather than brute strength.",
+                KeyFeaturesText = "Carnotaurus had two thick horns above its eyes, a deep skull, and extremely short forearms. It likely had rough, scale-like skin. Its powerful legs and stiff tail helped stabilize it at high speeds.",
+                LifeEnvironmentText = "Carnotaurus lived in semi-arid plains, forests, and floodplains in Argentina with a variety of herbivorous dinosaurs. As an apex predator, it had no natural predators.",
+                BehaviourText = "Carnotaurus was a fast pursuit predator that relied on speed and surprise. Its vision was adapted for depth perception. Its weak arms meant it depended heavily on its jaws.",
+                FunFactsText = "• It had the smallest arms of any large predator dinosaur.\n• It is one of the only large meat-eaters with true horns.\n• Its horns likely helped in combat or display.\n• It could snap its jaws shut extremely fast.\n• It is known from a nearly complete skeleton."
+            },
+            new Dinosaur
+            {
+                Name = "Allosaurus",
+                Pronunciation = "a-luh-saw-ruhs",
+                Meaning = "Different Lizard",
+                Era = "Late Jurassic",
+                Group = "Theropod",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "The fiercest hunter of the Jurassic",
+                Length = "30 feet", Height = "10 feet", Weight = "2500kg", Speed = "50km/h", Strength = 78,
+                ImageFile = "allosaurus.png",
+                Aliases = new[] { "allo" },
+                AboutText = "Allosaurus was a large carnivorous dinosaur that lived around 145 to 155 million years ago during the Late Jurassic. It was one of the top predators of its time, hunting large herbivores such as Stegosaurus and young sauropods across North America and Europe.",
+                KeyFeaturesText = "Allosaurus had a large skull with sharp, serrated teeth and powerful jaws. Its strong arms had three-fingered hands, and its long muscular legs let it move quickly. A flexible neck and balanced tail helped it strike at prey.",
+                LifeEnvironmentText = "Allosaurus lived in forested floodplains, river valleys, and semi-arid environments home to large herbivores. It was often the dominant large theropod at the top of the food chain.",
+                BehaviourText = "Allosaurus was an active predator and possibly an opportunistic scavenger. It was likely a solitary hunter, using ambush tactics to take down prey much larger than itself.",
+                FunFactsText = "• It was one of the most common large predators of the Jurassic.\n• Its serrated teeth worked like steak knives.\n• Some fossils show injuries from frequent combat.\n• It may have used its upper jaw like a hatchet.\n• It constantly shed and replaced its teeth."
+            },
+            new Dinosaur
+            {
+                Name = "Parasaurolophus",
+                Pronunciation = "peh-ruh-saw-raa-luh-fuhs",
+                Meaning = "Near-Crested Lizard",
+                Era = "Late Cretaceous",
+                Group = "Hadrosaur",
+                Diet = "Herbivore",
+                Category = "Land",
+                ShortDescription = "A dinosaur with a built-in trumpet",
+                Length = "32 feet", Height = "15 feet", Weight = "4500kg", Speed = "45km/h", Strength = 35,
+                ImageFile = "parasaurolophus.png",
+                Aliases = new[] { "parasaur", "para", "parasaurolofus" },
+                AboutText = "Parasaurolophus was a large herbivorous dinosaur that lived around 73 to 76 million years ago in what is now North America. It is famous for the long, curved crest on its head, which may have been used for communication, display, and sound.",
+                KeyFeaturesText = "Parasaurolophus had a long tube-like crest that helped amplify sounds. It had a duck-billed mouth adapted for cropping plants and hundreds of teeth for grinding. Its strong hind legs let it move quickly when needed.",
+                LifeEnvironmentText = "Parasaurolophus lived in forests, river valleys, and coastal plains full of lush vegetation. It shared its environment with other hadrosaurs, ceratopsians, and predators like T. Rex.",
+                BehaviourText = "Parasaurolophus likely lived in herds for protection. It used its crest to produce low-frequency sounds to communicate. It was a peaceful grazer feeding on leaves and aquatic plants.",
+                FunFactsText = "• Its crest may have worked like a natural trumpet.\n• Scientists can recreate its possible sounds using skull models.\n• It could walk on two legs or four.\n• Its crest could grow up to 6 feet long.\n• Its only real defence was speed and safety in numbers."
+            },
+            new Dinosaur
+            {
+                Name = "Argentinosaurus",
+                Pronunciation = "aar-juhn-tee-nuh-saw-ruhs",
+                Meaning = "Lizard From Argentina",
+                Era = "Mid Cretaceous",
+                Group = "Sauropod",
+                Diet = "Herbivore",
+                Category = "Land",
+                ShortDescription = "One of the largest animals to ever exist",
+                Length = "115 feet", Height = "40 feet", Weight = "90000kg", Speed = "7km/h", Strength = 65,
+                ImageFile = "argentinosaurus.png",
+                Aliases = new[] { "argentino" },
+                AboutText = "Argentinosaurus was one of the largest land animals ever to exist, living around 94 to 97 million years ago in what is now Argentina. This enormous titanosaur was a plant-eating giant that moved slowly across floodplains, stripping vegetation from tall trees.",
+                KeyFeaturesText = "Argentinosaurus had an incredibly long neck, a massive barrel-shaped body, and thick pillar-like legs. Its bones were large but relatively lightweight inside, helping reduce strain. Even its vertebrae were adapted to support one of the heaviest bodies on land.",
+                LifeEnvironmentText = "Argentinosaurus lived in warm floodplains, forests, and open plains in South America with conifers and ferns. Adults had very few predators such as Giganotosaurus, though juveniles were far more vulnerable.",
+                BehaviourText = "Argentinosaurus likely moved in slow, steady herds, using its size as protection. It spent most of its time feeding and migrating, consuming hundreds of kilograms of plants each day.",
+                FunFactsText = "• It may have been longer than a basketball court.\n• It is one of the heaviest land animals ever discovered.\n• Its thigh bone alone could be over 2 meters long.\n• Its exact size is debated due to incomplete fossils.\n• It could eat up to 1000kg of plants each day."
+            },
+            new Dinosaur
+            {
+                Name = "Therizinosaurus",
+                Pronunciation = "theh-rih-zih-nuh-saw-ruhs",
+                Meaning = "Scythe Lizard",
+                Era = "Late Cretaceous",
+                Group = "Theropod",
+                Diet = "Herbivore",
+                Category = "Land",
+                ShortDescription = "A giant feathered dinosaur with enormous claws",
+                Length = "32 feet", Height = "15 feet", Weight = "5500kg", Speed = "24km/h", Strength = 58,
+                ImageFile = "therizinosaurus.png",
+                Aliases = new[] { "therizino", "scythe lizard", "claw dinosaur" },
+                AboutText = "Therizinosaurus was one of the strangest dinosaurs to ever live, around 66 to 70 million years ago in what is now Mongolia. Although it belonged to the same group as meat-eaters like T. Rex, it evolved into a giant plant eater with a long neck, feathers, and the longest claws of any land animal in history.",
+                KeyFeaturesText = "Therizinosaurus had enormous scythe-like claws that could grow over 3 feet long. It had a long neck for reaching vegetation, a wide body for digesting plants, and feathers. Its small teeth and beak were adapted for eating leaves.",
+                LifeEnvironmentText = "Therizinosaurus lived in forests, river valleys, and floodplains rich in trees, shrubs, and ferns. Its huge claws and large size made it a difficult target for predators such as Tarbosaurus.",
+                BehaviourText = "Therizinosaurus was a slow mover that spent most of its day eating vegetation. Its massive claws were probably used for pulling branches, defending itself, and display. It relied on intimidation over speed.",
+                FunFactsText = "• It looked more like a giant feathered bird than a traditional dinosaur.\n• Its claws were longer than an adult human's arm.\n• Scientists first thought its claws belonged to a giant turtle.\n• It evolved into a plant eater despite carnivorous relatives.\n• It had one of the widest bodies of any theropod."
+            },
+            new Dinosaur
+            {
+                Name = "Titanosaurus",
+                Pronunciation = "tai-tan-oh-saw-ruhs",
+                Meaning = "Titanic Lizard",
+                Era = "Late Cretaceous",
+                Group = "Sauropod",
+                Diet = "Herbivore",
+                Category = "Land",
+                ShortDescription = "A colossal long-necked giant of the Cretaceous",
+                Length = "57 feet", Height = "16 feet", Weight = "70000kg", Speed = "5km/h", Strength = 62,
+                ImageFile = "titanosaurus.png",
+                Aliases = new[] { "titano" },
+                AboutText = "Titanosaurus was a large plant-eating sauropod that lived around 70 million years ago in what is now India and parts of Asia. It belonged to the titanosaurs, some of the largest land animals ever. Though its original fossils are incomplete, it remains a well-known member of this giant family.",
+                KeyFeaturesText = "Titanosaurus had a long neck, a long tail, and a massive barrel-shaped body on thick pillar-like legs. Its peg-shaped teeth stripped leaves from trees. Like many titanosaurs, it may have had bony plates called osteoderms in its skin.",
+                LifeEnvironmentText = "Titanosaurus lived in floodplains, forests, and woodlands with ferns, conifers, and flowering plants. Its large size helped deter most predators such as Abelisaurus.",
+                BehaviourText = "Titanosaurus spent most of its day eating and moving slowly between feeding grounds. It may have travelled in herds, especially when raising young. Its size was its primary defence.",
+                FunFactsText = "• It had bony armored skin in some places.\n• Its fossils were first found in India in the 1800s.\n• Titanosaurs laid eggs in large nesting colonies.\n• They were the last major group of sauropods.\n• It was one of the first dinosaurs discovered in Asia."
+            },
+            new Dinosaur
+            {
+                Name = "Titanoboa",
+                Pronunciation = "tai-tan-oh-boh-uh",
+                Meaning = "Titanic Boa",
+                Era = "Mid Paleocene",
+                Group = "Snake",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "One of the largest snakes ever to slither on Earth",
+                Length = "42 feet", Width = "3 feet", Weight = "1200kg", Speed = "5km/h", Strength = 75,
+                ImageFile = "titanoboa.png",
+                Aliases = new[] { "giant snake", "big snake" },
+                AboutText = "Titanoboa lived around 58 to 60 million years ago during the Paleocene in what is now South America, just a few million years after the dinosaurs went extinct. With a body longer than a school bus and thicker than a grown human, Titanoboa was one of the most powerful predators of its time.",
+                KeyFeaturesText = "Titanoboa had an incredibly long, muscular body that could wrap around animals and squeeze until they could no longer breathe. Its powerful jaws could swallow large prey whole, and its flexible skeleton let it eat animals wider than its own head.",
+                LifeEnvironmentText = "Titanoboa lived in warm, swampy rainforests with rivers, lakes, and dense vegetation, home to giant fish, crocodile-like reptiles, and turtles. As the apex predator, adults had no enemies.",
+                BehaviourText = "Titanoboa spent much of its time in or near water like modern anacondas. It used ambush tactics, staying hidden before striking with incredible speed. It remains the largest snake ever discovered.",
+                FunFactsText = "• A healthy adult human could probably outrun it in a straight line.\n• It lived after the dinosaurs went extinct.\n• It was twice as long and 8 times as heavy as a modern anaconda.\n• It could swallow a crocodile whole.\n• Its fossils were discovered in Colombia in 2009."
+            },
+            new Dinosaur
+            {
+                Name = "Deinonychus",
+                Pronunciation = "die-non-ih-kus",
+                Meaning = "Terrible Claw",
+                Era = "Early Cretaceous",
+                Group = "Raptor",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "A clever predator with deadly sickle claws",
+                Length = "11 feet", Height = "4 feet", Weight = "80kg", Speed = "55km/h", Strength = 40,
+                ImageFile = "deinonychus.png",
+                Aliases = new[] { "deinonicus" },
+                AboutText = "Deinonychus was a fast and intelligent carnivorous dinosaur that lived around 110 to 115 million years ago during the Early Cretaceous in what is now North America. It was one of the most important dinosaur discoveries ever, changing the view of dinosaurs from sluggish reptiles to active, energetic animals.",
+                KeyFeaturesText = "Deinonychus had a large sickle-shaped claw on each foot over 5 inches long to grip prey. Its body was covered in feathers, and its stiff tail acted as a counterbalance. It had strong grasping hands and a mouth full of sharp, serrated teeth.",
+                LifeEnvironmentText = "Deinonychus lived in forests, floodplains, and open woodlands with small dinosaurs, mammals, and larger herbivores such as Tenontosaurus. It was among the most successful hunters of its region.",
+                BehaviourText = "Deinonychus was an active, agile hunter that relied on speed, intelligence, and powerful claws. Some scientists suggest it hunted in groups, though this is debated. It used its sickle claws to latch onto prey.",
+                FunFactsText = "• It inspired the famous 'raptors' in dinosaur movies.\n• Its claws may have pinned prey rather than slashed it.\n• It was covered in feathers, closely related to birds.\n• Its jaws were relatively weak, so it slashed with its teeth.\n• Its reinforced tail helped it balance during fast turns."
+            },
+            new Dinosaur
+            {
+                Name = "Deinosuchus",
+                Pronunciation = "die-noh-soo-kus",
+                Meaning = "Terrible Crocodile",
+                Era = "Late Cretaceous",
+                Group = "Crocodylian",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "A giant crocodilian that hunted dinosaurs",
+                Length = "40 feet", Width = "5 feet", Weight = "8000kg", Speed = "20km/h", Strength = 96,
+                ImageFile = "deinosuchus.png",
+                Aliases = new[] { "giant crocodile", "crocodile", "croc", "alligator", "gator" },
+                AboutText = "Deinosuchus was one of the largest crocodilian relatives to ever live, around 73 to 82 million years ago during the Late Cretaceous in what is now North America. Larger than most modern crocodiles, it was an ambush predator that preyed upon dinosaurs that ventured too close to the water's edge.",
+                KeyFeaturesText = "Deinosuchus had a massive armored body covered in thick bony plates called osteoderms. Its enormous jaws had crushing teeth capable of breaking bone. A powerful tail propelled it through water, and its sensitive snout detected movement. It had a bite force around 23,000 pounds.",
+                LifeEnvironmentText = "Deinosuchus lived in rivers, swamps, estuaries, and coastal wetlands across ancient North America, home to fish, turtles, and dinosaurs that came to drink. Adults had no enemies.",
+                BehaviourText = "Deinosuchus was an ambush predator like modern crocodilians. It waited beneath the surface before exploding forward to seize prey. It likely used the 'death roll' to tear apart large animals.",
+                FunFactsText = "• It was not a dinosaur but a giant crocodilian.\n• Its bite marks have been found on dinosaur bones.\n• Its bite force exceeded that of T. Rex.\n• Some individuals lived over 50 years.\n• It looked remarkably like a modern alligator."
+            },
+
+            // ---------- new entries ----------
+            new Dinosaur
+            {
+                Name = "Ankylosaurus",
+                Pronunciation = "ang-kai-luh-saw-ruhs",
+                Meaning = "Fused Lizard",
+                Era = "Late Cretaceous",
+                Group = "Ankylosaur",
+                Diet = "Herbivore",
+                Category = "Land",
+                ShortDescription = "A living tank with a bone-shattering club",
+                Length = "26 feet", Height = "5.5 feet", Weight = "6000kg", Speed = "10km/h", Strength = 72,
+                ImageFile = "ankylosaurus.png",
+                Aliases = new[] { "ankylo", "anky", "armored dinosaur", "tank dinosaur" },
+                AboutText = "Ankylosaurus was a heavily armored plant-eater that lived around 66 to 68 million years ago in what is now North America. Covered head to tail in bony plates and wielding a huge club at the end of its tail, it was one of the best-protected dinosaurs that ever lived — a walking fortress even T. Rex thought twice about.",
+                KeyFeaturesText = "Ankylosaurus was covered in rows of thick bony plates called osteoderms, even over its eyelids. Its wide, low body sat close to the ground, and its tail ended in a massive club of fused bone that could swing with enough force to break a predator's leg.",
+                LifeEnvironmentText = "Ankylosaurus lived in forests and floodplains alongside Triceratops and T. Rex. It fed on low ferns and shrubs, using its wide beak to crop soft vegetation close to the ground.",
+                BehaviourText = "Ankylosaurus was a slow, solitary grazer that relied entirely on defence. When threatened it likely crouched low to protect its soft belly, then swung its club at an attacker's legs.",
+                FunFactsText = "• Its tail club could swing hard enough to shatter bone.\n• Even its eyelids had bony armor.\n• Its wide gut fermented tough plants like a modern cow.\n• Its only soft spot was its belly.\n• A full-grown one was about as wide as it was tall."
+            },
+            new Dinosaur
+            {
+                Name = "Pachycephalosaurus",
+                Pronunciation = "pak-ee-sef-uh-luh-saw-ruhs",
+                Meaning = "Thick-Headed Lizard",
+                Era = "Late Cretaceous",
+                Group = "Pachycephalosaur",
+                Diet = "Herbivore",
+                Category = "Land",
+                ShortDescription = "A head-butting dinosaur with a bony dome",
+                Length = "15 feet", Height = "6 feet", Weight = "450kg", Speed = "27km/h", Strength = 42,
+                ImageFile = "pachycephalosaurus.png",
+                Aliases = new[] { "pachy", "dome head", "bonehead" },
+                AboutText = "Pachycephalosaurus lived around 66 to 70 million years ago in what is now North America. It is famous for the thick dome of solid bone on top of its skull, up to 25cm thick, ringed with small bony spikes — a natural crash helmet unlike anything else in the dinosaur world.",
+                KeyFeaturesText = "Its skull dome was made of solid bone up to 25cm thick, surrounded by knobs and short spikes. It walked on two legs with a stiff tail for balance and had small, leaf-shaped teeth for eating soft plants.",
+                LifeEnvironmentText = "Pachycephalosaurus lived in warm coastal plains and forests, browsing on leaves, seeds, and fruit. It shared its world with Triceratops, Edmontosaurus, and T. Rex.",
+                BehaviourText = "Scientists think Pachycephalosaurus used its dome for head-butting or flank-butting contests over mates or territory, much like modern rams. Its thick skull helped absorb the shock.",
+                FunFactsText = "• Its skull dome could be 25cm of solid bone.\n• It may have head-butted rivals like a ram.\n• Its name means 'thick-headed lizard'.\n• The spikes around its dome were mostly for show.\n• We know it mostly from skulls, since domes fossilize well."
+            },
+            new Dinosaur
+            {
+                Name = "Quetzalcoatlus",
+                Pronunciation = "ket-sal-koh-at-luhs",
+                Meaning = "Feathered Serpent God",
+                Era = "Late Cretaceous",
+                Group = "Pterosaur",
+                Diet = "Carnivore",
+                Category = "Flying",
+                ShortDescription = "A flying giant as tall as a giraffe",
+                Length = "36 feet", Height = "18 feet", Weight = "250kg", Speed = "128km/h", Strength = 45,
+                ImageFile = "quetzalcoatlus.png",
+                Aliases = new[] { "quetzal", "quetzalcoatlus", "giant pterosaur" },
+                AboutText = "Quetzalcoatlus was one of the largest flying animals of all time, living around 68 to 66 million years ago. With a wingspan of up to 36 feet — as wide as a small plane — and standing as tall as a giraffe on the ground, it soared over Late Cretaceous North America hunting on land and in the air.",
+                KeyFeaturesText = "Quetzalcoatlus had an enormous wingspan, a long stiff neck, and a huge toothless beak. Despite its size it was surprisingly light thanks to hollow bones. On the ground it walked on all fours and could stand as tall as a giraffe.",
+                LifeEnvironmentText = "Quetzalcoatlus lived in inland plains and river valleys rather than by the sea. It likely strode across the ground hunting small dinosaurs and other animals, much like a giant modern stork.",
+                BehaviourText = "Quetzalcoatlus could launch into the air using its powerful arms and then soar for long distances on rising air. It may have hunted on foot, snapping up small animals with its long beak.",
+                FunFactsText = "• Its wingspan reached about 36 feet — the size of a small plane.\n• It stood as tall as a giraffe on the ground.\n• Its bones were hollow to stay light enough to fly.\n• It could probably fly for days at a time.\n• It is named after an Aztec feathered-serpent god."
+            },
+            new Dinosaur
+            {
+                Name = "Dilophosaurus",
+                Pronunciation = "die-loh-fuh-saw-ruhs",
+                Meaning = "Two-Crested Lizard",
+                Era = "Early Jurassic",
+                Group = "Theropod",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "An early hunter with a pair of head crests",
+                Length = "23 feet", Height = "7 feet", Weight = "400kg", Speed = "38km/h", Strength = 50,
+                ImageFile = "dilophosaurus.png",
+                Aliases = new[] { "dilo", "dilophosaur" },
+                AboutText = "Dilophosaurus lived around 186 million years ago during the Early Jurassic in what is now North America. One of the earliest large predatory dinosaurs, it is best known for the pair of thin, curved crests on top of its head. Despite its movie fame, it did not spit venom or have a neck frill.",
+                KeyFeaturesText = "Dilophosaurus had two thin, semicircular crests on its head that were probably used for display. It was slender and fast, with a long tail and narrow jaws lined with sharp teeth adapted for catching smaller, quicker prey.",
+                LifeEnvironmentText = "Dilophosaurus lived near rivers and lakes in a warm Early Jurassic landscape, hunting fish and small dinosaurs along the water's edge.",
+                BehaviourText = "Dilophosaurus was an agile hunter that likely relied on speed and its grasping hands to catch prey. Its head crests were too delicate for combat and were most likely used to signal to other Dilophosaurus.",
+                FunFactsText = "• The real Dilophosaurus did not spit venom — that was invented for a movie.\n• It had no neck frill.\n• Its head crests were probably colourful display features.\n• It was one of the earliest big meat-eating dinosaurs.\n• It was much larger than its movie version."
+            },
+            new Dinosaur
+            {
+                Name = "Baryonyx",
+                Pronunciation = "bah-ree-on-iks",
+                Meaning = "Heavy Claw",
+                Era = "Early Cretaceous",
+                Group = "Theropod",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "A fish-hunter with a crocodile-like snout",
+                Length = "28 feet", Height = "8 feet", Weight = "1700kg", Speed = "30km/h", Strength = 64,
+                ImageFile = "baryonyx.png",
+                Aliases = new[] { "bary", "baryonix" },
+                AboutText = "Baryonyx lived around 125 to 130 million years ago during the Early Cretaceous in what is now England. A close relative of Spinosaurus, it had a long, narrow, crocodile-like snout and huge curved thumb claws that it used to hook fish out of rivers.",
+                KeyFeaturesText = "Baryonyx had a long low skull with narrow jaws and about 96 cone-shaped teeth ideal for gripping slippery fish. Its most famous feature was a huge curved claw about 30cm long on each thumb, perfect for hooking prey.",
+                LifeEnvironmentText = "Baryonyx lived along rivers and wetlands, wading in shallow water to fish. Fossilized fish scales and even a young Iguanodon have been found in its stomach region.",
+                BehaviourText = "Baryonyx probably hunted like a giant grizzly bear, standing at the water's edge and swiping fish out with its clawed hands, but it also ate other dinosaurs when it could.",
+                FunFactsText = "• Its thumb claws were about 30cm long.\n• Fish scales were found where its stomach would have been.\n• It was a close cousin of Spinosaurus.\n• Its narrow snout worked like a modern crocodile's.\n• The first fossil was found by an amateur collector in England."
+            },
+            new Dinosaur
+            {
+                Name = "Iguanodon",
+                Pronunciation = "ig-wah-nuh-don",
+                Meaning = "Iguana Tooth",
+                Era = "Early Cretaceous",
+                Group = "Ornithopod",
+                Diet = "Herbivore",
+                Category = "Land",
+                ShortDescription = "A thumb-spiked plant-eater of the early Cretaceous",
+                Length = "33 feet", Height = "9 feet", Weight = "3500kg", Speed = "24km/h", Strength = 48,
+                ImageFile = "iguanodon.png",
+                Aliases = new[] { "iguana dinosaur" },
+                AboutText = "Iguanodon lived around 125 million years ago during the Early Cretaceous across what is now Europe. It was one of the very first dinosaurs ever named, and its most striking feature was a sharp thumb spike used for defence and for reaching food.",
+                KeyFeaturesText = "Iguanodon had a large thumb spike on each hand, a toothless beak for cropping plants, and rows of grinding teeth. It could walk on two legs or four, and its stiff tail helped it balance.",
+                LifeEnvironmentText = "Iguanodon roamed floodplains and forests in large herds, feeding on ferns, horsetails, and early flowering plants. It shared its world with predators such as Baryonyx.",
+                BehaviourText = "Iguanodon likely lived in herds for safety. When threatened it could rear up and stab with its thumb spike. It chewed its food with a special jaw hinge unusual among reptiles.",
+                FunFactsText = "• It was one of the first dinosaurs ever scientifically named, in 1825.\n• Early scientists mistakenly put its thumb spike on its nose.\n• Its thumb spike was a defensive weapon.\n• It could switch between walking on two legs and four.\n• Whole herds have been found fossilized together."
+            },
+            new Dinosaur
+            {
+                Name = "Utahraptor",
+                Pronunciation = "yoo-tah-rap-tr",
+                Meaning = "Utah's Robber",
+                Era = "Early Cretaceous",
+                Group = "Raptor",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "The largest raptor that ever lived",
+                Length = "18 feet", Height = "5 feet", Weight = "500kg", Speed = "40km/h", Strength = 66,
+                ImageFile = "utahraptor.png",
+                Aliases = new[] { "utah raptor", "giant raptor" },
+                AboutText = "Utahraptor lived around 130 million years ago in what is now Utah, USA. It was the largest raptor ever discovered — far bigger than Velociraptor — and combined size, strength, and a deadly foot claw into one of the early Cretaceous's most dangerous hunters.",
+                KeyFeaturesText = "Utahraptor had a huge curved sickle claw about 23cm long on each foot, powerful legs, and strong arms. It was heavily built for a raptor and was almost certainly covered in feathers.",
+                LifeEnvironmentText = "Utahraptor lived in a landscape of rivers and shifting sands. Several individuals have been found trapped together in ancient quicksand, hinting they may have hunted in groups.",
+                BehaviourText = "Utahraptor used its massive foot claws to pin and wound large prey. Fossils of many individuals together suggest it may have hunted in packs, taking down animals much larger than itself.",
+                FunFactsText = "• It was the largest raptor ever discovered.\n• Its foot claw was about 23cm long.\n• A block of many individuals was found trapped in quicksand.\n• It lived much earlier than Velociraptor.\n• It was probably covered in feathers."
+            },
+            new Dinosaur
+            {
+                Name = "Gallimimus",
+                Pronunciation = "gal-ih-my-muhs",
+                Meaning = "Chicken Mimic",
+                Era = "Late Cretaceous",
+                Group = "Ornithomimid",
+                Diet = "Omnivore",
+                Category = "Land",
+                ShortDescription = "An ostrich-like sprinter of the Cretaceous",
+                Length = "20 feet", Height = "6 feet", Weight = "440kg", Speed = "56km/h", Strength = 30,
+                ImageFile = "gallimimus.png",
+                Aliases = new[] { "galli", "ostrich dinosaur" },
+                AboutText = "Gallimimus lived around 70 million years ago in what is now Mongolia. Built like a giant ostrich, it was one of the fastest dinosaurs, using long legs and a lightweight body to outrun almost any predator across the open plains.",
+                KeyFeaturesText = "Gallimimus had long slender legs, a long neck, a small head, and a toothless beak. Its large eyes gave it excellent vision, and its stiff tail helped it balance at high speed.",
+                LifeEnvironmentText = "Gallimimus lived in dry plains and semi-deserts. It ate small animals, insects, eggs, and plants, filtering food or snapping up whatever it could find.",
+                BehaviourText = "Gallimimus relied on speed and sharp senses to survive. It likely lived in flocks for safety, sprinting away from predators like Tarbosaurus rather than fighting.",
+                FunFactsText = "• It could run around 56 km/h — as fast as a racehorse.\n• Its name means 'chicken mimic'.\n• It was one of the fastest dinosaurs ever.\n• Its toothless beak may have filtered tiny food from water.\n• It appeared as a fleeing herd in a famous dinosaur movie."
+            },
+            new Dinosaur
+            {
+                Name = "Kronosaurus",
+                Pronunciation = "kroh-nuh-saw-ruhs",
+                Meaning = "Time Lizard",
+                Era = "Early Cretaceous",
+                Group = "Pliosaur",
+                Diet = "Carnivore",
+                Category = "Sea",
+                ShortDescription = "A sea monster with a skull bigger than a T. Rex's",
+                Length = "33 feet", Width = "8 feet", Weight = "11000kg", Speed = "40km/h", Strength = 85,
+                ImageFile = "kronosaurus.png",
+                Aliases = new[] { "krono", "kronosaur" },
+                AboutText = "Kronosaurus lived around 120 million years ago in the shallow seas that once covered Australia. A short-necked pliosaur, it had one of the largest skulls of any sea reptile — bigger than a T. Rex's — and ruled the ancient oceans as a fearsome apex predator.",
+                KeyFeaturesText = "Kronosaurus had an enormous skull up to 2.7 metres long, cone-shaped teeth the size of bananas, and four powerful flippers. Its short neck and streamlined body were built for powerful bursts of speed.",
+                LifeEnvironmentText = "Kronosaurus swam in the warm inland sea over ancient Australia, hunting turtles, fish, and other marine reptiles. It had no natural predators.",
+                BehaviourText = "Kronosaurus was an ambush and pursuit hunter that used its huge jaws to crush shelled prey and large animals. Its four flippers let it turn and accelerate quickly.",
+                FunFactsText = "• Its skull was larger than a T. Rex's.\n• Its teeth were the size of bananas.\n• It swam using four powerful flippers.\n• It ruled the sea that once covered Australia.\n• Its name honours the Greek Titan Kronos."
+            },
+            new Dinosaur
+            {
+                Name = "Dunkleosteus",
+                Pronunciation = "dun-kul-oss-tee-uhs",
+                Meaning = "Dunkle's Bone",
+                Era = "Late Devonian",
+                Group = "Placoderm",
+                Diet = "Carnivore",
+                Category = "Sea",
+                ShortDescription = "An armored fish with self-sharpening jaws",
+                Length = "20 feet", Width = "5 feet", Weight = "1000kg", Speed = "30km/h", Strength = 82,
+                ImageFile = "dunkleosteus.png",
+                Aliases = new[] { "dunkle", "armored fish" },
+                AboutText = "Dunkleosteus lived around 358 to 382 million years ago, long before the dinosaurs, during the Age of Fishes. This armor-plated giant had no real teeth — instead it had bony blades that ground against each other into razor edges, giving it one of the strongest bites of any fish ever.",
+                KeyFeaturesText = "Dunkleosteus had a head and neck covered in thick bony armor plates instead of scales. Rather than teeth it had two pairs of sharp bony plates that sheared against each other, staying self-sharpening for a devastating bite.",
+                LifeEnvironmentText = "Dunkleosteus cruised the shallow seas of the Devonian period, preying on fish, sharks, and shelled animals. As a top predator, little could threaten it.",
+                BehaviourText = "Dunkleosteus could open its jaws in a fraction of a second, sucking in prey with a sudden vacuum, then slicing it apart with its bony blades. It may even have eaten others of its own kind.",
+                FunFactsText = "• It had no teeth — just self-sharpening bony blades.\n• Its bite was among the strongest of any fish.\n• It lived long before the first dinosaurs.\n• Its head was covered in bony armor.\n• It could open its mouth in about 1/50th of a second."
+            },
+            new Dinosaur
+            {
+                Name = "Smilodon",
+                Pronunciation = "smy-luh-don",
+                Meaning = "Knife Tooth",
+                Era = "Pleistocene Ice Age",
+                Group = "Sabertooth Cat",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "The famous sabre-toothed cat of the Ice Age",
+                Length = "8 feet", Height = "4 feet", Weight = "280kg", Speed = "48km/h", Strength = 58,
+                ImageFile = "smilodon.png",
+                Aliases = new[] { "sabertooth", "saber tooth", "sabre tooth", "saber toothed tiger", "sabertooth cat" },
+                AboutText = "Smilodon, the famous sabre-toothed cat, prowled the Americas during the last Ice Age until around 10,000 years ago. Stockier and more muscular than a modern lion, it is best known for its enormous curved canine teeth up to 28cm long.",
+                KeyFeaturesText = "Smilodon had two huge canine teeth up to 28cm long, an extremely powerful front half, and short strong legs. It was built for wrestling large prey to the ground rather than for a long chase.",
+                LifeEnvironmentText = "Smilodon lived in grasslands and forests alongside mammoths, giant ground sloths, and early humans. Many were preserved in the La Brea tar pits.",
+                BehaviourText = "Smilodon ambushed large prey, using its powerful arms to pin the animal before delivering a deep, precise bite to the throat with its sabre teeth. It may have lived in social groups.",
+                FunFactsText = "• Its sabre teeth could be up to 28cm long.\n• It was much stockier and stronger than a modern lion.\n• Thousands were preserved in the La Brea tar pits.\n• It lived alongside early humans.\n• Its teeth were fragile, so it bit only once prey was pinned."
+            },
+            new Dinosaur
+            {
+                Name = "Woolly Mammoth",
+                Pronunciation = "wool-ee mam-uth",
+                Meaning = "Great Tusked Beast",
+                Era = "Pleistocene Ice Age",
+                Group = "Mammal",
+                Diet = "Herbivore",
+                Category = "Land",
+                ShortDescription = "A shaggy Ice Age relative of the elephant",
+                Length = "18 feet", Height = "11 feet", Weight = "6000kg", Speed = "40km/h", Strength = 60,
+                ImageFile = "woollymammoth.png",
+                Aliases = new[] { "mammoth", "wooly mammoth", "woolly mammoth", "wooly mamoth" },
+                AboutText = "The woolly mammoth roamed the frozen plains of the last Ice Age until around 4,000 years ago. A close cousin of today's elephants, it was wrapped in thick shaggy fur and carried enormous curved tusks that it used to sweep snow away from the grass beneath.",
+                KeyFeaturesText = "The woolly mammoth had a thick coat of long hair, a layer of fat for insulation, small ears to reduce heat loss, and curved tusks up to 4 metres long used for fighting and clearing snow.",
+                LifeEnvironmentText = "Woolly mammoths lived on cold grassy plains called the mammoth steppe, grazing on grasses and herbs alongside woolly rhinos and early humans.",
+                BehaviourText = "Woolly mammoths lived in family herds led by an older female, much like modern elephants. They migrated to find food and used their tusks to dig through snow.",
+                FunFactsText = "• Some mammoths have been found frozen and almost perfectly preserved.\n• Its tusks could grow over 4 metres long.\n• It survived on the remote Wrangel Island until about 4,000 years ago.\n• Early humans hunted it and painted it on cave walls.\n• It was closely related to today's Asian elephant."
+            },
+            new Dinosaur
+            {
+                Name = "Compsognathus",
+                Pronunciation = "komp-sog-nay-thuhs",
+                Meaning = "Elegant Jaw",
+                Era = "Late Jurassic",
+                Group = "Theropod",
+                Diet = "Carnivore",
+                Category = "Land",
+                ShortDescription = "A speedy hunter the size of a chicken",
+                Length = "3.3 feet", Height = "1 feet", Weight = "3kg", Speed = "64km/h", Strength = 12,
+                ImageFile = "compsognathus.png",
+                Aliases = new[] { "compy", "compies", "compsognathus" },
+                AboutText = "Compsognathus lived around 150 million years ago during the Late Jurassic in what is now Europe. For a long time it was thought to be the smallest dinosaur — about the size of a chicken — and it was a quick, sharp-eyed hunter of small lizards and insects.",
+                KeyFeaturesText = "Compsognathus had a small slender body, a long tail for balance, delicate jaws with tiny sharp teeth, and long legs built for running. It had two clawed fingers on each hand.",
+                LifeEnvironmentText = "Compsognathus lived on small islands and coastlines in a warm Jurassic world of lagoons, darting after lizards, insects, and other small animals.",
+                BehaviourText = "Compsognathus was a fast, agile hunter that relied on speed and keen eyesight. A fossil was found with a small lizard still in its stomach, showing it swallowed prey whole.",
+                FunFactsText = "• It was about the size of a chicken.\n• A fossil was found with a lizard still in its stomach.\n• It was once thought to be the smallest dinosaur.\n• It could run very fast for its size.\n• It appeared as the small swarming dinosaurs in movies."
+            },
+        };
+    }
+}

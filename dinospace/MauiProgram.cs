@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace dinospace
 {
@@ -11,8 +11,7 @@ namespace dinospace
                 .UseMauiApp<App>()
                 .ConfigureFonts(fonts =>
                 {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    // Baloo2 -> friendly rounded headings; Nunito -> body text.
                     fonts.AddFont("Nunito-Regular.ttf", "Nunito");
                     fonts.AddFont("Baloo2-Bold.ttf", "Baloo");
                 });

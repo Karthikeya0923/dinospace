@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+using dinospace.Views;
 
 namespace dinospace
 {
@@ -7,13 +7,15 @@ namespace dinospace
         public App()
         {
             InitializeComponent();
-            // Single fixed theme (frosted glass on dark). Dark-mode toggle removed.
+            // Single fixed deep-space theme.
             UserAppTheme = AppTheme.Dark;
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new AppShell());
+            // First launch shows the 3-slide intro; after that, straight to the app.
+            Page root = AppSettings.Onboarded ? new AppShell() : new OnboardingPage();
+            return new Window(root);
         }
     }
 }
