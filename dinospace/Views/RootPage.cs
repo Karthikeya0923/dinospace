@@ -30,6 +30,10 @@ namespace dinospace.Views
         public static RootPage? Current { get; private set; }
         public void SwitchTab(int index) => GoToTab(index);
 
+        // Set by the theme toggle so the rebuilt UI fades in smoothly.
+        public static bool FadeInOnAppear;
+        private bool _didFadeIn;
+
         public RootPage()
         {
             Current = this;
@@ -246,6 +250,13 @@ namespace dinospace.Views
         protected override void OnAppearing()
         {
             base.OnAppearing();
+            if (FadeInOnAppear && !_didFadeIn)
+            {
+                _didFadeIn = true;
+                FadeInOnAppear = false;
+                Opacity = 0;
+                _ = this.FadeTo(1, 190, Easing.CubicIn);
+            }
             if (_current >= 0)
                 (_tabs[_current].view as ITabView)?.OnSelected();
         }

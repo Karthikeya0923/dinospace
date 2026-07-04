@@ -46,28 +46,29 @@ namespace dinospace
             ShadowAlpha = 0.14f
         };
 
-        // Black and gold. Rich, divine.
+        // Black and gold. Rich, divine. Secondary text is a warm champagne
+        // (not grey) so it stays readable and on-theme against near-black.
         private static readonly Palette Dark = new()
         {
             Bg = Color.FromArgb("#0A0908"),
-            BgRaised = Color.FromArgb("#12100D"),
-            Surface = Color.FromArgb("#161410"),
-            SurfaceAlt = Color.FromArgb("#26221A"),
+            BgRaised = Color.FromArgb("#131110"),
+            Surface = Color.FromArgb("#18150F"),
+            SurfaceAlt = Color.FromArgb("#2A2419"),
             SurfaceSunken = Color.FromArgb("#0E0D0A"),
-            Hairline = Color.FromArgb("#37311F"),
-            HairlineSoft = Color.FromArgb("#262114"),
-            TextPrimary = Color.FromArgb("#F5F1E6"),
-            TextSecondary = Color.FromArgb("#B3AB97"),
-            TextHint = Color.FromArgb("#7A7260"),
-            TextOnAccent = Color.FromArgb("#171205"),
-            Accent = Color.FromArgb("#D9B24A"),
-            AccentSoft = Color.FromArgb("#2B2412"),
-            Success = Color.FromArgb("#7CB56A"),
-            Danger = Color.FromArgb("#E08B7E"),
-            ChipBg = Color.FromArgb("#26221A"),
-            ChipText = Color.FromArgb("#D8CFB6"),
-            ImgPlaceholder = Color.FromArgb("#1C1913"),
-            CardStroke = Color.FromArgb("#2C2718"),
+            Hairline = Color.FromArgb("#3D3524"),
+            HairlineSoft = Color.FromArgb("#2A2418"),
+            TextPrimary = Color.FromArgb("#F7F3E9"),
+            TextSecondary = Color.FromArgb("#D9CDB0"),   // warm champagne, readable
+            TextHint = Color.FromArgb("#A99B7C"),        // muted gold-grey
+            TextOnAccent = Color.FromArgb("#1A1305"),
+            Accent = Color.FromArgb("#E3BE55"),          // rich gold
+            AccentSoft = Color.FromArgb("#302711"),
+            Success = Color.FromArgb("#8FCB7A"),
+            Danger = Color.FromArgb("#E8A24A"),          // amber, not red (gold family)
+            ChipBg = Color.FromArgb("#2A2419"),
+            ChipText = Color.FromArgb("#E3D8BC"),
+            ImgPlaceholder = Color.FromArgb("#1E1A12"),
+            CardStroke = Color.FromArgb("#332C1C"),
             ShadowAlpha = 0f
         };
 

@@ -36,21 +36,22 @@ namespace dinospace.Views
             }, haptic: false);
             Ui.Describe(back, "Go back");
 
-            var titleLabel = new Label
-            {
-                Text = title,
-                FontFamily = Ui.Display,
-                FontSize = 19,
-                TextColor = Theme.TextPrimary,
-                VerticalOptions = LayoutOptions.Center,
-                LineBreakMode = LineBreakMode.TailTruncation
-            };
-
             var bar = new Grid { Padding = new Thickness(10, 6, 16, 6), ColumnSpacing = 2 };
             bar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             bar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             bar.Add(back, 0, 0);
-            bar.Add(titleLabel, 1, 0);
+            // Only show a nav-bar title when the page has no big in-content
+            // title of its own — avoids the duplicate title.
+            if (!string.IsNullOrEmpty(title))
+                bar.Add(new Label
+                {
+                    Text = title,
+                    FontFamily = Ui.Display,
+                    FontSize = 19,
+                    TextColor = Theme.TextPrimary,
+                    VerticalOptions = LayoutOptions.Center,
+                    LineBreakMode = LineBreakMode.TailTruncation
+                }, 1, 0);
 
             scroll = new ScrollView { Content = content };
 

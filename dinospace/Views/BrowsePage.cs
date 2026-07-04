@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
@@ -8,13 +9,14 @@ using Microsoft.Maui.Graphics;
 namespace dinospace.Views
 {
     // "View all" for one domain: serif title, rounded search, quiet category
-    // filter, and a two-column card grid that never clips titles.
+    // filter, and a virtualized two-column card grid (fast, no clipping).
     public class BrowsePage : ContentPage
     {
         private readonly string _domain; // "Dinosaurs" | "Space"
+        private readonly ObservableCollection<EntryRow> _items = new();
         private string _query = "";
         private string _category = "";
-        private VerticalStackLayout _grid = null!;
+        private CollectionView _grid = null!;
         private HorizontalStackLayout _chips = null!;
         private Label _count = null!;
 
@@ -27,18 +29,11 @@ namespace dinospace.Views
 
         private void Build()
         {
-            var stack = new VerticalStackLayout { Spacing = 14, Padding = new Thickness(18, 4, 18, 8) };
+            var header = new VerticalStackLayout { Spacing = 14, Padding = new Thickness(18, 4, 18, 8) };
 
-            stack.Add(new Label
-            {
-                Text = _domain,
-                FontFamily = Ui.Display,
-                FontSize = Ui.S(30),
-                TextColor = Theme.TextPrimary
-            });
+            header.Add(new Label { Text = _domain, FontFamily = Ui.Display, FontSize = Ui.S(30), TextColor = Theme.TextPrimary });
 
-            // search field
-            var entry = new Entry { Placeholder = $"Search {_domain.ToLowerInvariant()}…", BackgroundColor = Colors.Transparent };
+            var entry = new Entry { Placeholder = $"Search {_domain.ToLowerInvariant()}…", BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint };
             entry.TextChanged += (_, e) => { _query = e.NewTextValue ?? ""; Refresh(); };
             var glass = Ui.Icon(Ui.IconSearch, 22, Theme.TextHint);
             glass.VerticalOptions = LayoutOptions.Center;
@@ -47,31 +42,37 @@ namespace dinospace.Views
             field.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             field.Add(glass, 0, 0);
             field.Add(entry, 1, 0);
-            stack.Add(new Border
+            header.Add(new Border
             {
-                Content = field,
-                BackgroundColor = Theme.Surface,
-                Stroke = Theme.Hairline,
-                StrokeThickness = 1.4,
-                StrokeShape = new RoundRectangle { CornerRadius = 14 },
-                MinimumHeightRequest = 52
+                Content = field, BackgroundColor = Theme.Surface, Stroke = Theme.Hairline, StrokeThickness = 1.4,
+                StrokeShape = new RoundRectangle { CornerRadius = 14 }, MinimumHeightRequest = 52
             });
 
-            // category chips
             _chips = new HorizontalStackLayout { Spacing = 8 };
             BuildChips();
-            stack.Add(new ScrollView { Orientation = ScrollOrientation.Horizontal, HorizontalScrollBarVisibility = ScrollBarVisibility.Never, Content = _chips });
+            header.Add(new ScrollView { Orientation = ScrollOrientation.Horizontal, HorizontalScrollBarVisibility = ScrollBarVisibility.Never, Content = _chips });
 
             _count = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint };
-            stack.Add(_count);
+            header.Add(_count);
 
-            _grid = new VerticalStackLayout { Spacing = 0, Padding = new Thickness(18, 4, 18, 24) };
+            _grid = new CollectionView
+            {
+                ItemsSource = _items,
+                SelectionMode = SelectionMode.Single,
+                ItemsLayout = new GridItemsLayout(2, ItemsLayoutOrientation.Vertical) { HorizontalItemSpacing = 12, VerticalItemSpacing = 12 },
+                ItemTemplate = new DataTemplate(CardTemplate),
+                VerticalScrollBarVisibility = ScrollBarVisibility.Never,
+                Margin = new Thickness(18, 4, 18, 16)
+            };
+            _grid.SelectionChanged += OnSelectedCard;
 
-            var content = new VerticalStackLayout { Spacing = 0 };
-            content.Add(stack);
-            content.Add(_grid);
+            var col = new Grid { RowSpacing = 0 };
+            col.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            col.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
+            col.Add(header, 0, 0);
+            col.Add(_grid, 0, 1);
 
-            var body = Nav.DetailScaffold(_domain, new ScrollView { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Never }, Theme.Accent, out _);
+            var body = Nav.DetailScaffold("", col, Theme.Accent, out _);
             Content = new Grid { BackgroundColor = Theme.Bg, Children = { body } };
             Refresh();
         }
@@ -89,13 +90,11 @@ namespace dinospace.Views
                 {
                     Content = new Label
                     {
-                        Text = c,
-                        FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), FontAttributes = FontAttributes.Bold,
+                        Text = c, FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), FontAttributes = FontAttributes.Bold,
                         TextColor = active ? Theme.TextOnAccent : Theme.ChipText
                     },
                     BackgroundColor = active ? Theme.Accent : Theme.ChipBg,
-                    Stroke = Colors.Transparent,
-                    StrokeShape = new RoundRectangle { CornerRadius = 100 },
+                    Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 100 },
                     Padding = new Thickness(14, 7)
                 };
                 var cc = c;
@@ -104,35 +103,62 @@ namespace dinospace.Views
             }
         }
 
+        private View CardTemplate()
+        {
+            var img = new Image { Aspect = Aspect.AspectFill, HeightRequest = 118 };
+            img.SetBinding(Image.SourceProperty, new Binding(nameof(EntryRow.Image)));
+            var imgWrap = new Grid { HeightRequest = 118, BackgroundColor = Theme.ImgPlaceholder };
+            imgWrap.Add(img);
+
+            var name = new Label { FontFamily = Ui.Display, FontSize = Ui.S(17), LineHeight = 1.12, TextColor = Theme.TextPrimary };
+            name.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Title)));
+            var meta = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextSecondary };
+            meta.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Meta)));
+            var info = new VerticalStackLayout { Spacing = 5, Padding = new Thickness(12, 11, 12, 14) };
+            info.Add(name); info.Add(meta);
+
+            var colc = new VerticalStackLayout { Spacing = 0 };
+            colc.Add(imgWrap); colc.Add(info);
+
+            return new Border
+            {
+                Content = colc, BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1,
+                StrokeShape = new RoundRectangle { CornerRadius = 14 }, Padding = 0, Shadow = Theme.CardShadow()
+            };
+        }
+
+        private async void OnSelectedCard(object? sender, SelectionChangedEventArgs e)
+        {
+            if (e.CurrentSelection.FirstOrDefault() is not EntryRow r) return;
+            _grid.SelectedItem = null;
+            AppSettings.Tap();
+            if (r.Data is Dinosaur d) await Nav.OpenDino(d);
+            else if (r.Data is SpaceObject s) await Nav.OpenSpace(s);
+        }
+
         private void Refresh()
         {
             string q = Retriever.Normalize(_query);
-            var items = new List<(string, string, string, Action)>();
+            var next = new List<EntryRow>();
 
             if (_domain == "Dinosaurs")
-            {
                 foreach (var d in DinoData.All.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
                 {
                     if (!MatchesDinoCategory(d)) continue;
                     if (!Match(q, d.Name, d.Aliases)) continue;
-                    var dd = d;
-                    items.Add((d.ImageFile, d.Name, d.Era, async () => await Nav.OpenDino(dd)));
+                    next.Add(new EntryRow { Image = d.ImageFile, Title = d.Name, Meta = d.Era, Data = d });
                 }
-            }
             else
-            {
                 foreach (var s in SpaceData.All.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
                 {
                     if (_category != "" && s.Category != _category) continue;
                     if (!Match(q, s.Name, s.Aliases)) continue;
-                    var ss = s;
-                    items.Add((s.ImageFile, s.Name, s.TypeLabel, async () => await Nav.OpenSpace(ss)));
+                    next.Add(new EntryRow { Image = s.ImageFile, Title = s.Name, Meta = s.TypeLabel, Data = s });
                 }
-            }
 
-            _grid.Children.Clear();
-            _grid.Add(EntryCards.TwoColumn(items));
-            _count.Text = items.Count == 1 ? "1 entry" : $"{items.Count} entries";
+            _items.Clear();
+            foreach (var r in next) _items.Add(r);
+            _count.Text = next.Count == 1 ? "1 entry" : $"{next.Count} entries";
         }
 
         private bool MatchesDinoCategory(Dinosaur d)
@@ -146,7 +172,6 @@ namespace dinospace.Views
             };
         }
 
-        // Names and nicknames only, same as the Search tab.
         private static bool Match(string q, string name, string[] aliases)
         {
             if (string.IsNullOrEmpty(q)) return true;

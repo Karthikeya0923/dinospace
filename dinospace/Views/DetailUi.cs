@@ -140,11 +140,13 @@ namespace dinospace.Views
         // Floating over the hero: back left, bookmark right — white circles.
         public static View TopBar(bool saved, Action onBack, Action onSave, out Label saveIcon)
         {
-            var back = RoundIcon(Ui.IconBack, Theme.TextPrimary);
+            var back = RoundIcon(Ui.IconBack, Colors.White);
             Ui.OnTap(back, (_, _) => onBack(), haptic: false);
             Ui.Describe(back, "Go back");
 
-            saveIcon = Ui.Icon(saved ? Ui.IconSavedFill : Ui.IconSaved, 22, saved ? Theme.Accent : Theme.TextPrimary);
+            // Icons sit on a dark scrim circle, so white/gold always reads on
+            // top of the hero photo in both light and dark themes.
+            saveIcon = Ui.Icon(saved ? Ui.IconSavedFill : Ui.IconSaved, 22, saved ? Theme.Accent : Colors.White);
             var saveBtn = RoundWrap(saveIcon);
             Ui.OnTap(saveBtn, (_, _) => onSave());
             Ui.Describe(saveBtn, saved ? "Remove bookmark" : "Save to bookmarks");
@@ -164,10 +166,9 @@ namespace dinospace.Views
         {
             Content = content,
             WidthRequest = 42, HeightRequest = 42,
-            BackgroundColor = Colors.White,
+            BackgroundColor = Color.FromArgb("#8A000000"),
             Stroke = Colors.Transparent,
-            StrokeShape = new RoundRectangle { CornerRadius = 21 },
-            Shadow = Theme.CardShadow()
+            StrokeShape = new RoundRectangle { CornerRadius = 21 }
         };
 
         public static View AskNovaButton(string name)

@@ -13,6 +13,13 @@ namespace dinospace
         ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
     public class MainActivity : MauiAppCompatActivity
     {
+        protected override void OnCreate(Bundle? savedInstanceState)
+        {
+            base.OnCreate(savedInstanceState);
+            // Paint the window the theme background so nothing flashes white.
+            try { ThemeFx.SetWindowBackground(global::dinospace.Theme.Bg); } catch { }
+        }
+
         // Finger-tracking tab pager, ViewPager-style, implemented at the
         // activity level (MAUI gesture recognizers never fire over
         // scrollable content). Touches pass through untouched until the

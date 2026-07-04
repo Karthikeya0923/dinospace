@@ -171,7 +171,7 @@ namespace dinospace.Views
 
         private Grid BuildInput()
         {
-            _entry = new Entry { Placeholder = "Ask about dinosaurs or space...", BackgroundColor = Colors.Transparent, ReturnType = ReturnType.Send };
+            _entry = new Entry { Placeholder = "Ask about dinosaurs or space...", BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Send };
             _entry.Completed += (_, _) => OnSend();
             var entryWrap = new Border
             {
@@ -373,12 +373,14 @@ namespace dinospace.Views
 
         private void RevealTick()
         {
-            if (_revealWords == null || _revealIndex >= _revealWords.Length) { CompleteReveal(); return; }
+            // A Clear can null things out from under a queued tick.
+            if (!_revealActive || _revealWords == null || _revealLabel == null) { _revealTimer?.Stop(); return; }
+            if (_revealIndex >= _revealWords.Length) { CompleteReveal(); return; }
             _revealSb.Append(_revealWords[_revealIndex]);
             if (_revealIndex < _revealWords.Length - 1) _revealSb.Append(' ');
             _revealIndex++;
-            if (_revealLabel != null) _revealLabel.Text = _revealSb.ToString();
-            _ = _chatScroll.ScrollToAsync(0, _chatStack.Height, false);
+            _revealLabel.Text = _revealSb.ToString();
+            try { _ = _chatScroll.ScrollToAsync(0, _chatStack.Height, false); } catch { }
         }
 
         private void FinishRevealNow()
@@ -533,8 +535,13 @@ namespace dinospace.Views
 
         private async Task ScrollToEnd()
         {
-            await Task.Delay(40);
-            await _chatScroll.ScrollToAsync(0, _chatStack.Height, true);
+            try
+            {
+                await Task.Delay(40);
+                if (_chatScroll != null && _chatStack != null)
+                    await _chatScroll.ScrollToAsync(0, _chatStack.Height, true);
+            }
+            catch { }
         }
 
         private IDispatcherTimer MakeTimer(TimeSpan interval, Action tick)
@@ -552,10 +559,10 @@ namespace dinospace.Views
             _overlayBody = new Label { FontFamily = Ui.Fonts, FontSize = 14.5, LineHeight = 1.45, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center };
             _overlayStatus = new Label { FontFamily = Ui.Fonts, FontSize = 13, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center };
 
-            _progress = new ProgressBar { Progress = 0, HeightRequest = 8 };
-            _pauseLabel = new Label { Text = "Pause", FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.AccentNova };
+            _progress = new ProgressBar { Progress = 0, HeightRequest = 8, ProgressColor = Theme.Accent, BackgroundColor = Theme.SurfaceAlt };
+            _pauseLabel = new Label { Text = "Pause", FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.Accent };
             Ui.OnTap(_pauseLabel, (_, _) => OnPauseResume());
-            var stopLabel = new Label { Text = "Stop", FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.Danger };
+            var stopLabel = new Label { Text = "Stop", FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary };
             Ui.OnTap(stopLabel, (_, _) => OnStop());
             _pauseRow = new HorizontalStackLayout { Spacing = 24, HorizontalOptions = LayoutOptions.Center, Children = { _pauseLabel, stopLabel } };
 

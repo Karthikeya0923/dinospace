@@ -49,7 +49,7 @@ namespace dinospace.Views
                 stack.Add(card);
             }
 
-            var body = Nav.DetailScaffold("Collections", new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never }, Theme.Accent, out _);
+            var body = Nav.DetailScaffold("", new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never }, Theme.Accent, out _);
             Content = new Grid { BackgroundColor = Theme.Bg, Children = { body } };
             SwipeBack.Attach(this);
         }

@@ -92,16 +92,31 @@ namespace dinospace.Views
             return grid;
         }
 
-        // Swap the palette and rebuild the whole UI so every screen re-skins.
-        private void ToggleDarkMode(bool dark)
+        // Swap the palette and rebuild the UI with a Discord-style cross-fade
+        // instead of a jarring white flash.
+        private async void ToggleDarkMode(bool dark)
         {
             AppSettings.DarkMode = dark;
+            var window = Application.Current?.Windows.FirstOrDefault();
+            var current = window?.Page;
+
+            // Fade the current UI out.
+            if (current != null)
+            {
+                try { await current.FadeTo(0, 130, Easing.CubicOut); } catch { }
+            }
+
+            // Repaint the native window so the gap shows the target colour.
             Theme.Apply(dark);
+            ThemeFx.SetWindowBackground(Theme.Bg);
             if (Application.Current != null)
                 Application.Current.UserAppTheme = dark ? AppTheme.Dark : AppTheme.Light;
             NovaPage.ResetShared();
-            if (Application.Current?.Windows.Count > 0)
-                Application.Current.Windows[0].Page = new AppShell();
+
+            // Rebuild; RootPage fades itself in on appear.
+            RootPage.FadeInOnAppear = true;
+            if (window != null)
+                window.Page = new AppShell();
         }
 
         private View TextSizeRow()

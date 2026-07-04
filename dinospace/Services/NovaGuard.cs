@@ -47,6 +47,19 @@ namespace dinospace.Services
             if (q is "bye" or "goodbye" or "see you" or "good night" or "goodnight" or "cya")
                 return "See you later! Come back any time you're curious about dinosaurs or space.";
 
+            // Short acknowledgements ("ok", "cool", "nice") get an instant, on
+            // -brand reply so trivial one-word messages never bother the model.
+            string[] acks =
+            {
+                "ok", "okay", "okie", "k", "kk", "cool", "nice", "great", "awesome",
+                "wow", "woah", "whoa", "lol", "lmao", "haha", "hah", "oh", "ohh",
+                "got it", "i see", "makes sense", "interesting", "neat", "sweet",
+                "amazing", "fair", "true", "right", "yeah", "yea", "yep", "yup",
+                "no way", "damn", "crazy", "fr", "bet", "alright", "aight"
+            };
+            if (acks.Contains(q))
+                return "Glad you think so! What else would you like to know about dinosaurs or space?";
+
             if (Phrase(q, "thank you") || Word(q, "thanks") || Word(q, "thx") || Word(q, "ty"))
                 return "You're welcome! Want to ask another dinosaur or space question?";
 

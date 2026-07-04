@@ -76,7 +76,7 @@ namespace dinospace.Views
             bool nowSaved = SavedStore.ToggleSpace(_s.Name);
             AppSettings.LongPress();
             _saveIcon.Text = nowSaved ? Ui.IconSavedFill : Ui.IconSaved;
-            _saveIcon.TextColor = nowSaved ? Theme.Accent : Theme.TextPrimary;
+            _saveIcon.TextColor = nowSaved ? Theme.Accent : Microsoft.Maui.Graphics.Colors.White;
         }
     }
 }

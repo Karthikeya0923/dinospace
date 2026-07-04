@@ -90,7 +90,7 @@ namespace dinospace.Views
             bool nowSaved = SavedStore.ToggleDino(_d.Name);
             AppSettings.LongPress();
             _saveIcon.Text = nowSaved ? Ui.IconSavedFill : Ui.IconSaved;
-            _saveIcon.TextColor = nowSaved ? Theme.Accent : Theme.TextPrimary;
+            _saveIcon.TextColor = nowSaved ? Theme.Accent : Microsoft.Maui.Graphics.Colors.White;
         }
 
         private static double Num(string s)

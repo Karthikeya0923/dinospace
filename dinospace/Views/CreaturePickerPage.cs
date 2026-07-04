@@ -25,7 +25,7 @@ namespace dinospace.Views
 
         private void Build()
         {
-            var search = new SearchBar { Placeholder = "Search creatures...", BackgroundColor = Colors.Transparent };
+            var search = new SearchBar { Placeholder = "Search creatures...", BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint };
             search.TextChanged += (_, e) => Filter(e.NewTextValue ?? "");
             var searchWrap = new Border
             {

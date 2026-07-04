@@ -46,7 +46,7 @@ namespace dinospace.Views
             stack.Add(_featuredCard);
 
             // Reserved for the upcoming "Scan Sky" feature.
-            stack.Add(Ui.SectionHeader("Visible right now"));
+            stack.Add(Ui.SectionHeader("Your sky"));
             stack.Add(VisibleRightNowPlaceholder());
 
             // Dinosaurs
