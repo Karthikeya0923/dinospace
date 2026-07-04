@@ -28,12 +28,6 @@ namespace dinospace.Services
             _ => 1.0,
         };
 
-        public static bool Onboarded
-        {
-            get => Preferences.Get("onboarded_v2", false);
-            set => Preferences.Set("onboarded_v2", value);
-        }
-
         // A subtle tap, gated by the user's preference.
         public static void Tap()
         {

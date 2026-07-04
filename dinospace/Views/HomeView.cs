@@ -6,19 +6,18 @@ using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
-    // The landing tab: a warm welcome, the day's featured creature and object,
-    // quick jumps into the app, live progress, and a rotating fact.
+    // The landing tab: app logo, the day's featured creature/object, quick
+    // jumps into the app, live progress, and a rotating fact.
     public class HomeView : ContentView, ITabView
     {
         private readonly Action<int> _goTab;
 
-        private Label _levelChip = null!;
-        private Label _streakValue = null!, _seenValue = null!, _xpValue = null!;
+        private Label _streakValue = null!, _seenValue = null!, _savedValue = null!;
         private Label _factLabel = null!;
         private Border _featuredCard = null!;
         private bool _showDino = true;
-        private Dinosaur _dino = null!;
-        private SpaceObject _space = null!;
+        private readonly Dinosaur _dino;
+        private readonly SpaceObject _space;
 
         public HomeView(Action<int> goTab)
         {
@@ -37,33 +36,18 @@ namespace dinospace.Views
 
         private void Build()
         {
-            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(16, 20, 16, 24) };
+            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(16, 16, 16, 24) };
 
-            // ----- header -----
-            var hi = new VerticalStackLayout { Spacing = 2 };
-            hi.Add(new Label { Text = "Welcome to", FontFamily = Ui.Fonts, FontSize = 14, TextColor = Theme.TextSecondary });
-            var wordmark = new HorizontalStackLayout { Spacing = 0 };
-            wordmark.Add(new Label { Text = "Dino", FontFamily = Ui.Display, FontSize = 34, TextColor = Theme.AccentDino });
-            wordmark.Add(new Label { Text = "Space", FontFamily = Ui.Display, FontSize = 34, TextColor = Theme.AccentSpace });
-            hi.Add(wordmark);
-
-            _levelChip = new Label { FontFamily = Ui.Fonts, FontSize = 12, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent };
-            var levelBadge = new Border
+            // ----- logo header (friend-supplied art; blank until added) -----
+            var logo = new Image
             {
-                Content = _levelChip,
-                BackgroundColor = Theme.AccentNova,
-                Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 12 },
-                Padding = new Thickness(12, 6),
-                VerticalOptions = LayoutOptions.Center
+                Source = "mainlogo.png",
+                Aspect = Aspect.AspectFit,
+                HeightRequest = 96,
+                HorizontalOptions = LayoutOptions.Center
             };
-
-            var header = new Grid();
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            header.Add(hi, 0, 0);
-            header.Add(levelBadge, 1, 0);
-            stack.Add(header);
+            Ui.Describe(logo, "DinoSpace");
+            stack.Add(logo);
 
             // ----- featured of the day -----
             _featuredCard = BuildFeatured();
@@ -104,28 +88,19 @@ namespace dinospace.Views
             var textCol = new VerticalStackLayout { Spacing = 3 };
             textCol.Add(tag); textCol.Add(name); textCol.Add(sub);
 
-            var openBtn = new Label { Text = "Open  ›", FontFamily = Ui.Fonts, FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = Theme.AccentDino };
-            var flipBtn = new Label { Text = "Flip ⇄", FontFamily = Ui.Fonts, FontSize = 13, TextColor = Theme.TextSecondary };
-            var actions = new Grid();
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            actions.Add(openBtn, 0, 0);
-            actions.Add(flipBtn, 1, 0);
+            // Tapping the card opens the entry; Flip switches dino <-> space.
+            var flipBtn = new Label { Text = "Flip ⇄", FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, HorizontalOptions = LayoutOptions.End };
             Ui.OnTap(flipBtn, (_, _) => { _showDino = !_showDino; RefreshFeatured(); });
 
             var col = new VerticalStackLayout { Spacing = 0 };
             col.Add(textCol);
             col.Add(imgWrap);
-            col.Add(actions);
+            col.Add(flipBtn);
 
             var card = new Border
             {
                 Content = col,
-                Background = new LinearGradientBrush(new GradientStopCollection
-                {
-                    new GradientStop(Color.FromArgb("#2A1E10"), 0f),
-                    new GradientStop(Theme.Surface, 1f)
-                }, new Point(0, 0), new Point(1, 1)),
+                Background = Grad("#2A1E10"),
                 Stroke = Theme.HairlineSoft,
                 StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 20 },
@@ -137,12 +112,11 @@ namespace dinospace.Views
                 else await Nav.OpenSpace(_space);
             });
 
-            // stash references for refresh
-            card.BindingContext = new FeaturedRefs(tag, name, sub, img, openBtn, card);
+            card.BindingContext = new FeaturedRefs(tag, name, sub, img, card);
             return card;
         }
 
-        private record FeaturedRefs(Label Tag, Label Name, Label Sub, Image Img, Label Open, Border Card);
+        private record FeaturedRefs(Label Tag, Label Name, Label Sub, Image Img, Border Card);
 
         private void RefreshFeatured()
         {
@@ -151,14 +125,14 @@ namespace dinospace.Views
             {
                 r.Tag.Text = "DINOSAUR OF THE DAY"; r.Tag.TextColor = Theme.AccentDino;
                 r.Name.Text = _dino.Name; r.Sub.Text = _dino.ShortDescription;
-                r.Img.Source = _dino.ImageFile; r.Open.TextColor = Theme.AccentDino;
+                r.Img.Source = _dino.ImageFile;
                 r.Card.Background = Grad("#2A1E10");
             }
             else
             {
                 r.Tag.Text = "SPACE OBJECT OF THE DAY"; r.Tag.TextColor = Theme.AccentSpace;
                 r.Name.Text = _space.Name; r.Sub.Text = _space.ShortDescription;
-                r.Img.Source = _space.ImageFile; r.Open.TextColor = Theme.AccentSpace;
+                r.Img.Source = _space.ImageFile;
                 r.Card.Background = Grad("#1B2050");
             }
         }
@@ -177,35 +151,27 @@ namespace dinospace.Views
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            grid.Add(ActionCard("Dinosaurs", $"{DinoData.All.Count} creatures", Theme.AccentDino, () => { ExploreView.RequestSegment(1); _goTab(1); }), 0, 0);
-            grid.Add(ActionCard("Space", $"{SpaceData.All.Count} objects", Theme.AccentSpace, () => { ExploreView.RequestSegment(2); _goTab(1); }), 1, 0);
-            grid.Add(ActionCard("Ask Nova AI", "Your offline guide", Theme.AccentNova, () => _goTab(2)), 0, 1);
-            grid.Add(ActionCard("Play & Quiz", "Test yourself", Theme.AccentDino, () => _goTab(3)), 1, 1);
+            grid.Add(ActionCard("Dinosaurs", "dinopedialogo.png", () => { ExploreView.RequestSegment(1); _goTab(1); }), 0, 0);
+            grid.Add(ActionCard("Space", "spacepedialogo.png", () => { ExploreView.RequestSegment(2); _goTab(1); }), 1, 0);
+            grid.Add(ActionCard("Ask Nova AI", "askailogo.png", () => _goTab(2)), 0, 1);
+            grid.Add(ActionCard("Play & Quiz", "quizlogo.png", () => _goTab(3)), 1, 1);
             return grid;
         }
 
-        private Border ActionCard(string title, string sub, Color accent, Action onTap)
+        // Square: friend-supplied logo image on top, title below. Nothing else.
+        private Border ActionCard(string title, string image, Action onTap)
         {
-            var dot = new Border
+            var img = new Image
             {
-                WidthRequest = 34, HeightRequest = 34,
-                BackgroundColor = Ui.MultiplyAlpha(accent, 0.18f),
-                Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 10 },
-                Content = new Border
-                {
-                    WidthRequest = 14, HeightRequest = 14,
-                    BackgroundColor = accent,
-                    Stroke = Colors.Transparent,
-                    StrokeShape = new RoundRectangle { CornerRadius = 5 },
-                    HorizontalOptions = LayoutOptions.Center,
-                    VerticalOptions = LayoutOptions.Center
-                }
+                Source = image,
+                Aspect = Aspect.AspectFit,
+                HeightRequest = 64,
+                HorizontalOptions = LayoutOptions.Center
             };
-            var col = new VerticalStackLayout { Spacing = 8 };
-            col.Add(dot);
-            col.Add(new Label { Text = title, FontFamily = Ui.Display, FontSize = 16, TextColor = Theme.TextPrimary });
-            col.Add(new Label { Text = sub, FontFamily = Ui.Fonts, FontSize = 12, TextColor = Theme.TextSecondary });
+
+            var col = new VerticalStackLayout { Spacing = 10 };
+            col.Add(img);
+            col.Add(new Label { Text = title, FontFamily = Ui.Display, FontSize = 16, TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center });
 
             var card = new Border
             {
@@ -214,9 +180,10 @@ namespace dinospace.Views
                 Stroke = Theme.HairlineSoft,
                 StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 16 },
-                Padding = new Thickness(14)
+                Padding = new Thickness(14, 16)
             };
             Ui.OnTap(card, (_, _) => onTap());
+            Ui.Describe(card, title);
             return card;
         }
 
@@ -229,17 +196,17 @@ namespace dinospace.Views
 
             _streakValue = StatNumber();
             _seenValue = StatNumber();
-            _xpValue = StatNumber();
-            grid.Add(StatTile("Day streak", _streakValue, Theme.AccentDino), 0, 0);
-            grid.Add(StatTile("Entries seen", _seenValue, Theme.AccentSpace), 1, 0);
-            grid.Add(StatTile("XP earned", _xpValue, Theme.AccentNova), 2, 0);
+            _savedValue = StatNumber();
+            grid.Add(StatTile("Day streak", _streakValue), 0, 0);
+            grid.Add(StatTile("Entries seen", _seenValue), 1, 0);
+            grid.Add(StatTile("Bookmarks", _savedValue), 2, 0);
             return grid;
         }
 
         private Label StatNumber() => new()
         { FontFamily = Ui.Display, FontSize = 24, TextColor = Theme.TextPrimary };
 
-        private Border StatTile(string label, Label value, Color accent)
+        private Border StatTile(string label, Label value)
         {
             var col = new VerticalStackLayout { Spacing = 2, HorizontalOptions = LayoutOptions.Center };
             col.Add(value);
@@ -278,10 +245,9 @@ namespace dinospace.Views
 
         private void RefreshProgress()
         {
-            _levelChip.Text = $"Level {StatsStore.Level()}";
             _streakValue.Text = StatsStore.Streak().ToString();
             _seenValue.Text = (StatsStore.DinosSeen() + StatsStore.SpaceSeen()).ToString();
-            _xpValue.Text = StatsStore.Xp().ToString();
+            _savedValue.Text = SavedStore.Count.ToString();
         }
     }
 }

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
@@ -13,8 +11,9 @@ namespace dinospace.Views
     // look identical in structure and only differ in content.
     public static class DetailUi
     {
-        // Full-bleed hero: image, a dark gradient scrim, and overlaid title.
-        public static View Hero(string image, string title, string pronunciation, IEnumerable<(string text, Color accent)> chips, Color accent)
+        // Full-bleed hero: image + a dark gradient scrim + overlaid title.
+        // No chips overlaid — the image is the star.
+        public static View Hero(string image, string title, string pronunciation)
         {
             var img = new Image { Source = image, Aspect = Aspect.AspectFill, HorizontalOptions = LayoutOptions.Fill, VerticalOptions = LayoutOptions.Fill };
             Ui.Describe(img, title);
@@ -24,33 +23,27 @@ namespace dinospace.Views
                 Background = new LinearGradientBrush(new GradientStopCollection
                 {
                     new GradientStop(Colors.Transparent, 0f),
-                    new GradientStop(Color.FromArgb("#33060A12"), 0.5f),
+                    new GradientStop(Color.FromArgb("#33060A12"), 0.55f),
                     new GradientStop(Color.FromArgb("#F2060A12"), 1f),
                 }, new Point(0, 0), new Point(0, 1)),
                 Stroke = Colors.Transparent,
                 InputTransparent = true
             };
 
-            var chipRow = new HorizontalStackLayout { Spacing = 6 };
-            foreach (var (text, ac) in chips)
-                chipRow.Add(Ui.TintChip(text.ToUpperInvariant(), ac));
-
             var name = new Label { Text = title, FontFamily = Ui.Display, FontSize = Ui.S(30), TextColor = Theme.TextPrimary };
             var pron = new Label { Text = pronunciation, FontFamily = Ui.Fonts, FontSize = Ui.S(13), FontAttributes = FontAttributes.Italic, TextColor = Theme.TextSecondary };
 
-            var overlay = new VerticalStackLayout { Spacing = 8, Padding = new Thickness(16, 0, 16, 16), VerticalOptions = LayoutOptions.End };
-            overlay.Add(chipRow);
+            var overlay = new VerticalStackLayout { Spacing = 4, Padding = new Thickness(16, 0, 16, 16), VerticalOptions = LayoutOptions.End };
             overlay.Add(name);
             if (!string.IsNullOrWhiteSpace(pronunciation)) overlay.Add(pron);
 
-            var grid = new Grid { HeightRequest = 300, BackgroundColor = Theme.ImgPlaceholder };
+            var grid = new Grid { HeightRequest = 320, BackgroundColor = Theme.ImgPlaceholder };
             grid.Add(img);
             grid.Add(scrim);
             grid.Add(overlay);
             return grid;
         }
 
-        // A small stat pill (label above, value below) for the horizontal row.
         public static View StatChip(string label, string value, Color accent)
         {
             var col = new VerticalStackLayout { Spacing = 2 };
@@ -77,7 +70,6 @@ namespace dinospace.Views
             return new ScrollView { Orientation = ScrollOrientation.Horizontal, HorizontalScrollBarVisibility = ScrollBarVisibility.Never, Content = row };
         }
 
-        // A titled text section inside a card.
         public static View Section(string title, string body, Color accent)
         {
             if (string.IsNullOrWhiteSpace(body)) return new ContentView { IsVisible = false };
@@ -87,7 +79,6 @@ namespace dinospace.Views
             return Card(col);
         }
 
-        // Fun facts rendered as accent-dotted lines.
         public static View FunFacts(string funFacts, Color accent)
         {
             if (string.IsNullOrWhiteSpace(funFacts)) return new ContentView { IsVisible = false };
@@ -132,8 +123,8 @@ namespace dinospace.Views
             Padding = new Thickness(16)
         };
 
-        // Floating top bar over the hero: back, save, share.
-        public static View TopBar(bool saved, Action onBack, Action onSave, Action onShare, out Label saveIcon)
+        // Floating top bar over the hero: back on the left, bookmark on the right.
+        public static View TopBar(bool saved, Action onBack, Action onSave, out Label saveIcon)
         {
             var back = RoundGlyph("‹", 30);
             Ui.OnTap(back, (_, _) => onBack(), haptic: false);
@@ -151,20 +142,12 @@ namespace dinospace.Views
             Ui.OnTap(saveBtn, (_, _) => onSave());
             Ui.Describe(saveBtn, saved ? "Remove bookmark" : "Save to bookmarks");
 
-            var share = RoundGlyph("↗", 20);
-            Ui.OnTap(share, (_, _) => onShare());
-            Ui.Describe(share, "Share");
-
-            var right = new HorizontalStackLayout { Spacing = 8, HorizontalOptions = LayoutOptions.End };
-            right.Add(saveBtn);
-            right.Add(share);
-
             var grid = new Grid { Padding = new Thickness(12, 10) };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             grid.Add(back, 0, 0);
-            grid.Add(right, 2, 0);
+            grid.Add(saveBtn, 2, 0);
             return grid;
         }
 
@@ -217,7 +200,7 @@ namespace dinospace.Views
             return btn;
         }
 
-        // Related entries strip (same domain).
+        // Related entries strip (same domain). No outline on the thumbnails.
         public static View Related(IEnumerable<(string image, string name, object data)> items, Color accent)
         {
             var row = new HorizontalStackLayout { Spacing = 12 };
@@ -227,7 +210,7 @@ namespace dinospace.Views
                 var wrap = new Border
                 {
                     Content = img, WidthRequest = 120, HeightRequest = 84,
-                    BackgroundColor = Theme.ImgPlaceholder, Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                    BackgroundColor = Theme.ImgPlaceholder, Stroke = Colors.Transparent,
                     StrokeShape = new RoundRectangle { CornerRadius = 12 }
                 };
                 var label = new Label { Text = name, FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextSecondary, MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation, WidthRequest = 120 };
@@ -243,11 +226,6 @@ namespace dinospace.Views
             section.Add(TitleRow("You might also like", accent));
             section.Add(new ScrollView { Orientation = ScrollOrientation.Horizontal, HorizontalScrollBarVisibility = ScrollBarVisibility.Never, Content = row });
             return section;
-        }
-
-        public static async Task ShareText(string text)
-        {
-            try { await Share.Default.RequestAsync(new ShareTextRequest { Text = text, Title = "DinoSpace" }); } catch { }
         }
     }
 }

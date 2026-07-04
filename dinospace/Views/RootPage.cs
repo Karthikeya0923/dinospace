@@ -49,26 +49,23 @@ namespace dinospace.Views
                 _content.Add(view);
             }
 
+            // Swipe left/right to move between tabs (like the old carousel).
+            var swipeLeft = new SwipeGestureRecognizer { Direction = SwipeDirection.Left };
+            swipeLeft.Swiped += (_, _) => GoToTab(_current + 1);
+            var swipeRight = new SwipeGestureRecognizer { Direction = SwipeDirection.Right };
+            swipeRight.Swiped += (_, _) => GoToTab(_current - 1);
+            _content.GestureRecognizers.Add(swipeLeft);
+            _content.GestureRecognizers.Add(swipeRight);
+
             var nav = BuildNav();
 
             var root = new Grid { BackgroundColor = Theme.Bg };
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            // Gradient backdrop sits behind the whole app.
-            var bg = new Border
-            {
-                Background = new LinearGradientBrush(
-                    new GradientStopCollection
-                    {
-                        new GradientStop(Color.FromArgb("#0B1224"), 0f),
-                        new GradientStop(Color.FromArgb("#070B14"), 0.5f),
-                        new GradientStop(Color.FromArgb("#05070E"), 1f),
-                    },
-                    new Point(0, 0), new Point(0, 1)),
-                Stroke = Colors.Transparent,
-                InputTransparent = true
-            };
+            // The app-wide background image (friend-supplied). Falls back to the
+            // base colour if the file isn't present.
+            var bg = Backdrop.For("mainbackground.png", 0.25, 0.55);
             Grid.SetRowSpan(bg, 2);
 
             root.Add(bg);

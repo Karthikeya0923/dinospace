@@ -69,14 +69,29 @@ pipeline (`Services/`):
   the `novasaur` repo for Kotlin changes to take effect on-device.)
 
 ## New features
-- Dino battles (composite winner from size, weight, bite force, speed, danger).
-- Curated collections with ranked medals.
-- Share fun facts / entries to any app.
-- 3-slide first-launch onboarding.
+- Dino battles: searchable, alphabetical creature picker; winner computed from
+  measurable stats only (length, weight, bite force, speed); reset to re-pick.
+- Curated collections with ranked medals — temperatures shown in "Hottest to
+  Coldest", real sizes in "Cosmic Giants".
 - Haptic feedback on saves and interactions (toggleable).
 - Accessibility: four text-size options and TalkBack/VoiceOver descriptions.
-- XP, levels, daily streaks, and a personal stats summary.
+- Daily streaks and a personal stats summary (no XP/levels — cut by design).
+- Swipe left/right anywhere to move between the five tabs.
 
-## Deferred to v2.1
+## NovaSaur streaming (the "stuck on thinking" fix)
+The chat now uses the engine's streaming API (`AskStream`): tokens render live
+into the bubble the moment generation starts, with a rotating status while the
+prompt is processed, a 75s first-token watchdog, a 150s total cap, and an
+automatic fallback to the blocking `Ask` call if streaming ever fails. Send is
+disabled until the model finishes loading so taps can't wedge the flow.
+
+## Art integration (friend-supplied images)
+- `mainlogo.png` — Home header; `mainbackground.png` — app-wide backdrop.
+- `dinobackground.png` / `spacebackground.png` — dino and space entry pages.
+- `dinopedialogo.png`, `spacepedialogo.png`, `askailogo.png`, `quizlogo.png` —
+  the four Home squares.
+All layers degrade gracefully: missing art simply shows the dark theme.
+
+## Deferred to v2.0
 - **Scan Sky** (point-your-camera feature) — intentionally left for a later
   update.

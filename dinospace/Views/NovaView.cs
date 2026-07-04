@@ -23,7 +23,6 @@ namespace dinospace.Views
     {
         private const string HistoryKey = "nova_history_v2";
         private const int MaxSaved = 60;
-        private static readonly TimeSpan AnswerTimeout = TimeSpan.FromSeconds(90);
 
         private const string Welcome =
             "Hey, I'm NovaSaur! Ask me anything about dinosaurs or space — like how big a T. Rex was, or why Mars is red. I run right here on your device.";
@@ -61,15 +60,22 @@ namespace dinospace.Views
         private int _gen;
         private bool _chatStarted;
         private bool _modelInited;
+        private bool _modelReady;
 
-        // reveal
+        // live stream bubble
+        private Label? _streamLabel;
+        private View? _thinking;
+        private Label? _thinkingLabel;
+        private IDispatcherTimer? _thinkingTimer;
+        private int _thinkingTicks;
+
+        // typewriter reveal (instant replies only)
         private Label? _revealLabel;
         private string[]? _revealWords;
         private int _revealIndex;
         private bool _revealActive;
         private readonly StringBuilder _revealSb = new();
         private IDispatcherTimer? _revealTimer;
-        private View? _thinking;
 
         public NovaView() => Build();
 
@@ -195,14 +201,15 @@ namespace dinospace.Views
             if (!NovaSaurService.SupportedPlatform)
             {
                 if (_messages.Count == 0) AddNova("NovaSaur runs on Android right now. The rest of DinoSpace works everywhere!");
-                _sendBtn.IsEnabled = false;
+                SetSendEnabled(false);
                 _suggestionScroll.IsVisible = false;
                 return;
             }
 
             if (!_modelInited && !NovaSaurService.IsReady)
             {
-                var status = AddStatus("NovaSaur is waking up… first time takes a moment.");
+                SetSendEnabled(false);
+                var status = AddStatus("NovaSaur is waking up… first time takes a minute.");
                 try { await NovaSaurService.InitAsync(); }
                 catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova init: " + ex); }
                 Remove(status);
@@ -212,19 +219,27 @@ namespace dinospace.Views
             if (!NovaSaurService.IsReady)
             {
                 AddNova("I couldn't start up — your device may be low on free memory. Try closing other apps and reopening this tab.");
-                _sendBtn.IsEnabled = false;
+                SetSendEnabled(false);
                 _suggestionScroll.IsVisible = false;
                 return;
             }
 
+            _modelReady = true;
+            SetSendEnabled(true);
             if (_messages.Count == 0) AddNova(Welcome);
             ShowSuggestions();
             MaybeRunPending();
         }
 
+        private void SetSendEnabled(bool enabled)
+        {
+            _sendBtn.IsEnabled = enabled;
+            _sendBtn.Opacity = enabled ? 1 : 0.45;
+        }
+
         private void MaybeRunPending()
         {
-            if (_pending == null || _busy || !NovaSaurService.IsReady) return;
+            if (_pending == null || _busy || !_modelReady) return;
             string q = _pending; _pending = null;
             AddUser(q);
             Answer(q);
@@ -233,6 +248,7 @@ namespace dinospace.Views
         private void OnSend()
         {
             if (_busy) { StopGeneration(); return; }
+            if (!_modelReady) return;
             string q = (_entry.Text ?? "").Trim();
             if (q.Length == 0) return;
             _entry.Text = "";
@@ -245,44 +261,125 @@ namespace dinospace.Views
             _busy = true;
             _sendIcon.Text = "■";
             int myGen = ++_gen;
-            _thinking = AddStatus("NovaSaur is thinking…");
+            StartThinking();
             await ScrollToEnd();
 
             NovaTurn turn;
             try { turn = PromptBuilder.Build(question, _messages, _lastEntities); }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova prompt: " + ex); FinishThinking(myGen, NovaSaurService.ErrorMessage); return; }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova prompt: " + ex); FinishAnswer(myGen, NovaSaurService.ErrorMessage); return; }
 
             if (turn.Entities.Count > 0) _lastEntities = new List<string>(turn.Entities);
 
             if (turn.InstantReply != null)
             {
                 await Task.Delay(300);
-                FinishThinking(myGen, turn.InstantReply);
+                if (myGen != _gen) return;
+                StopThinking();
+                Reveal(turn.InstantReply); // typewriter for canned replies
                 return;
             }
 
             string answer;
-            try { answer = await NovaSaurService.AskAsync(turn.Prompt!, AnswerTimeout, CancellationToken.None); }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova ask: " + ex); answer = NovaSaurService.ErrorMessage; }
+            try
+            {
+                // Tokens stream in live; the bubble grows as the model writes.
+                answer = await NovaSaurService.AskAsync(
+                    turn.Prompt!,
+                    partial => MainThread.BeginInvokeOnMainThread(() => ShowPartial(myGen, partial)),
+                    CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Nova ask: " + ex);
+                answer = NovaSaurService.ErrorMessage;
+            }
 
             if (myGen != _gen) return;
-            FinishThinking(myGen, answer);
+            FinishAnswer(myGen, answer);
+        }
+
+        // First streamed text replaces the thinking status with a live bubble.
+        private void ShowPartial(int myGen, string partial)
+        {
+            if (myGen != _gen) return;
+            if (_streamLabel == null)
+            {
+                StopThinking();
+                _streamLabel = StartNovaBubble();
+            }
+            _streamLabel.Text = partial.TrimStart();
+            _ = _chatScroll.ScrollToAsync(0, _chatStack.Height, false);
+        }
+
+        private void FinishAnswer(int myGen, string finalAnswer)
+        {
+            if (myGen != _gen) return;
+            StopThinking();
+
+            if (_streamLabel != null)
+            {
+                // Swap the raw streamed text for the cleaned final answer.
+                _streamLabel.Text = finalAnswer;
+                _streamLabel = null;
+                _messages.Add(new ChatMessage { IsUser = false, Text = finalAnswer });
+                SaveHistory();
+                _busy = false;
+                _sendIcon.Text = "➤";
+                ShowSuggestions();
+                _ = ScrollToEnd();
+            }
+            else
+            {
+                Reveal(finalAnswer); // nothing streamed (fallback path) - type it out
+            }
         }
 
         private void StopGeneration()
         {
             if (_revealActive && _revealLabel != null) { FinishRevealNow(); return; }
             _gen++;
-            if (_thinking != null) { Remove(_thinking); _thinking = null; }
+            StopThinking();
+            // If text already streamed in, keep it as the answer.
+            if (_streamLabel != null)
+            {
+                string kept = (_streamLabel.Text ?? "").Trim();
+                if (kept.Length > 0) { _messages.Add(new ChatMessage { IsUser = false, Text = kept }); SaveHistory(); }
+                _streamLabel = null;
+            }
             _busy = false;
             _sendIcon.Text = "➤";
+            ShowSuggestions();
         }
 
-        private void FinishThinking(int myGen, string answer)
+        // ---------- thinking status ----------
+        private void StartThinking()
         {
-            if (myGen != _gen) return;
+            _thinkingTicks = 0;
+            var label = new Label { Text = "NovaSaur is thinking…", FontFamily = Ui.Fonts, FontSize = Ui.S(13), FontAttributes = FontAttributes.Italic, TextColor = Theme.TextSecondary, HorizontalOptions = LayoutOptions.Start };
+            _thinkingLabel = label;
+            _thinking = label;
+            _chatStack.Add(label);
+
+            // Reassure on long prompt-processing waits instead of looking hung.
+            _thinkingTimer ??= MakeTimer(TimeSpan.FromSeconds(8), () =>
+            {
+                _thinkingTicks++;
+                if (_thinkingLabel == null) return;
+                _thinkingLabel.Text = _thinkingTicks switch
+                {
+                    1 => "NovaSaur is thinking… reading up on your question.",
+                    2 => "Still thinking — big questions take a moment on-device…",
+                    _ => "Almost there — writing the answer…",
+                };
+            });
+            _thinkingTimer.Start();
+        }
+
+        private void StopThinking()
+        {
+            _thinkingTimer?.Stop();
+            _thinkingLabel = null;
             if (_thinking != null) { Remove(_thinking); _thinking = null; }
-            Reveal(answer);
         }
 
         // ---------- typewriter reveal ----------
@@ -394,9 +491,8 @@ namespace dinospace.Views
             if (string.IsNullOrWhiteSpace(text)) return;
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null) return;
-            string choice = await page.DisplayActionSheet(null, "Cancel", null, "Copy", "Share");
+            string choice = await page.DisplayActionSheet(null, "Cancel", null, "Copy");
             if (choice == "Copy") { try { await Clipboard.Default.SetTextAsync(text); } catch { } }
-            else if (choice == "Share") await DetailUi.ShareText(text);
         }
 
         // ---------- suggestions ----------
@@ -424,7 +520,8 @@ namespace dinospace.Views
             _gen++;
             _revealTimer?.Stop();
             _revealActive = false; _revealLabel = null; _revealWords = null;
-            if (_thinking != null) { Remove(_thinking); _thinking = null; }
+            _streamLabel = null;
+            StopThinking();
             _busy = false; _sendIcon.Text = "➤";
             _messages.Clear();
             _lastEntities.Clear();

@@ -28,14 +28,32 @@ namespace dinospace.Data
         public static readonly List<Collection> All = new()
         {
             new() { Id = "biggest", Title = "Biggest Creatures Ever", Subtitle = "Ranked by length, longest first", Domain = "Dino" },
-            new() { Id = "dangerous", Title = "Most Dangerous", Subtitle = "The deadliest hunters that ever lived", Domain = "Dino" },
             new() { Id = "speed", Title = "Speed Demons", Subtitle = "Fastest creatures, quickest first", Domain = "Dino" },
             new() { Id = "bite", Title = "Strongest Bites", Subtitle = "Ranked by bite force in PSI", Domain = "Dino" },
             new() { Id = "sea", Title = "Rulers of the Deep", Subtitle = "Giants of the ancient oceans", Domain = "Dino" },
-            new() { Id = "cretaceous", Title = "Neighbours of the Cretaceous", Subtitle = "Creatures that shared the same world", Domain = "Dino" },
             new() { Id = "planets", Title = "A Journey From the Sun", Subtitle = "The eight planets in order", Domain = "Space" },
             new() { Id = "cosmic", Title = "Cosmic Giants", Subtitle = "The largest objects in space", Domain = "Space" },
             new() { Id = "hottest", Title = "Hottest to Coldest", Subtitle = "Worlds ranked by temperature", Domain = "Space" },
+        };
+
+        // Approximate surface (or effective) temperatures for the ranking.
+        private static readonly Dictionary<string, string> TempC = new()
+        {
+            ["Sun"] = "5,500°C", ["Venus"] = "465°C", ["Mercury"] = "430°C (day)",
+            ["Earth"] = "15°C", ["Mars"] = "-60°C", ["Neptune"] = "-200°C", ["Pluto"] = "-230°C",
+        };
+
+        // Human-readable "size" for the cosmic giants ranking.
+        private static readonly Dictionary<string, string> CosmicSize = new()
+        {
+            ["Phoenix A*"] = "590 billion km wide",
+            ["Milky Way"] = "100,000 light-years wide",
+            ["Andromeda Galaxy"] = "220,000 light-years wide",
+            ["Betelgeuse"] = "700× the Sun's width",
+            ["Sagittarius A*"] = "24 million km wide",
+            ["Sun"] = "1.39 million km wide",
+            ["Jupiter"] = "139,820 km wide",
+            ["Saturn"] = "116,460 km wide",
         };
 
         public static Collection? ById(string id) => All.FirstOrDefault(c => c.Id == id);
@@ -46,8 +64,6 @@ namespace dinospace.Data
             {
                 case "biggest":
                     return RankDino(d => Num(d.Length), desc: true, d => d.Length);
-                case "dangerous":
-                    return RankDino(d => d.Strength, desc: true, d => $"Danger {d.Strength}/100");
                 case "speed":
                     return RankDino(d => Num(d.Speed), desc: true, d => d.Speed);
                 case "bite":
@@ -58,22 +74,18 @@ namespace dinospace.Data
                     return DinoData.All.Where(d => d.Category == "Sea")
                         .OrderByDescending(d => Num(d.Length))
                         .Select(d => Entry(d, d.Length)).ToList();
-                case "cretaceous":
-                    return DinoData.All.Where(d => d.Era.Contains("Cretaceous"))
-                        .OrderBy(d => d.Name)
-                        .Select(d => Entry(d, d.Era)).ToList();
                 case "planets":
                     var order = new[] { "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune" };
                     return order.Select(SpaceData.ByName).Where(s => s != null)
                         .Select(s => EntryS(s!, s!.Stat2Value)).ToList();
                 case "cosmic":
-                    var big = new[] { "Phoenix A*", "Sagittarius A*", "Milky Way", "Andromeda Galaxy", "Betelgeuse", "Sun", "Jupiter", "Saturn" };
+                    var big = new[] { "Phoenix A*", "Milky Way", "Andromeda Galaxy", "Betelgeuse", "Sagittarius A*", "Sun", "Jupiter", "Saturn" };
                     return big.Select(SpaceData.ByName).Where(s => s != null)
-                        .Select(s => EntryS(s!, s!.TypeLabel)).ToList();
+                        .Select(s => EntryS(s!, CosmicSize.GetValueOrDefault(s!.Name, s!.TypeLabel))).ToList();
                 case "hottest":
                     var hot = new[] { "Sun", "Venus", "Mercury", "Earth", "Mars", "Neptune", "Pluto" };
                     return hot.Select(SpaceData.ByName).Where(s => s != null)
-                        .Select(s => EntryS(s!, s!.TypeLabel)).ToList();
+                        .Select(s => EntryS(s!, TempC.GetValueOrDefault(s!.Name, "—"))).ToList();
                 default:
                     return new List<CollectionEntry>();
             }

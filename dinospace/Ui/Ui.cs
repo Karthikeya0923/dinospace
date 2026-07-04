@@ -168,7 +168,7 @@ namespace dinospace
             return OnTap(card, tapped);
         }
 
-        // Rounded thumbnail with a faint accent ring while the image loads.
+        // Rounded thumbnail. No outline — the image should stand on its own.
         public static Border Thumb(string image, double size, Color accent)
         {
             var img = new Image
@@ -184,8 +184,7 @@ namespace dinospace
                 WidthRequest = size,
                 HeightRequest = size,
                 BackgroundColor = Theme.ImgPlaceholder,
-                Stroke = MultiplyAlpha(accent, 0.4f),
-                StrokeThickness = 1,
+                Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 }
             };
         }

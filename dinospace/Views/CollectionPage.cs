@@ -30,7 +30,10 @@ namespace dinospace.Views
                 stack.Add(Row(rank++, e, accent));
 
             var content = Nav.DetailScaffold(c?.Title ?? "Collection", new ScrollView { Content = stack }, accent, out _);
-            Content = new Grid { BackgroundColor = Theme.Bg, Children = { content } };
+            var root = new Grid { BackgroundColor = Theme.Bg };
+            root.Add(Backdrop.For("mainbackground.png"));
+            root.Add(content);
+            Content = root;
         }
 
         private View Row(int rank, CollectionEntry e, Color accent)
@@ -54,7 +57,7 @@ namespace dinospace.Views
             var thumb = new Border
             {
                 Content = img, WidthRequest = 52, HeightRequest = 52,
-                BackgroundColor = Theme.ImgPlaceholder, Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                BackgroundColor = Theme.ImgPlaceholder, Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 12 }
             };
 

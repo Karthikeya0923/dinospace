@@ -2,21 +2,22 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
-    // Dino Battle: pick two creatures and reveal a winner from a composite of
-    // size, weight, bite force, speed, and danger rating.
+    // Dino Battle: pick two creatures (via a searchable list) and reveal a
+    // winner from a composite of size, weight, bite force, and speed. Filled
+    // slots are just images; use Reset to choose again.
     public class BattlePage : ContentPage
     {
         private Dinosaur? _a;
         private Dinosaur? _b;
         private Grid _arena = null!;
         private Border _fightBtn = null!;
+        private View _resetBtn = null!;
         private VerticalStackLayout _resultArea = null!;
 
         public BattlePage(Dinosaur? preselect)
@@ -47,11 +48,24 @@ namespace dinospace.Views
             Ui.OnTap(_fightBtn, (_, _) => Fight());
             stack.Add(_fightBtn);
 
+            var resetLabel = new Label { Text = "↺  Reset picks", FontFamily = Ui.Fonts, FontSize = Ui.S(14), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center };
+            _resetBtn = new Border
+            {
+                Content = resetLabel,
+                BackgroundColor = Colors.Transparent, Stroke = Theme.Hairline, StrokeThickness = 1,
+                StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(16, 12)
+            };
+            Ui.OnTap(_resetBtn, (_, _) => Reset());
+            stack.Add(_resetBtn);
+
             _resultArea = new VerticalStackLayout { Spacing = 12 };
             stack.Add(_resultArea);
 
             var content = Nav.DetailScaffold("Dino Battle", new ScrollView { Content = stack }, Theme.AccentDino, out _);
-            Content = new Grid { BackgroundColor = Theme.Bg, Children = { content } };
+            var root = new Grid { BackgroundColor = Theme.Bg };
+            root.Add(Backdrop.For("dinobackground.png"));
+            root.Add(content);
+            Content = root;
             RefreshArena();
             SwipeBack.Attach(this);
         }
@@ -60,17 +74,20 @@ namespace dinospace.Views
         {
             _arena.Children.Clear();
             _arena.Add(Slot(_a, true), 0, 0);
-            var vs = new Label { Text = "VS", FontFamily = Ui.Display, FontSize = Ui.S(22), TextColor = Theme.AccentDino, VerticalOptions = LayoutOptions.Center, HorizontalOptions = LayoutOptions.Center };
-            _arena.Add(vs, 1, 0);
+            _arena.Add(new Label { Text = "VS", FontFamily = Ui.Display, FontSize = Ui.S(22), TextColor = Theme.AccentDino, VerticalOptions = LayoutOptions.Center, HorizontalOptions = LayoutOptions.Center }, 1, 0);
             _arena.Add(Slot(_b, false), 2, 0);
-            _fightBtn.IsEnabled = _a != null && _b != null && _a.Name != _b.Name;
-            _fightBtn.Opacity = _fightBtn.IsEnabled ? 1 : 0.5;
+
+            bool ready = _a != null && _b != null && _a.Name != _b.Name;
+            _fightBtn.IsEnabled = ready;
+            _fightBtn.Opacity = ready ? 1 : 0.5;
+            _resetBtn.IsVisible = _a != null || _b != null;
         }
 
         private View Slot(Dinosaur? d, bool isA)
         {
             View inner;
-            if (d == null)
+            bool empty = d == null;
+            if (empty)
             {
                 inner = new VerticalStackLayout
                 {
@@ -84,8 +101,8 @@ namespace dinospace.Views
             }
             else
             {
-                var img = new Image { Source = d.ImageFile, Aspect = Aspect.AspectFill, HeightRequest = 96 };
-                var imgWrap = new Border { Content = img, HeightRequest = 96, BackgroundColor = Theme.ImgPlaceholder, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 12 } };
+                var img = new Image { Source = d!.ImageFile, Aspect = Aspect.AspectFill, HeightRequest = 100 };
+                var imgWrap = new Border { Content = img, HeightRequest = 100, BackgroundColor = Theme.ImgPlaceholder, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 12 } };
                 inner = new VerticalStackLayout
                 {
                     Spacing = 6,
@@ -102,21 +119,23 @@ namespace dinospace.Views
             {
                 Content = inner,
                 BackgroundColor = Theme.Surface, Stroke = Theme.HairlineSoft, StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(12), HeightRequest = 200
+                StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(12), HeightRequest = 210
             };
-            Ui.OnTap(card, async (_, _) => await Pick(isA));
+            // Only empty slots are tappable; filled slots are just images.
+            if (empty) Ui.OnTap(card, async (_, _) => await Nav.Push(new CreaturePickerPage(picked => Set(isA, picked))));
             return card;
         }
 
-        private async System.Threading.Tasks.Task Pick(bool isA)
+        private void Set(bool isA, Dinosaur picked)
         {
-            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
-            if (page == null) return;
-            var names = DinoData.All.Select(x => x.Name).ToArray();
-            string choice = await page.DisplayActionSheet("Choose a creature", "Cancel", null, names);
-            var picked = DinoData.ByName(choice);
-            if (picked == null) return;
             if (isA) _a = picked; else _b = picked;
+            _resultArea.Children.Clear();
+            RefreshArena();
+        }
+
+        private void Reset()
+        {
+            _a = null; _b = null;
             _resultArea.Children.Clear();
             RefreshArena();
         }
@@ -126,9 +145,7 @@ namespace dinospace.Views
             if (_a == null || _b == null) return;
             AppSettings.LongPress();
 
-            double sa = Power(_a), sb = Power(_b);
-            var winner = sa >= sb ? _a : _b;
-            var loser = sa >= sb ? _b : _a;
+            var winner = Power(_a) >= Power(_b) ? _a : _b;
 
             _resultArea.Children.Clear();
             _resultArea.Add(new Border
@@ -154,13 +171,12 @@ namespace dinospace.Views
                     CompareRow("Weight", _a.Weight, _b.Weight),
                     CompareRow("Top speed", _a.Speed, _b.Speed),
                     CompareRow("Bite force", string.IsNullOrEmpty(_a.BiteForce) ? "—" : _a.BiteForce, string.IsNullOrEmpty(_b.BiteForce) ? "—" : _b.BiteForce),
-                    CompareRow("Danger", $"{_a.Strength}/100", $"{_b.Strength}/100"),
                 }
             }));
 
             _resultArea.Add(new Label
             {
-                Text = Verdict(winner, loser),
+                Text = Verdict(winner, winner == _a ? _b : _a),
                 FontFamily = Ui.Fonts, FontSize = Ui.S(14), LineHeight = 1.45, TextColor = Theme.TextSecondary
             });
         }
@@ -177,19 +193,18 @@ namespace dinospace.Views
             return grid;
         }
 
-        // Composite score: danger rating dominates, with size, weight, bite,
-        // and speed contributing.
+        // Composite from measurable stats only (no subjective danger score).
         private static double Power(Dinosaur d)
         {
             double maxLen = DinoData.All.Max(x => Num(x.Length));
             double maxW = DinoData.All.Max(x => Num(x.Weight));
             double maxBite = DinoData.All.Max(x => Num(x.BiteForce));
             double maxSpd = DinoData.All.Max(x => Num(x.Speed));
-            double score = d.Strength * 1.0;
-            if (maxLen > 0) score += Num(d.Length) / maxLen * 20;
-            if (maxW > 0) score += Num(d.Weight) / maxW * 15;
-            if (maxBite > 0) score += Num(d.BiteForce) / maxBite * 15;
-            if (maxSpd > 0) score += Num(d.Speed) / maxSpd * 8;
+            double score = 0;
+            if (maxLen > 0) score += Num(d.Length) / maxLen * 30;
+            if (maxW > 0) score += Num(d.Weight) / maxW * 30;
+            if (maxBite > 0) score += Num(d.BiteForce) / maxBite * 30;
+            if (maxSpd > 0) score += Num(d.Speed) / maxSpd * 10;
             return score;
         }
 
@@ -203,7 +218,7 @@ namespace dinospace.Views
                 sb.Append($"At {w.Weight}, sheer size and power make the difference. ");
             else if (Num(w.Speed) > Num(l.Speed))
                 sb.Append($"Its speed of {w.Speed} lets it control the fight. ");
-            sb.Append("In real life, though, the outcome would depend on terrain, surprise, and a good deal of luck!");
+            sb.Append("In real life, the outcome would depend on terrain, surprise, and a good deal of luck!");
             return sb.ToString();
         }
 

@@ -14,8 +14,9 @@ namespace dinospace.Data
         public static Dinosaur? ByName(string name)
             => All.FirstOrDefault(d => d.Name == name);
 
-        // Popular bite-force estimates in PSI. Kept in one table so they're
-        // easy to tune. Creatures not listed have no shown bite force.
+        // Bite-force estimates in PSI for every creature, kept in one table so
+        // they're easy to tune. Carnivore figures follow popular published
+        // estimates; herbivore and beaked values are rough approximations.
         private static readonly Dictionary<string, string> BiteForcePsi = new()
         {
             ["T. Rex"] = "12,800 PSI",
@@ -23,19 +24,34 @@ namespace dinospace.Data
             ["Megalodon"] = "40,000 PSI",
             ["Velociraptor"] = "500 PSI",
             ["Triceratops"] = "1,000 PSI",
+            ["Pteranodon"] = "50 PSI",
+            ["Brachiosaurus"] = "200 PSI",
+            ["Stegosaurus"] = "150 PSI",
             ["Mosasaurus"] = "13,000 PSI",
             ["Liopleurodon"] = "15,000 PSI",
             ["Giganotosaurus"] = "7,500 PSI",
             ["Carnotaurus"] = "3,300 PSI",
             ["Allosaurus"] = "3,500 PSI",
+            ["Parasaurolophus"] = "300 PSI",
+            ["Argentinosaurus"] = "250 PSI",
+            ["Therizinosaurus"] = "120 PSI",
+            ["Titanosaurus"] = "250 PSI",
+            ["Titanoboa"] = "400 PSI",
             ["Deinonychus"] = "2,000 PSI",
             ["Deinosuchus"] = "23,000 PSI",
+            ["Ankylosaurus"] = "800 PSI",
+            ["Pachycephalosaurus"] = "350 PSI",
+            ["Quetzalcoatlus"] = "150 PSI",
+            ["Dilophosaurus"] = "1,500 PSI",
+            ["Baryonyx"] = "2,000 PSI",
+            ["Iguanodon"] = "500 PSI",
+            ["Utahraptor"] = "700 PSI",
+            ["Gallimimus"] = "60 PSI",
             ["Kronosaurus"] = "20,000 PSI",
             ["Dunkleosteus"] = "8,000 PSI",
             ["Smilodon"] = "1,000 PSI",
-            ["Baryonyx"] = "2,000 PSI",
-            ["Utahraptor"] = "700 PSI",
-            ["Dilophosaurus"] = "1,500 PSI",
+            ["Woolly Mammoth"] = "1,800 PSI",
+            ["Compsognathus"] = "50 PSI",
         };
 
         private static List<Dinosaur> BuildWithBiteForce()

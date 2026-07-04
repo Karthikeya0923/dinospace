@@ -1,5 +1,3 @@
-using dinospace.Views;
-
 namespace dinospace
 {
     public partial class App : Application
@@ -13,9 +11,8 @@ namespace dinospace
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            // First launch shows the 3-slide intro; after that, straight to the app.
-            Page root = AppSettings.Onboarded ? new AppShell() : new OnboardingPage();
-            return new Window(root);
+            // Straight into the app after the splash screen.
+            return new Window(new AppShell());
         }
     }
 }

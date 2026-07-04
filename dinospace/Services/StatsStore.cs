@@ -58,15 +58,6 @@ namespace dinospace
 
         public static int Streak() => Preferences.Get("streak_count", 0);
 
-        // ----- XP -----
-        public static int Xp() => Preferences.Get("xp_total", 0);
-        public static void AddXp(int amount)
-            => Preferences.Set("xp_total", Math.Max(0, Xp() + amount));
-
-        // Level scales gently: every 100 XP is a level.
-        public static int Level() => 1 + Xp() / 100;
-        public static double LevelProgress() => (Xp() % 100) / 100.0;
-
         // ----- quizzes -----
         public static void RecordQuiz(string mode, int correct, int total)
         {
@@ -75,7 +66,6 @@ namespace dinospace
             int best = Preferences.Get($"quiz_best_{mode}", 0);
             int pct = total > 0 ? (int)Math.Round(100.0 * correct / total) : 0;
             if (pct > best) Preferences.Set($"quiz_best_{mode}", pct);
-            AddXp(correct * 10);
         }
 
         public static string QuizAccuracy(string mode)
@@ -100,7 +90,6 @@ namespace dinospace
             }
             Preferences.Remove("streak_count");
             Preferences.Remove("streak_last");
-            Preferences.Remove("xp_total");
         }
     }
 }

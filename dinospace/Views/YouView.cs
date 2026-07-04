@@ -7,12 +7,11 @@ using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
-    // The profile tab: level and XP, a friendly stats summary, bookmarks, and
-    // settings (haptics, text size, about, clear data).
+    // The profile tab: a friendly stats summary, bookmarks, and settings
+    // (haptics, text size, feedback, clear data).
     public class YouView : ContentView, ITabView
     {
-        private Label _levelLabel = null!, _xpLabel = null!, _statsSummary = null!;
-        private ProgressBar _xpBar = null!;
+        private Label _statsSummary = null!;
         private VerticalStackLayout _savedArea = null!;
         private HorizontalStackLayout _sizePills = null!;
 
@@ -20,7 +19,6 @@ namespace dinospace.Views
 
         public void OnSelected()
         {
-            RefreshHeader();
             RefreshStats();
             RefreshSaved();
         }
@@ -30,20 +28,6 @@ namespace dinospace.Views
             var stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(16, 20, 16, 24) };
 
             stack.Add(new Label { Text = "You", FontFamily = Ui.Display, FontSize = 28, TextColor = Theme.TextPrimary });
-
-            // level card
-            _levelLabel = new Label { FontFamily = Ui.Display, FontSize = 20, TextColor = Theme.TextPrimary };
-            _xpLabel = new Label { FontFamily = Ui.Fonts, FontSize = 12.5, TextColor = Theme.TextSecondary };
-            _xpBar = new ProgressBar { HeightRequest = 8, ProgressColor = Theme.AccentNova };
-            var levelCol = new VerticalStackLayout { Spacing = 8 };
-            var levelTop = new Grid();
-            levelTop.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            levelTop.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            levelTop.Add(_levelLabel, 0, 0);
-            levelTop.Add(_xpLabel, 1, 0);
-            levelCol.Add(levelTop);
-            levelCol.Add(_xpBar);
-            stack.Add(DetailUi.Card(levelCol));
 
             // stats summary
             stack.Add(Ui.Overline("Your journey"));
@@ -59,22 +43,13 @@ namespace dinospace.Views
             stack.Add(Ui.Overline("Settings"));
             stack.Add(HapticsRow());
             stack.Add(TextSizeRow());
-            stack.Add(SimpleRow("About DinoSpace", async () => await Nav.Push(new AboutPage())));
             stack.Add(SimpleRow("Send feedback", OpenFeedback));
             stack.Add(ClearRow());
 
-            stack.Add(new Label { Text = "DinoSpace v2.0 · Made with curiosity", FontFamily = Ui.Fonts, FontSize = 11.5, TextColor = Theme.TextHint, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(0, 8) });
+            stack.Add(new Label { Text = "DinoSpace v1.0", FontFamily = Ui.Fonts, FontSize = 11.5, TextColor = Theme.TextHint, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(0, 8) });
 
             Content = new ScrollView { Content = stack };
             OnSelected();
-        }
-
-        private void RefreshHeader()
-        {
-            _levelLabel.Text = $"Level {StatsStore.Level()}";
-            int into = StatsStore.Xp() % 100;
-            _xpLabel.Text = $"{into} / 100 XP to next level";
-            _xpBar.Progress = StatsStore.LevelProgress();
         }
 
         private void RefreshStats()
@@ -131,7 +106,7 @@ namespace dinospace.Views
             {
                 Content = new Image { Source = image, Aspect = Aspect.AspectFill, WidthRequest = 48, HeightRequest = 48 },
                 WidthRequest = 48, HeightRequest = 48, BackgroundColor = Theme.ImgPlaceholder,
-                Stroke = Theme.HairlineSoft, StrokeThickness = 1, StrokeShape = new RoundRectangle { CornerRadius = 12 }
+                Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 12 }
             };
             var info = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };
             info.Add(new Label { Text = name, FontFamily = Ui.Display, FontSize = 15.5, TextColor = Theme.TextPrimary });

@@ -69,13 +69,17 @@ namespace dinospace.Views
 
             _body = new VerticalStackLayout { Spacing = 14, Padding = new Thickness(16, 8, 16, 24) };
 
-            var root = new Grid { BackgroundColor = Theme.Bg, RowSpacing = 0 };
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
-            root.Add(barGrid, 0, 0);
-            root.Add(_progress, 0, 1);
-            root.Add(new ScrollView { Content = _body }, 0, 2);
+            var main = new Grid { RowSpacing = 0 };
+            main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
+            main.Add(barGrid, 0, 0);
+            main.Add(_progress, 0, 1);
+            main.Add(new ScrollView { Content = _body }, 0, 2);
+
+            var root = new Grid { BackgroundColor = Theme.Bg };
+            root.Add(Backdrop.For("mainbackground.png"));
+            root.Add(main);
             Content = root;
         }
 
@@ -226,7 +230,6 @@ namespace dinospace.Views
             _body.Add(new Label { Text = "Quiz complete!", FontFamily = Ui.Display, FontSize = 26, TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(0, 20, 0, 8) });
             _body.Add(ring);
             _body.Add(new Label { Text = verdict, FontFamily = Ui.Fonts, FontSize = 15, LineHeight = 1.4, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(20, 8) });
-            _body.Add(new Label { Text = $"+{_score * 10} XP earned", FontFamily = Ui.Fonts, FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = _accent, HorizontalTextAlignment = TextAlignment.Center });
 
             var retry = new Border
             {
