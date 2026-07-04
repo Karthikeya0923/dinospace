@@ -3,9 +3,7 @@ using System.Linq;
 
 namespace dinospace.Data
 {
-    // The prehistoric-creatures encyclopedia. Stat strings keep a leading
-    // number (feet / kg / km-h) so they parse cleanly for stat bars and for
-    // NovaSaur's "biggest / fastest" lookups.
+
     public static class DinoData
     {
         private static List<Dinosaur>? _cache;
@@ -14,9 +12,7 @@ namespace dinospace.Data
         public static Dinosaur? ByName(string name)
             => All.FirstOrDefault(d => d.Name == name);
 
-        // Bite-force estimates in PSI for every creature, kept in one table so
-        // they're easy to tune. Carnivore figures follow popular published
-        // estimates; herbivore and beaked values are rough approximations.
+
         private static readonly Dictionary<string, string> BiteForcePsi = new()
         {
             ["T. Rex"] = "12,800 PSI",
