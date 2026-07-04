@@ -128,7 +128,8 @@ namespace dinospace
         {
             Content = content,
             BackgroundColor = Theme.Surface,
-            Stroke = Colors.Transparent,
+            Stroke = Theme.CardStroke,
+            StrokeThickness = 1,
             StrokeShape = new RoundRectangle { CornerRadius = radius },
             Padding = padding ?? new Thickness(16),
             Shadow = Theme.CardShadow()

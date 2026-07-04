@@ -45,7 +45,8 @@ namespace dinospace.Views
             {
                 Content = col,
                 BackgroundColor = Theme.Surface,
-                Stroke = Colors.Transparent,
+                Stroke = Theme.CardStroke,
+                StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 },
                 Padding = 0,
                 Shadow = Theme.CardShadow()

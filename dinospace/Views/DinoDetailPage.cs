@@ -14,7 +14,7 @@ namespace dinospace.Views
     {
         private readonly Dinosaur _d;
         private Label _saveIcon = null!;
-        private static readonly Color Accent = Theme.Accent;
+        private static Color Accent => Theme.Accent;
 
         public DinoDetailPage(Dinosaur d)
         {
@@ -30,15 +30,6 @@ namespace dinospace.Views
 
             stack.Add(DetailUi.TitleBlock(_d.Name, _d.Pronunciation,
                 $"“{_d.Meaning}”  ·  {_d.Diet}  ·  {_d.Era}"));
-
-            stack.Add(DetailUi.StatChipRow(new (string, string, Color)[]
-            {
-                ("Length", _d.Length, Accent),
-                ("Height", _d.Height, Accent),
-                ("Weight", _d.Weight, Accent),
-                ("Top speed", _d.Speed, Accent),
-                ("Bite force", _d.BiteForce, Accent),
-            }));
 
             stack.Add(StatBars());
 

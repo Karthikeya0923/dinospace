@@ -13,6 +13,12 @@ namespace dinospace.Services
             set => Preferences.Set("set_haptics", value);
         }
 
+        public static bool DarkMode
+        {
+            get => Preferences.Get("set_darkmode", false);
+            set => Preferences.Set("set_darkmode", value);
+        }
+
         // 0 = Small, 1 = Default, 2 = Large, 3 = Extra large.
         public static int TextSizeIndex
         {

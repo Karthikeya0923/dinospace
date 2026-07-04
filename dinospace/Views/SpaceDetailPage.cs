@@ -11,7 +11,7 @@ namespace dinospace.Views
     {
         private readonly SpaceObject _s;
         private Label _saveIcon = null!;
-        private static readonly Color Accent = Theme.Accent;
+        private static Color Accent => Theme.Accent;
 
         public SpaceDetailPage(SpaceObject s)
         {

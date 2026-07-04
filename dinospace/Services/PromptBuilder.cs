@@ -69,33 +69,37 @@ namespace dinospace.Services
                 sb.AppendLine(notes.Trim());
             }
 
-            // Only spend tokens on history when the question actually needs it
-            // (short follow-ups like "how fast was it?").
-            string hist = History(history, question);
+            // The last two exchanges ride along so follow-ups ("so what made
+            // it shine brighter?") actually connect to what was just said.
+            string hist = History(history);
             if (!string.IsNullOrEmpty(hist))
+            {
+                sb.AppendLine("The chat so far:");
                 sb.AppendLine(hist);
+                sb.AppendLine("Answer the next question in the context of that chat.");
+            }
 
             sb.AppendLine("Q: " + question);
             sb.Append("A:");
             return sb.ToString();
         }
 
-        // Last Q/A pair, compressed — included only for short follow-ups.
-        private static string History(IReadOnlyList<ChatMessage> messages, string question)
+        // The last two Q/A pairs, compressed.
+        private static string History(IReadOnlyList<ChatMessage> messages)
         {
             if (messages == null || messages.Count == 0) return "";
-            int words = question.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
-            string q = " " + Retriever.Normalize(question) + " ";
-            bool followUp = words <= 6 ||
-                new[] { " it ", " its ", " they ", " them ", " that ", " this ", " he ", " she " }.Any(q.Contains);
-            if (!followUp) return "";
-
-            for (int i = messages.Count - 1; i >= 1; i--)
+            var pairs = new List<string>();
+            int i = messages.Count - 1;
+            while (i >= 1 && pairs.Count < 2)
             {
                 if (!messages[i].IsUser && messages[i - 1].IsUser)
-                    return "Q: " + Snip(messages[i - 1].Text, 90) + "\nA: " + Snip(messages[i].Text, 120);
+                {
+                    pairs.Insert(0, "Q: " + Snip(messages[i - 1].Text, 100) + "\nA: " + Snip(messages[i].Text, 150));
+                    i -= 2;
+                }
+                else i--;
             }
-            return "";
+            return string.Join("\n", pairs);
         }
 
         // ---------- answer cleanup ----------

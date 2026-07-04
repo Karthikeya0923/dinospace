@@ -116,7 +116,7 @@ namespace dinospace.Views
             if (_segment is 0 or 1)
                 foreach (var d in DinoData.All.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
                 {
-                    if (!Match(q, d.Name, d.ShortDescription, d.Group, d.Aliases)) continue;
+                    if (!Match(q, d.Name, d.Aliases)) continue;
                     var dd = d;
                     _results.Add(EntryCards.ListRow(d.ImageFile, d.Name, $"{d.Diet} · {d.Era}", async () => await Nav.OpenDino(dd)));
                     n++;
@@ -125,7 +125,7 @@ namespace dinospace.Views
             if (_segment is 0 or 2)
                 foreach (var s in SpaceData.All.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
                 {
-                    if (!Match(q, s.Name, s.ShortDescription, s.TypeLabel, s.Aliases)) continue;
+                    if (!Match(q, s.Name, s.Aliases)) continue;
                     var ss = s;
                     _results.Add(EntryCards.ListRow(s.ImageFile, s.Name, $"{s.TypeLabel} · {s.Category}", async () => await Nav.OpenSpace(ss)));
                     n++;
@@ -134,10 +134,12 @@ namespace dinospace.Views
             _count.Text = n == 1 ? "1 entry" : $"{n} entries";
         }
 
-        private static bool Match(string q, string name, string desc, string group, string[] aliases)
+        // Match against the name and nicknames only — searching "earth"
+        // should find Earth, not every description that mentions it.
+        private static bool Match(string q, string name, string[] aliases)
         {
             if (string.IsNullOrEmpty(q)) return true;
-            return Retriever.Normalize($"{name} {desc} {group} {string.Join(' ', aliases)}").Contains(q);
+            return Retriever.Normalize($"{name} {string.Join(' ', aliases)}").Contains(q);
         }
     }
 }

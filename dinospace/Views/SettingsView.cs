@@ -38,7 +38,9 @@ namespace dinospace.Views
 
             // Preferences
             stack.Add(Ui.SectionHeader("Preferences"));
-            stack.Add(SwitchRow("Haptic feedback", AppSettings.Haptics, v => { AppSettings.Haptics = v; if (v) AppSettings.Tap(); }));
+            stack.Add(SwitchRow("Dark mode", "Sleek black with rich gold accents.", AppSettings.DarkMode, ToggleDarkMode));
+            stack.Add(Rule());
+            stack.Add(SwitchRow("Haptic feedback", "Tiny vibrations when you tap, save, or answer.", AppSettings.Haptics, v => { AppSettings.Haptics = v; if (v) AppSettings.Tap(); }));
             stack.Add(Rule());
             stack.Add(TextSizeRow());
             stack.Add(Rule());
@@ -72,16 +74,34 @@ namespace dinospace.Views
             VerticalOptions = LayoutOptions.Center
         };
 
-        private View SwitchRow(string title, bool value, Action<bool> onChange)
+        private View SwitchRow(string title, string caption, bool value, Action<bool> onChange)
         {
             var sw = new Switch { IsToggled = value, OnColor = Theme.Accent, ThumbColor = Colors.White, VerticalOptions = LayoutOptions.Center };
             sw.Toggled += (_, e) => onChange(e.Value);
-            var grid = new Grid { Padding = new Thickness(0, 14) };
+
+            var text = new VerticalStackLayout { Spacing = 3, VerticalOptions = LayoutOptions.Center };
+            text.Add(RowTitle(title));
+            if (!string.IsNullOrEmpty(caption))
+                text.Add(new Label { Text = caption, FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint });
+
+            var grid = new Grid { Padding = new Thickness(0, 14), ColumnSpacing = 12 };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.Add(RowTitle(title), 0, 0);
+            grid.Add(text, 0, 0);
             grid.Add(sw, 1, 0);
             return grid;
+        }
+
+        // Swap the palette and rebuild the whole UI so every screen re-skins.
+        private void ToggleDarkMode(bool dark)
+        {
+            AppSettings.DarkMode = dark;
+            Theme.Apply(dark);
+            if (Application.Current != null)
+                Application.Current.UserAppTheme = dark ? AppTheme.Dark : AppTheme.Light;
+            NovaPage.ResetShared();
+            if (Application.Current?.Windows.Count > 0)
+                Application.Current.Windows[0].Page = new AppShell();
         }
 
         private View TextSizeRow()
@@ -108,7 +128,7 @@ namespace dinospace.Views
                 {
                     Text = labels[i],
                     FontFamily = Ui.Fonts, FontSize = 14, FontAttributes = FontAttributes.Bold,
-                    TextColor = active ? Colors.White : Theme.ChipText,
+                    TextColor = active ? Theme.TextOnAccent : Theme.ChipText,
                     HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
                 };
                 var pill = new Border

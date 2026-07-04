@@ -10,6 +10,10 @@ namespace dinospace.Views
         private static NovaView? _sharedChat;
         private static NovaView Chat => _sharedChat ??= new NovaView();
 
+        // Drop the shared chat so it rebuilds with the current palette.
+        // History reloads from storage, so nothing is lost.
+        public static void ResetShared() => _sharedChat = null;
+
         private readonly Grid _root;
 
         public NovaPage()

@@ -45,15 +45,9 @@ namespace dinospace.Views
             _featuredCard = BuildFeatured();
             stack.Add(_featuredCard);
 
-            // What's new — the most recently added entries.
-            stack.Add(Ui.SectionHeader("What's new"));
-            stack.Add(EntryCards.TwoColumn(new (string, string, string, Action)[]
-            {
-                (Item(DinoData.ByName("Smilodon"))),
-                (ItemS(SpaceData.ByName("Europa"))),
-                (Item(DinoData.ByName("Woolly Mammoth"))),
-                (ItemS(SpaceData.ByName("Orion Nebula"))),
-            }));
+            // Reserved for the upcoming "Scan Sky" feature.
+            stack.Add(Ui.SectionHeader("Visible right now"));
+            stack.Add(VisibleRightNowPlaceholder());
 
             // Dinosaurs
             stack.Add(Ui.SectionHeader("Dinosaurs", "View all", async (_, _) => await Nav.Push(new BrowsePage("Dinosaurs"))));
@@ -104,6 +98,24 @@ namespace dinospace.Views
             return (s.ImageFile, s.Name, s.TypeLabel, async () => await Nav.OpenSpace(s));
         }
 
+        // Teaser card for the upcoming Scan Sky feature.
+        private View VisibleRightNowPlaceholder()
+        {
+            var col = new VerticalStackLayout { Spacing = 8 };
+            col.Add(Ui.Icon(Ui.IconSearch, 30, Theme.Accent));
+            col.Add(new Label
+            {
+                Text = "Coming soon",
+                FontFamily = Ui.Display, FontSize = Ui.S(19), TextColor = Theme.TextPrimary
+            });
+            col.Add(new Label
+            {
+                Text = "Point your phone at the night sky to spot the planets and stars above you.",
+                FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), LineHeight = 1.4, TextColor = Theme.TextSecondary
+            });
+            return Ui.Card(col, radius: 18, padding: new Thickness(18, 16));
+        }
+
         // ----- masthead: friend's logo, serif fallback -----
         private View Masthead()
         {
@@ -141,40 +153,20 @@ namespace dinospace.Views
             var imgWrap = new Grid { HeightRequest = 250, BackgroundColor = Theme.ImgPlaceholder };
             imgWrap.Add(img);
 
-            // Red round FEATURED badge, like the reference.
-            var badge = new Border
-            {
-                WidthRequest = 78, HeightRequest = 78,
-                BackgroundColor = Theme.Accent,
-                Stroke = Colors.White, StrokeThickness = 2.5,
-                StrokeShape = new RoundRectangle { CornerRadius = 39 },
-                HorizontalOptions = LayoutOptions.Start,
-                VerticalOptions = LayoutOptions.Start,
-                Margin = new Thickness(14, 14, 0, 0),
-                Content = new Label
-                {
-                    Text = "OF THE\nDAY",
-                    FontFamily = Ui.Fonts, FontSize = 11.5, FontAttributes = FontAttributes.Bold,
-                    CharacterSpacing = 0.8, TextColor = Colors.White,
-                    HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
-                }
-            };
-            imgWrap.Add(badge);
-
-            // Big flip pill — generous hitbox this time.
+            // Big flip pill — generous hitbox, top-right of the photo.
             var flipContent = new HorizontalStackLayout
             {
                 Spacing = 6,
                 Children =
                 {
-                    Ui.Icon(Ui.IconSwap, 18, Theme.TextPrimary),
-                    new Label { Text = "Flip", FontFamily = Ui.Fonts, FontSize = 13.5, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center }
+                    Ui.Icon(Ui.IconSwap, 18, Theme.TextOnAccent),
+                    new Label { Text = "Flip", FontFamily = Ui.Fonts, FontSize = 13.5, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, VerticalOptions = LayoutOptions.Center }
                 }
             };
             var flip = new Border
             {
                 Content = flipContent,
-                BackgroundColor = Colors.White,
+                BackgroundColor = Theme.Accent,
                 Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 100 },
                 Padding = new Thickness(16, 10),

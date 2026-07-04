@@ -27,12 +27,11 @@ namespace dinospace.Data
     {
         public static readonly List<Collection> All = new()
         {
-            new() { Id = "biggest", Title = "Biggest Creatures Ever", Subtitle = "Ranked by length, longest first", Domain = "Dino" },
-            new() { Id = "speed", Title = "Speed Demons", Subtitle = "Fastest creatures, quickest first", Domain = "Dino" },
-            new() { Id = "bite", Title = "Strongest Bites", Subtitle = "Ranked by bite force in PSI", Domain = "Dino" },
+            new() { Id = "biggest", Title = "Biggest Creatures Ever", Subtitle = "Every creature ranked by length", Domain = "Dino" },
+            new() { Id = "speed", Title = "Speed Demons", Subtitle = "Every creature ranked by top speed", Domain = "Dino" },
+            new() { Id = "bite", Title = "Strongest Bites", Subtitle = "Every creature ranked by bite force", Domain = "Dino" },
             new() { Id = "farthest", Title = "Farthest From Earth", Subtitle = "Every space object, nearest to farthest", Domain = "Space" },
-            new() { Id = "cosmic", Title = "Cosmic Giants", Subtitle = "The largest objects in space", Domain = "Space" },
-            new() { Id = "hottest", Title = "Hottest to Coldest", Subtitle = "Worlds ranked by temperature", Domain = "Space" },
+            new() { Id = "cosmic", Title = "Cosmic Giants", Subtitle = "Every space object ranked by size", Domain = "Space" },
         };
 
         // Every space entry ordered by distance from Earth (closest approach /
@@ -64,24 +63,33 @@ namespace dinospace.Data
             ("Phoenix A*", "5.8 billion light-years"),
         };
 
-        // Approximate surface (or effective) temperatures for the ranking.
-        private static readonly Dictionary<string, string> TempC = new()
+        // Every space entry ordered by physical size, biggest first.
+        // New entries should be added here too or they fall to the end.
+        private static readonly (string name, string size)[] CosmicSizeOrder =
         {
-            ["Sun"] = "5,500°C", ["Venus"] = "465°C", ["Mercury"] = "430°C (day)",
-            ["Earth"] = "15°C", ["Mars"] = "-60°C", ["Neptune"] = "-200°C", ["Pluto"] = "-230°C",
-        };
-
-        // Human-readable "size" for the cosmic giants ranking.
-        private static readonly Dictionary<string, string> CosmicSize = new()
-        {
-            ["Phoenix A*"] = "590 billion km wide",
-            ["Milky Way"] = "100,000 light-years wide",
-            ["Andromeda Galaxy"] = "220,000 light-years wide",
-            ["Betelgeuse"] = "700× the Sun's width",
-            ["Sagittarius A*"] = "24 million km wide",
-            ["Sun"] = "1.39 million km wide",
-            ["Jupiter"] = "139,820 km wide",
-            ["Saturn"] = "116,460 km wide",
+            ("Andromeda Galaxy", "220,000 light-years wide"),
+            ("Milky Way", "100,000 light-years wide"),
+            ("Orion", "spans ~1,100 light-years of sky"),
+            ("Orion Nebula", "24 light-years wide"),
+            ("Phoenix A*", "590 billion km wide"),
+            ("Betelgeuse", "975 million km wide"),
+            ("Asteroid Belt", "a ring ~150 million km thick"),
+            ("Sagittarius A*", "24 million km wide"),
+            ("Sun", "1.39 million km wide"),
+            ("Jupiter", "139,820 km wide"),
+            ("Saturn", "116,460 km wide"),
+            ("Uranus", "50,724 km wide"),
+            ("Neptune", "49,244 km wide"),
+            ("Earth", "12,750 km wide"),
+            ("Venus", "12,104 km wide"),
+            ("Mars", "6,779 km wide"),
+            ("Mercury", "4,879 km wide"),
+            ("Moon", "3,475 km wide"),
+            ("Europa", "3,122 km wide"),
+            ("Pluto", "2,377 km wide"),
+            ("Halley's Comet", "nucleus 15 km wide"),
+            ("International Space Station", "109 m wide"),
+            ("Voyager 1", "about 4 m wide"),
         };
 
         public static Collection? ById(string id) => All.FirstOrDefault(c => c.Id == id);
@@ -91,37 +99,43 @@ namespace dinospace.Data
             switch (id)
             {
                 case "biggest":
-                    return RankDino(d => Num(d.Length), desc: true, d => d.Length);
+                    // Every creature, longest first.
+                    return DinoData.All.OrderByDescending(d => Num(d.Length))
+                        .Select(d => Entry(d, d.Length)).ToList();
                 case "speed":
-                    return RankDino(d => Num(d.Speed), desc: true, d => d.Speed);
+                    // Every creature, fastest first.
+                    return DinoData.All.OrderByDescending(d => Num(d.Speed))
+                        .Select(d => Entry(d, d.Speed)).ToList();
                 case "bite":
-                    return DinoData.All.Where(d => d.BiteForce.Length > 0)
-                        .OrderByDescending(d => Num(d.BiteForce))
-                        .Select(d => Entry(d, d.BiteForce)).ToList();
+                    // Every creature, strongest bite first (all have a PSI value).
+                    return DinoData.All.OrderByDescending(d => Num(d.BiteForce))
+                        .Select(d => Entry(d, string.IsNullOrEmpty(d.BiteForce) ? "—" : d.BiteForce)).ToList();
                 case "farthest":
-                    return FarthestOrder
-                        .Select(x => (obj: SpaceData.ByName(x.name), x.distance))
-                        .Where(x => x.obj != null)
-                        .Select(x => EntryS(x.obj!, x.distance)).ToList();
+                    return Ordered(FarthestOrder);
                 case "cosmic":
-                    var big = new[] { "Phoenix A*", "Milky Way", "Andromeda Galaxy", "Betelgeuse", "Sagittarius A*", "Sun", "Jupiter", "Saturn" };
-                    return big.Select(SpaceData.ByName).Where(s => s != null)
-                        .Select(s => EntryS(s!, CosmicSize.GetValueOrDefault(s!.Name, s!.TypeLabel))).ToList();
-                case "hottest":
-                    var hot = new[] { "Sun", "Venus", "Mercury", "Earth", "Mars", "Neptune", "Pluto" };
-                    return hot.Select(SpaceData.ByName).Where(s => s != null)
-                        .Select(s => EntryS(s!, TempC.GetValueOrDefault(s!.Name, "—"))).ToList();
+                    return Ordered(CosmicSizeOrder);
                 default:
                     return new List<CollectionEntry>();
             }
         }
 
-        private static List<CollectionEntry> RankDino(Func<Dinosaur, double> key, bool desc, Func<Dinosaur, string> stat)
+        // Builds a space list from an explicit ordering, then appends any
+        // space object the list forgot so nothing is ever missing.
+        private static List<CollectionEntry> Ordered((string name, string stat)[] order)
         {
-            var ordered = desc
-                ? DinoData.All.OrderByDescending(key)
-                : DinoData.All.OrderBy(key);
-            return ordered.Take(15).Select(d => Entry(d, stat(d))).ToList();
+            var result = new List<CollectionEntry>();
+            var used = new HashSet<string>();
+            foreach (var (name, stat) in order)
+            {
+                var s = SpaceData.ByName(name);
+                if (s == null) continue;
+                result.Add(EntryS(s, stat));
+                used.Add(name);
+            }
+            foreach (var s in SpaceData.All)
+                if (!used.Contains(s.Name))
+                    result.Add(EntryS(s, s.TypeLabel));
+            return result;
         }
 
         private static CollectionEntry Entry(Dinosaur d, string stat) => new()

@@ -91,7 +91,7 @@ namespace dinospace.Views
                     {
                         Text = c,
                         FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), FontAttributes = FontAttributes.Bold,
-                        TextColor = active ? Colors.White : Theme.ChipText
+                        TextColor = active ? Theme.TextOnAccent : Theme.ChipText
                     },
                     BackgroundColor = active ? Theme.Accent : Theme.ChipBg,
                     Stroke = Colors.Transparent,
@@ -114,7 +114,7 @@ namespace dinospace.Views
                 foreach (var d in DinoData.All.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
                 {
                     if (!MatchesDinoCategory(d)) continue;
-                    if (!Match(q, d.Name, d.ShortDescription, d.Group, d.Aliases)) continue;
+                    if (!Match(q, d.Name, d.Aliases)) continue;
                     var dd = d;
                     items.Add((d.ImageFile, d.Name, d.Era, async () => await Nav.OpenDino(dd)));
                 }
@@ -124,7 +124,7 @@ namespace dinospace.Views
                 foreach (var s in SpaceData.All.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
                 {
                     if (_category != "" && s.Category != _category) continue;
-                    if (!Match(q, s.Name, s.ShortDescription, s.TypeLabel, s.Aliases)) continue;
+                    if (!Match(q, s.Name, s.Aliases)) continue;
                     var ss = s;
                     items.Add((s.ImageFile, s.Name, s.TypeLabel, async () => await Nav.OpenSpace(ss)));
                 }
@@ -146,10 +146,11 @@ namespace dinospace.Views
             };
         }
 
-        private static bool Match(string q, string name, string desc, string group, string[] aliases)
+        // Names and nicknames only, same as the Search tab.
+        private static bool Match(string q, string name, string[] aliases)
         {
             if (string.IsNullOrEmpty(q)) return true;
-            return Retriever.Normalize($"{name} {desc} {group} {string.Join(' ', aliases)}").Contains(q);
+            return Retriever.Normalize($"{name} {string.Join(' ', aliases)}").Contains(q);
         }
     }
 }
