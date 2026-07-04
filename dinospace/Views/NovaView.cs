@@ -38,7 +38,7 @@ namespace dinospace.Views
         private ScrollView _chatScroll = null!;
         private Entry _entry = null!;
         private Border _sendBtn = null!;
-        private Label _sendIcon = null!;
+        private Microsoft.Maui.Controls.Shapes.Path _sendIcon = null!;
         private HorizontalStackLayout _suggestions = null!;
         private ScrollView _suggestionScroll = null!;
         private Grid _inputArea = null!;
@@ -182,7 +182,7 @@ namespace dinospace.Views
                 Padding = new Thickness(16, 0)
             };
 
-            _sendIcon = new Label { Text = "➤", FontSize = 18, TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center };
+            _sendIcon = Ui.Icon(Ui.IconSend, 20, Theme.TextOnAccent);
             _sendBtn = new Border
             {
                 Content = _sendIcon,
@@ -275,7 +275,7 @@ namespace dinospace.Views
         private async void Answer(string question)
         {
             _busy = true;
-            _sendIcon.Text = "■";
+            Ui.SetIcon(_sendIcon, Ui.IconStop, Theme.TextOnAccent);
             int myGen = ++_gen;
             StartThinking();
             await ScrollToEnd();
@@ -323,7 +323,7 @@ namespace dinospace.Views
             _gen++;
             StopThinking();
             _busy = false;
-            _sendIcon.Text = "➤";
+            Ui.SetIcon(_sendIcon, Ui.IconSend, Theme.TextOnAccent);
             ShowSuggestions();
         }
 
@@ -402,7 +402,7 @@ namespace dinospace.Views
             string full = _revealSb.ToString().Trim();
             if (full.Length > 0) { _messages.Add(new ChatMessage { IsUser = false, Text = full }); SaveHistory(); }
             _revealLabel = null; _revealWords = null;
-            _busy = false; _sendIcon.Text = "➤";
+            _busy = false; Ui.SetIcon(_sendIcon, Ui.IconSend, Theme.TextOnAccent);
             ShowSuggestions();
             _ = ScrollToEnd();
         }
@@ -499,7 +499,7 @@ namespace dinospace.Views
             _revealTimer?.Stop();
             _revealActive = false; _revealLabel = null; _revealWords = null;
             StopThinking();
-            _busy = false; _sendIcon.Text = "➤";
+            _busy = false; Ui.SetIcon(_sendIcon, Ui.IconSend, Theme.TextOnAccent);
             _messages.Clear();
             _lastEntities.Clear();
             Preferences.Remove(HistoryKey);

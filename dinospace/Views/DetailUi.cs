@@ -138,7 +138,7 @@ namespace dinospace.Views
         public static Border Card(View content) => Ui.Card(content);
 
         // Floating over the hero: back left, bookmark right — white circles.
-        public static View TopBar(bool saved, Action onBack, Action onSave, out Label saveIcon)
+        public static View TopBar(bool saved, Action onBack, Action onSave, out Microsoft.Maui.Controls.Shapes.Path saveIcon)
         {
             var back = RoundIcon(Ui.IconBack, Colors.White);
             Ui.OnTap(back, (_, _) => onBack(), haptic: false);

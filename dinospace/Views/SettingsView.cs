@@ -38,7 +38,7 @@ namespace dinospace.Views
 
             // Preferences
             stack.Add(Ui.SectionHeader("Preferences"));
-            stack.Add(SwitchRow("Dark mode", "Sleek black with rich gold accents.", AppSettings.DarkMode, ToggleDarkMode));
+            stack.Add(SwitchRow("Dark mode", "Switch between the light and dark theme.", AppSettings.DarkMode, ToggleDarkMode));
             stack.Add(Rule());
             stack.Add(SwitchRow("Haptic feedback", "Tiny vibrations when you tap, save, or answer.", AppSettings.Haptics, v => { AppSettings.Haptics = v; if (v) AppSettings.Tap(); }));
             stack.Add(Rule());

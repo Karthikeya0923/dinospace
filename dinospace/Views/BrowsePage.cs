@@ -13,7 +13,7 @@ namespace dinospace.Views
     public class BrowsePage : ContentPage
     {
         private readonly string _domain; // "Dinosaurs" | "Space"
-        private readonly ObservableCollection<EntryRow> _items = new();
+        private readonly RangeObservableCollection<EntryRow> _items = new();
         private string _query = "";
         private string _category = "";
         private CollectionView _grid = null!;
@@ -156,8 +156,7 @@ namespace dinospace.Views
                     next.Add(new EntryRow { Image = s.ImageFile, Title = s.Name, Meta = s.TypeLabel, Data = s });
                 }
 
-            _items.Clear();
-            foreach (var r in next) _items.Add(r);
+            _items.ReplaceAll(next);
             _count.Text = next.Count == 1 ? "1 entry" : $"{next.Count} entries";
         }
 

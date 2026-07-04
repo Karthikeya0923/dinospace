@@ -17,7 +17,7 @@ namespace dinospace.Views
     public class RootPage : ContentPage
     {
         private readonly List<(string label, string icon, View view)> _tabs = new();
-        private readonly List<Label> _navIcons = new();
+        private readonly List<Microsoft.Maui.Controls.Shapes.Path> _navIcons = new();
         private readonly List<Label> _navLabels = new();
         private Grid _content = null!;
         private int _current = -1;
@@ -132,8 +132,7 @@ namespace dinospace.Views
             for (int i = 0; i < _tabs.Count; i++)
             {
                 bool on = i == _current;
-                _navIcons[i].TextColor = on ? Theme.Accent : Theme.TextHint;
-                _navIcons[i].Text = on && i == 2 ? Ui.IconSavedFill : _tabs[i].icon;
+                Ui.SetIcon(_navIcons[i], on && i == 2 ? Ui.IconSavedFill : _tabs[i].icon, on ? Theme.Accent : Theme.TextHint);
                 _navLabels[i].TextColor = on ? Theme.Accent : Theme.TextHint;
                 _navLabels[i].FontAttributes = on ? FontAttributes.Bold : FontAttributes.None;
             }

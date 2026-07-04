@@ -23,6 +23,8 @@ namespace dinospace.Views
                 FontFamily = Ui.Display,
                 FontSize = Ui.S(17),
                 LineHeight = 1.12,
+                MaxLines = 2,
+                LineBreakMode = LineBreakMode.TailTruncation,
                 TextColor = Theme.TextPrimary
             };
             var sub = new Label
@@ -30,6 +32,8 @@ namespace dinospace.Views
                 Text = meta,
                 FontFamily = Ui.Fonts,
                 FontSize = Ui.S(12),
+                MaxLines = 1,
+                LineBreakMode = LineBreakMode.TailTruncation,
                 TextColor = Theme.TextSecondary
             };
 

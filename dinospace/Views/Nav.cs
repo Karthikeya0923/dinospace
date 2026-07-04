@@ -28,8 +28,14 @@ namespace dinospace.Views
         // Used by every pushed utility page.
         public static View DetailScaffold(string title, View content, Color accent, out ScrollView scroll)
         {
-            var back = Ui.Icon(Ui.IconBack, 24, Theme.TextPrimary);
-            back.Padding = new Thickness(6, 8, 14, 8);
+            var backIcon = Ui.Icon(Ui.IconBack, 24, Theme.TextPrimary);
+            var back = new Border
+            {
+                Content = backIcon,
+                BackgroundColor = Colors.Transparent,
+                Stroke = Colors.Transparent,
+                Padding = new Thickness(6, 8, 14, 8)
+            };
             Ui.OnTap(back, async (_, _) =>
             {
                 try { if (Shell.Current.Navigation.NavigationStack.Count > 1) await Shell.Current.Navigation.PopAsync(); } catch { }

@@ -22,7 +22,7 @@ namespace dinospace.Views
     // entry loaded).
     public class SearchView : ContentView, ITabView
     {
-        private readonly ObservableCollection<EntryRow> _rows = new();
+        private readonly RangeObservableCollection<EntryRow> _rows = new();
         private Entry _entry = null!;
         private HorizontalStackLayout _segments = null!;
         private CollectionView _list = null!;
@@ -170,8 +170,7 @@ namespace dinospace.Views
                     if (Match(q, s.Name, s.Aliases))
                         next.Add(new EntryRow { Image = s.ImageFile, Title = s.Name, Meta = $"{s.TypeLabel} · {s.Category}", Data = s });
 
-            _rows.Clear();
-            foreach (var r in next) _rows.Add(r);
+            _rows.ReplaceAll(next);
             _count.Text = next.Count == 1 ? "1 entry" : $"{next.Count} entries";
         }
 

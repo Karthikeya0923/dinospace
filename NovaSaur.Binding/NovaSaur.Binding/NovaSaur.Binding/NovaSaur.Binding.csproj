@@ -5,6 +5,14 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<IsTrimmable>true</IsTrimmable>
+		<!-- Always emit portable debug symbols so the app can be launched WITH
+		     the debugger (F5), not only "Start Without Debugging". -->
+		<DebugType>portable</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+		<!-- This binding ships no Android resources; skip the resource designer
+		     so its design-time build doesn't look for a missing Designer.dll. -->
+		<AndroidGenerateResourceDesigner>false</AndroidGenerateResourceDesigner>
+		<AndroidUseDesignerAssembly>false</AndroidUseDesignerAssembly>
 	</PropertyGroup>
 
 	<ItemGroup>

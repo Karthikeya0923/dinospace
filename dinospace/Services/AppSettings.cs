@@ -34,17 +34,21 @@ namespace dinospace.Services
             _ => 1.0,
         };
 
-        // A subtle tap, gated by the user's preference.
+        // A clear, feelable tap. A short vibration pulse is far more noticeable
+        // than the system "click" haptic, which many phones barely render.
         public static void Tap()
         {
             if (!Haptics) return;
-            try { HapticFeedback.Default.Perform(HapticFeedbackType.Click); } catch { }
+            try { Vibration.Default.Vibrate(TimeSpan.FromMilliseconds(18)); }
+            catch { try { HapticFeedback.Default.Perform(HapticFeedbackType.Click); } catch { } }
         }
 
+        // A stronger pulse for saves and important confirmations.
         public static void LongPress()
         {
             if (!Haptics) return;
-            try { HapticFeedback.Default.Perform(HapticFeedbackType.LongPress); } catch { }
+            try { Vibration.Default.Vibrate(TimeSpan.FromMilliseconds(35)); }
+            catch { try { HapticFeedback.Default.Perform(HapticFeedbackType.LongPress); } catch { } }
         }
     }
 }

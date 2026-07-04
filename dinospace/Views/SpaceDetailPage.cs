@@ -10,7 +10,7 @@ namespace dinospace.Views
     public class SpaceDetailPage : ContentPage
     {
         private readonly SpaceObject _s;
-        private Label _saveIcon = null!;
+        private Microsoft.Maui.Controls.Shapes.Path _saveIcon = null!;
         private static Color Accent => Theme.Accent;
 
         public SpaceDetailPage(SpaceObject s)
@@ -75,8 +75,7 @@ namespace dinospace.Views
         {
             bool nowSaved = SavedStore.ToggleSpace(_s.Name);
             AppSettings.LongPress();
-            _saveIcon.Text = nowSaved ? Ui.IconSavedFill : Ui.IconSaved;
-            _saveIcon.TextColor = nowSaved ? Theme.Accent : Microsoft.Maui.Graphics.Colors.White;
+            Ui.SetIcon(_saveIcon, nowSaved ? Ui.IconSavedFill : Ui.IconSaved, nowSaved ? Theme.Accent : Microsoft.Maui.Graphics.Colors.White);
         }
     }
 }

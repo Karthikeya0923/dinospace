@@ -13,7 +13,7 @@ namespace dinospace.Views
     public class DinoDetailPage : ContentPage
     {
         private readonly Dinosaur _d;
-        private Label _saveIcon = null!;
+        private Microsoft.Maui.Controls.Shapes.Path _saveIcon = null!;
         private static Color Accent => Theme.Accent;
 
         public DinoDetailPage(Dinosaur d)
@@ -89,8 +89,7 @@ namespace dinospace.Views
         {
             bool nowSaved = SavedStore.ToggleDino(_d.Name);
             AppSettings.LongPress();
-            _saveIcon.Text = nowSaved ? Ui.IconSavedFill : Ui.IconSaved;
-            _saveIcon.TextColor = nowSaved ? Theme.Accent : Microsoft.Maui.Graphics.Colors.White;
+            Ui.SetIcon(_saveIcon, nowSaved ? Ui.IconSavedFill : Ui.IconSaved, nowSaved ? Theme.Accent : Microsoft.Maui.Graphics.Colors.White);
         }
 
         private static double Num(string s)
