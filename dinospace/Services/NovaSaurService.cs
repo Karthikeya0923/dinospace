@@ -20,7 +20,7 @@ namespace dinospace.Services
 
         // The UI-facing cap. The native call may run longer in the background;
         // the lock protects the engine while it does.
-        private static readonly TimeSpan AnswerTimeout = TimeSpan.FromSeconds(60);
+        private static readonly TimeSpan AnswerTimeout = TimeSpan.FromSeconds(45);
 
         public static bool SupportedPlatform =>
 #if ANDROID
@@ -60,10 +60,17 @@ namespace dinospace.Services
         public static async Task<string> AskAsync(string prompt, CancellationToken ct)
         {
 #if ANDROID
+            // If a previous (possibly abandoned/slow) inference still holds the
+            // engine, don't queue behind it for 45s -- tell the user instantly.
+            // Two inferences can never run at once, which keeps the engine safe.
+            if (_lock.CurrentCount == 0)
+                return BusyMessage;
+
             var work = Task.Run(async () =>
             {
                 // Lock acquired inside the task: an abandoned (timed-out) call
-                // keeps holding it until the engine really finishes.
+                // keeps holding it until the engine really finishes, so the
+                // next question can't start a second overlapping inference.
                 await _lock.WaitAsync(CancellationToken.None);
                 try { return Com.Novasaur.NovaSaurModule.Ask(prompt); }
                 finally { _lock.Release(); }
@@ -105,5 +112,7 @@ namespace dinospace.Services
             "That one's taking me a while to think through. Give me a few seconds to catch my breath, then try asking it a shorter way!";
         public const string ErrorMessage =
             "Something went sideways answering that. Give it another try in a moment.";
+        public const string BusyMessage =
+            "I'm still finishing your last question — give me a few seconds, then ask away!";
     }
 }

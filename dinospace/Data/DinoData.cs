@@ -15,7 +15,7 @@ namespace dinospace.Data
 
         private static readonly Dictionary<string, string> BiteForcePsi = new()
         {
-            ["T. Rex"] = "12,800 PSI",
+            ["Tyrannosaurus Rex"] = "12,800 PSI",
             ["Spinosaurus"] = "2,000 PSI",
             ["Megalodon"] = "40,000 PSI",
             ["Velociraptor"] = "500 PSI",
@@ -63,7 +63,7 @@ namespace dinospace.Data
         {
             new Dinosaur
             {
-                Name = "T. Rex",
+                Name = "Tyrannosaurus Rex",
                 Pronunciation = "tie-ran-uh-saw-ruhs reks",
                 Meaning = "Tyrant Lizard King",
                 Era = "Late Cretaceous",

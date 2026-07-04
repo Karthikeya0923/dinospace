@@ -30,8 +30,10 @@ namespace dinospace.Views
         public static RootPage? Current { get; private set; }
         public void SwitchTab(int index) => GoToTab(index);
 
-        // Set by the theme toggle so the rebuilt UI fades in smoothly.
+        // Set by the theme toggle so the rebuilt UI fades in smoothly and
+        // lands on the same tab the user was on (not always Home).
         public static bool FadeInOnAppear;
+        public static int LastTab;
         private bool _didFadeIn;
 
         public RootPage()
@@ -48,7 +50,7 @@ namespace dinospace.Views
             _tabs.Add(("Settings", Ui.IconSettings, settings));
 
             Build();
-            GoToTab(0);
+            GoToTab(LastTab >= 0 && LastTab < _tabs.Count ? LastTab : 0);
         }
 
         private void Build()
@@ -116,6 +118,7 @@ namespace dinospace.Views
 
             if (_current >= 0) _tabs[_current].view.IsVisible = false;
             _current = index;
+            LastTab = index;
             var v = _tabs[index].view;
             v.TranslationX = 0;
             v.IsVisible = true;

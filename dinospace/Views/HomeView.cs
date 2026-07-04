@@ -53,7 +53,7 @@ namespace dinospace.Views
             stack.Add(Ui.SectionHeader("Dinosaurs", "View all", async (_, _) => await Nav.Push(new BrowsePage("Dinosaurs"))));
             stack.Add(EntryCards.TwoColumn(new (string, string, string, Action)[]
             {
-                (Item(DinoData.ByName("T. Rex"))),
+                (Item(DinoData.ByName("Tyrannosaurus Rex"))),
                 (Item(DinoData.ByName("Spinosaurus"))),
                 (Item(DinoData.ByName("Triceratops"))),
                 (Item(DinoData.ByName("Velociraptor"))),

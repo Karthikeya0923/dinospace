@@ -92,29 +92,33 @@ namespace dinospace.Views
             return grid;
         }
 
-        // Swap the palette and rebuild the UI with a Discord-style cross-fade
-        // instead of a jarring white flash.
+        // Swap the palette and rebuild the UI with a Discord-style cross-fade.
+        // The trick that kills the "white flash + jump to Home":
+        //   1. Apply the new palette and paint the native window the new bg
+        //      FIRST, so the moment of the swap is already the target colour.
+        //   2. Dissolve the current UI out to that colour.
+        //   3. Rebuild on the SAME tab; the new UI fades up from the colour.
         private async void ToggleDarkMode(bool dark)
         {
             AppSettings.DarkMode = dark;
             var window = Application.Current?.Windows.FirstOrDefault();
-            var current = window?.Page;
+            var rp = RootPage.Current;
 
-            // Fade the current UI out.
-            if (current != null)
-            {
-                try { await current.FadeTo(0, 130, Easing.CubicOut); } catch { }
-            }
-
-            // Repaint the native window so the gap shows the target colour.
             Theme.Apply(dark);
             ThemeFx.SetWindowBackground(Theme.Bg);
             if (Application.Current != null)
                 Application.Current.UserAppTheme = dark ? AppTheme.Dark : AppTheme.Light;
-            NovaPage.ResetShared();
 
-            // Rebuild; RootPage fades itself in on appear.
-            RootPage.FadeInOnAppear = true;
+            // Dissolve the (still old-coloured) UI out to the new window bg.
+            try
+            {
+                if (rp != null) await rp.FadeTo(0, 150, Easing.CubicOut);
+                else if (window?.Page != null) await window.Page.FadeTo(0, 150, Easing.CubicOut);
+            }
+            catch { }
+
+            NovaPage.ResetShared();
+            RootPage.FadeInOnAppear = true;  // new RootPage fades up, same tab
             if (window != null)
                 window.Page = new AppShell();
         }
