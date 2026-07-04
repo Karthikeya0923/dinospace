@@ -3,159 +3,14 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <!-- ============================================================
-         DinoSpace component styles.
-         Headings use Baloo (round, friendly); body text uses Nunito.
-         Cards are Border (not the deprecated Frame) for speed.
-         ============================================================ -->
-
-    <!-- ===== Labels ===== -->
+    <!-- Editorial light theme defaults. Most UI is built in C# via Ui.cs;
+         these cover the platform controls (entries, pages, indicators). -->
 
     <Style TargetType="Label">
         <Setter Property="FontFamily" Value="Nunito" />
         <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
         <Setter Property="FontSize" Value="15" />
     </Style>
-
-    <Style x:Key="ScreenTitle" TargetType="Label">
-        <Setter Property="FontFamily" Value="Baloo" />
-        <Setter Property="FontSize" Value="28" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
-    </Style>
-
-    <Style x:Key="SectionTitle" TargetType="Label">
-        <Setter Property="FontFamily" Value="Baloo" />
-        <Setter Property="FontSize" Value="19" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
-    </Style>
-
-    <Style x:Key="CardTitle" TargetType="Label">
-        <Setter Property="FontFamily" Value="Baloo" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
-    </Style>
-
-    <Style x:Key="Body" TargetType="Label">
-        <Setter Property="FontFamily" Value="Nunito" />
-        <Setter Property="FontSize" Value="15" />
-        <Setter Property="LineHeight" Value="1.4" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
-    </Style>
-
-    <Style x:Key="BodyMuted" TargetType="Label">
-        <Setter Property="FontFamily" Value="Nunito" />
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="LineHeight" Value="1.35" />
-        <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
-    </Style>
-
-    <Style x:Key="Caption" TargetType="Label">
-        <Setter Property="FontFamily" Value="Nunito" />
-        <Setter Property="FontSize" Value="11" />
-        <Setter Property="TextColor" Value="{StaticResource TextHint}" />
-    </Style>
-
-    <Style x:Key="Overline" TargetType="Label">
-        <Setter Property="FontFamily" Value="Nunito" />
-        <Setter Property="FontSize" Value="11" />
-        <Setter Property="CharacterSpacing" Value="1.4" />
-        <Setter Property="TextColor" Value="{StaticResource TextHint}" />
-    </Style>
-
-    <!-- ===== Cards ===== -->
-
-    <Style x:Key="Card" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
-        <Setter Property="Stroke" Value="{StaticResource HairlineSoft}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="StrokeShape" Value="RoundRectangle 18" />
-        <Setter Property="Padding" Value="16" />
-    </Style>
-
-    <Style x:Key="CardFlat" TargetType="Border" BasedOn="{StaticResource Card}">
-        <Setter Property="Stroke" Value="Transparent" />
-    </Style>
-
-    <Style x:Key="CardSunken" TargetType="Border" BasedOn="{StaticResource Card}">
-        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceSunken}" />
-    </Style>
-
-    <Style x:Key="ListRow" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
-        <Setter Property="Stroke" Value="{StaticResource HairlineSoft}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="StrokeShape" Value="RoundRectangle 16" />
-        <Setter Property="Padding" Value="12" />
-        <Setter Property="Margin" Value="0,4" />
-    </Style>
-
-    <Style x:Key="Chip" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource ChipBg}" />
-        <Setter Property="Stroke" Value="Transparent" />
-        <Setter Property="StrokeShape" Value="RoundRectangle 10" />
-        <Setter Property="Padding" Value="9,3" />
-        <Setter Property="VerticalOptions" Value="Center" />
-    </Style>
-
-    <Style x:Key="ChipText" TargetType="Label">
-        <Setter Property="FontFamily" Value="Nunito" />
-        <Setter Property="FontSize" Value="11" />
-        <Setter Property="TextColor" Value="{StaticResource ChipText}" />
-    </Style>
-
-    <!-- ===== Buttons ===== -->
-
-    <Style TargetType="Button">
-        <Setter Property="FontFamily" Value="Nunito" />
-        <Setter Property="FontSize" Value="15" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource TextOnAccent}" />
-        <Setter Property="BackgroundColor" Value="{StaticResource AccentNova}" />
-        <Setter Property="CornerRadius" Value="14" />
-        <Setter Property="Padding" Value="16,10" />
-        <Setter Property="MinimumHeightRequest" Value="46" />
-        <Setter Property="BorderWidth" Value="0" />
-        <Setter Property="VisualStateManager.VisualStateGroups">
-            <VisualStateGroupList>
-                <VisualStateGroup x:Name="CommonStates">
-                    <VisualState x:Name="Normal" />
-                    <VisualState x:Name="Disabled">
-                        <VisualState.Setters>
-                            <Setter Property="TextColor" Value="{StaticResource TextHint}" />
-                            <Setter Property="BackgroundColor" Value="{StaticResource SurfaceAlt}" />
-                        </VisualState.Setters>
-                    </VisualState>
-                    <VisualState x:Name="Pressed">
-                        <VisualState.Setters>
-                            <Setter Property="Opacity" Value="0.75" />
-                        </VisualState.Setters>
-                    </VisualState>
-                </VisualStateGroup>
-            </VisualStateGroupList>
-        </Setter>
-    </Style>
-
-    <Style x:Key="ButtonDino" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource AccentDino}" />
-    </Style>
-
-    <Style x:Key="ButtonSpace" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource AccentSpace}" />
-    </Style>
-
-    <Style x:Key="ButtonGhost" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
-        <Setter Property="BorderColor" Value="{StaticResource Hairline}" />
-        <Setter Property="BorderWidth" Value="1" />
-    </Style>
-
-    <Style x:Key="ButtonDanger" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource DangerDim}" />
-        <Setter Property="TextColor" Value="{StaticResource Danger}" />
-    </Style>
-
-    <!-- ===== Inputs ===== -->
 
     <Style TargetType="Entry">
         <Setter Property="FontFamily" Value="Nunito" />
@@ -178,24 +33,34 @@
         <Setter Property="FontFamily" Value="Nunito" />
         <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
         <Setter Property="PlaceholderColor" Value="{StaticResource TextHint}" />
-        <Setter Property="CancelButtonColor" Value="{StaticResource AccentNova}" />
+        <Setter Property="CancelButtonColor" Value="{StaticResource Accent}" />
         <Setter Property="BackgroundColor" Value="Transparent" />
     </Style>
 
-    <!-- ===== Misc controls ===== -->
+    <Style TargetType="Button">
+        <Setter Property="FontFamily" Value="Nunito" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource TextOnAccent}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinimumHeightRequest" Value="46" />
+        <Setter Property="BorderWidth" Value="0" />
+    </Style>
 
     <Style TargetType="ActivityIndicator">
-        <Setter Property="Color" Value="{StaticResource AccentNova}" />
+        <Setter Property="Color" Value="{StaticResource Accent}" />
     </Style>
 
     <Style TargetType="ProgressBar">
-        <Setter Property="ProgressColor" Value="{StaticResource AccentNova}" />
+        <Setter Property="ProgressColor" Value="{StaticResource Accent}" />
         <Setter Property="BackgroundColor" Value="{StaticResource SurfaceAlt}" />
     </Style>
 
     <Style TargetType="Switch">
-        <Setter Property="OnColor" Value="{StaticResource AccentNova}" />
-        <Setter Property="ThumbColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="OnColor" Value="{StaticResource Accent}" />
+        <Setter Property="ThumbColor" Value="White" />
     </Style>
 
     <Style TargetType="BoxView">

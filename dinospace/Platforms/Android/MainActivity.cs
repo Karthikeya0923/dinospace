@@ -13,45 +13,91 @@ namespace dinospace
         ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
     public class MainActivity : MauiAppCompatActivity
     {
-        // Observes every touch (without consuming any) and turns a fast, long,
-        // mostly-horizontal fling into a tab switch. This lives at the
-        // activity level because MAUI gesture recognizers on the tab host
-        // never fire — the scrollable content grabs the touches first.
-        private float _downX, _downY;
-        private long _downTime;
+        // Finger-tracking tab pager, ViewPager-style, implemented at the
+        // activity level (MAUI gesture recognizers never fire over
+        // scrollable content). Touches pass through untouched until the
+        // gesture is clearly a horizontal drag; then we send the children a
+        // CANCEL and drive RootPage's pager directly.
+        private float _downX, _downY, _lastX;
+        private long _downTime, _lastTime;
+        private float _velocity;           // px per ms, smoothed
+        private bool _captured, _ignoring;
 
         public override bool DispatchTouchEvent(MotionEvent? e)
         {
-            if (e != null)
+            if (e == null) return base.DispatchTouchEvent(e);
+            float density = Resources?.DisplayMetrics?.Density ?? 2.75f;
+            var root = dinospace.Views.RootPage.Current;
+
+            switch (e.ActionMasked)
             {
-                switch (e.Action)
-                {
-                    case MotionEventActions.Down:
-                        _downX = e.RawX;
-                        _downY = e.RawY;
-                        _downTime = e.EventTime;
-                        break;
+                case MotionEventActions.Down:
+                    _downX = _lastX = e.RawX;
+                    _downY = e.RawY;
+                    _downTime = _lastTime = e.EventTime;
+                    _velocity = 0;
+                    _captured = false;
+                    _ignoring = root == null || !root.CanPan();
+                    break;
 
-                    case MotionEventActions.Up:
-                        float dx = e.RawX - _downX;
-                        float dy = e.RawY - _downY;
-                        long dt = e.EventTime - _downTime;
-                        float width = Resources?.DisplayMetrics?.WidthPixels ?? 1080;
+                case MotionEventActions.Move:
+                    if (_ignoring) break;
+                    float dx = e.RawX - _downX;
+                    float dy = e.RawY - _downY;
 
-                        // Deliberate horizontal fling: at least 25% of screen
-                        // width, clearly more horizontal than vertical, quick.
-                        bool isFling = System.Math.Abs(dx) > width * 0.25f
-                                       && System.Math.Abs(dx) > System.Math.Abs(dy) * 2.2f
-                                       && dt < 450;
-                        if (isFling)
+                    // update velocity (px/ms, smoothed)
+                    long dt = e.EventTime - _lastTime;
+                    if (dt > 0)
+                    {
+                        float inst = (e.RawX - _lastX) / dt;
+                        _velocity = 0.7f * inst + 0.3f * _velocity;
+                    }
+                    _lastX = e.RawX;
+                    _lastTime = e.EventTime;
+
+                    if (!_captured)
+                    {
+                        // Capture once clearly horizontal (~18dp) and not a scroll.
+                        if (System.Math.Abs(dx) > 18 * density && System.Math.Abs(dx) > System.Math.Abs(dy) * 1.4f)
                         {
-                            int delta = dx < 0 ? +1 : -1; // swipe left = next tab
-                            Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(
-                                () => dinospace.Views.RootPage.Current?.HandleFling(delta));
+                            _captured = true;
+                            Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() => root!.HandlePanStart());
+
+                            // Children get a CANCEL so lists stop scrolling.
+                            var cancel = MotionEvent.Obtain(e);
+                            cancel!.Action = MotionEventActions.Cancel;
+                            base.DispatchTouchEvent(cancel);
+                            cancel.Recycle();
                         }
-                        break;
-                }
+                        else if (System.Math.Abs(dy) > 26 * density)
+                        {
+                            _ignoring = true; // committed vertical scroll
+                        }
+                    }
+
+                    if (_captured)
+                    {
+                        float dxNow = e.RawX - _downX;
+                        Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(
+                            () => root!.HandlePanMove(dxNow, density));
+                        return true; // we own this gesture now
+                    }
+                    break;
+
+                case MotionEventActions.Up:
+                case MotionEventActions.Cancel:
+                    if (_captured)
+                    {
+                        float dxEnd = e.RawX - _downX;
+                        float vel = _velocity;
+                        Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(
+                            () => root!.HandlePanEnd(dxEnd, vel, density));
+                        _captured = false;
+                        return true;
+                    }
+                    break;
             }
+
             return base.DispatchTouchEvent(e);
         }
     }

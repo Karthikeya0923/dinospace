@@ -4,85 +4,60 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
     <!-- ============================================================
-         DinoSpace design tokens - single dark "deep space" theme.
-         Everything in the app reads these; nothing hard-codes color.
+         DinoSpace design tokens — warm editorial light theme.
+         Mirrors Ui/Theme.cs. One accent (red), paper surfaces,
+         black serif headlines.
          ============================================================ -->
 
-    <!-- Backgrounds -->
-    <Color x:Key="Bg">#070B14</Color>
-    <Color x:Key="BgRaised">#0C1322</Color>
-    <Color x:Key="Surface">#131B2E</Color>
-    <Color x:Key="SurfaceAlt">#1A2440</Color>
-    <Color x:Key="SurfaceSunken">#0A101D</Color>
+    <Color x:Key="Bg">#FBF9F5</Color>
+    <Color x:Key="BgRaised">#FFFFFF</Color>
+    <Color x:Key="Surface">#FFFFFF</Color>
+    <Color x:Key="SurfaceAlt">#F3EFE8</Color>
+    <Color x:Key="SurfaceSunken">#F3EFE8</Color>
 
-    <!-- Lines and separators -->
-    <Color x:Key="Hairline">#26314F</Color>
-    <Color x:Key="HairlineSoft">#1C2740</Color>
+    <Color x:Key="Hairline">#E7E0D2</Color>
+    <Color x:Key="HairlineSoft">#EEE9DD</Color>
 
-    <!-- Text -->
-    <Color x:Key="TextPrimary">#F2F5FC</Color>
-    <Color x:Key="TextSecondary">#9AA7C4</Color>
-    <Color x:Key="TextHint">#5F6C8C</Color>
-    <Color x:Key="TextOnAccent">#0B1020</Color>
+    <Color x:Key="TextPrimary">#1C1B1A</Color>
+    <Color x:Key="TextSecondary">#6E6963</Color>
+    <Color x:Key="TextHint">#A39D93</Color>
+    <Color x:Key="TextOnAccent">#FFFFFF</Color>
 
-    <!-- Brand accents: amber for dinosaurs, indigo for space, teal for Nova AI -->
-    <Color x:Key="AccentDino">#FFB74D</Color>
-    <Color x:Key="AccentDinoDim">#33FFB74D</Color>
-    <Color x:Key="AccentSpace">#8C9EFF</Color>
-    <Color x:Key="AccentSpaceDim">#338C9EFF</Color>
-    <Color x:Key="AccentNova">#40E0C8</Color>
-    <Color x:Key="AccentNovaDim">#3340E0C8</Color>
+    <Color x:Key="Accent">#D93025</Color>
+    <Color x:Key="AccentSoft">#FBE9E7</Color>
 
-    <!-- Feedback -->
-    <Color x:Key="Success">#4ADE80</Color>
-    <Color x:Key="SuccessDim">#334ADE80</Color>
-    <Color x:Key="Danger">#FF7A7A</Color>
-    <Color x:Key="DangerDim">#33FF7A7A</Color>
+    <!-- Legacy keys used by older styles -->
+    <Color x:Key="AccentDino">#D93025</Color>
+    <Color x:Key="AccentDinoDim">#FBE9E7</Color>
+    <Color x:Key="AccentSpace">#D93025</Color>
+    <Color x:Key="AccentSpaceDim">#FBE9E7</Color>
+    <Color x:Key="AccentNova">#D93025</Color>
+    <Color x:Key="AccentNovaDim">#FBE9E7</Color>
 
-    <!-- Chips -->
-    <Color x:Key="ChipBg">#223055</Color>
-    <Color x:Key="ChipText">#C9D4EE</Color>
+    <Color x:Key="Success">#2E7D32</Color>
+    <Color x:Key="SuccessDim">#E5F1E6</Color>
+    <Color x:Key="Danger">#C62828</Color>
+    <Color x:Key="DangerDim">#FBE9E7</Color>
 
-    <!-- Misc -->
-    <Color x:Key="ImgPlaceholder">#182238</Color>
-    <Color x:Key="Scrim">#B3060A12</Color>
+    <Color x:Key="ChipBg">#F3EFE8</Color>
+    <Color x:Key="ChipText">#57524B</Color>
+    <Color x:Key="ImgPlaceholder">#EFEAE0</Color>
+    <Color x:Key="Scrim">#66000000</Color>
 
-    <!-- Brushes -->
     <SolidColorBrush x:Key="BgBrush" Color="{StaticResource Bg}" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource Surface}" />
     <SolidColorBrush x:Key="HairlineBrush" Color="{StaticResource Hairline}" />
-    <SolidColorBrush x:Key="AccentDinoBrush" Color="{StaticResource AccentDino}" />
-    <SolidColorBrush x:Key="AccentSpaceBrush" Color="{StaticResource AccentSpace}" />
-    <SolidColorBrush x:Key="AccentNovaBrush" Color="{StaticResource AccentNova}" />
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource Accent}" />
 
-    <LinearGradientBrush x:Key="PageBgBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#0B1224" Offset="0.0" />
-        <GradientStop Color="#070B14" Offset="0.45" />
-        <GradientStop Color="#05070E" Offset="1.0" />
-    </LinearGradientBrush>
-
-    <LinearGradientBrush x:Key="HeroDinoBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#2A1E10" Offset="0.0" />
-        <GradientStop Color="#131B2E" Offset="1.0" />
-    </LinearGradientBrush>
-
-    <LinearGradientBrush x:Key="HeroSpaceBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#1B2050" Offset="0.0" />
-        <GradientStop Color="#131B2E" Offset="1.0" />
-    </LinearGradientBrush>
-
-    <LinearGradientBrush x:Key="HeroNovaBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#0E2E2C" Offset="0.0" />
-        <GradientStop Color="#131B2E" Offset="1.0" />
-    </LinearGradientBrush>
+    <SolidColorBrush x:Key="PageBgBrush" Color="{StaticResource Bg}" />
 
     <!-- Legacy keys kept so the default MAUI styles that reference them still resolve. -->
-    <Color x:Key="Primary">#40E0C8</Color>
-    <Color x:Key="PrimaryDark">#40E0C8</Color>
-    <Color x:Key="PrimaryDarkText">#0B1020</Color>
-    <Color x:Key="Secondary">#8C9EFF</Color>
-    <Color x:Key="SecondaryDarkText">#C9D4EE</Color>
-    <Color x:Key="Tertiary">#FFB74D</Color>
+    <Color x:Key="Primary">#D93025</Color>
+    <Color x:Key="PrimaryDark">#D93025</Color>
+    <Color x:Key="PrimaryDarkText">#FFFFFF</Color>
+    <Color x:Key="Secondary">#6E6963</Color>
+    <Color x:Key="SecondaryDarkText">#6E6963</Color>
+    <Color x:Key="Tertiary">#D93025</Color>
     <Color x:Key="White">White</Color>
     <Color x:Key="Black">Black</Color>
     <Color x:Key="Gray100">#E1E1E1</Color>

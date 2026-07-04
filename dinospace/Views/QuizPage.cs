@@ -77,10 +77,7 @@ namespace dinospace.Views
             main.Add(_progress, 0, 1);
             main.Add(new ScrollView { Content = _body }, 0, 2);
 
-            var root = new Grid { BackgroundColor = Theme.Bg };
-            root.Add(Backdrop.For("mainbackground.png"));
-            root.Add(main);
-            Content = root;
+            Content = new Grid { BackgroundColor = Theme.Bg, Children = { main } };
         }
 
         private void ShowQuestion()

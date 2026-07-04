@@ -1,110 +1,212 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
-    // The landing tab: app logo, the day's featured creature/object, quick
-    // jumps into the app, live progress, and a rotating fact.
+    // The landing tab, magazine-style: logo masthead, a big featured story,
+    // curated entry grids with "View all", the play features, and a fact.
     public class HomeView : ContentView, ITabView
     {
-        private readonly Action<int> _goTab;
-
-        private Label _streakValue = null!, _seenValue = null!, _savedValue = null!;
-        private Label _factLabel = null!;
         private Border _featuredCard = null!;
         private bool _showDino = true;
         private readonly Dinosaur _dino;
         private readonly SpaceObject _space;
+        private Label _factLabel = null!;
 
         public HomeView(Action<int> goTab)
         {
-            _goTab = goTab;
             _dino = DinoData.All[DateTime.Now.DayOfYear % DinoData.All.Count];
             _space = SpaceData.All[DateTime.Now.DayOfYear % SpaceData.All.Count];
             Build();
         }
 
-        public void OnSelected()
-        {
-            StatsStore.UpdateStreak();
-            RefreshProgress();
-            RefreshFeatured();
-        }
+        public void OnSelected() => StatsStore.UpdateStreak();
 
         private void Build()
         {
-            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(16, 16, 16, 24) };
+            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(18, 10, 18, 28) };
 
-            // ----- logo header (friend-supplied art; blank until added) -----
+            stack.Add(Masthead());
+
+            var hello = new Label
+            {
+                Text = "Let's explore.",
+                FontFamily = Ui.Display,
+                FontSize = Ui.S(28),
+                TextColor = Theme.TextSecondary
+            };
+            stack.Add(hello);
+
+            _featuredCard = BuildFeatured();
+            stack.Add(_featuredCard);
+
+            // What's new — the most recently added entries.
+            stack.Add(Ui.SectionHeader("What's new"));
+            stack.Add(EntryCards.TwoColumn(new (string, string, string, Action)[]
+            {
+                (Item(DinoData.ByName("Smilodon"))),
+                (ItemS(SpaceData.ByName("Europa"))),
+                (Item(DinoData.ByName("Woolly Mammoth"))),
+                (ItemS(SpaceData.ByName("Orion Nebula"))),
+            }));
+
+            // Dinosaurs
+            stack.Add(Ui.SectionHeader("Dinosaurs", "View all", async (_, _) => await Nav.Push(new BrowsePage("Dinosaurs"))));
+            stack.Add(EntryCards.TwoColumn(new (string, string, string, Action)[]
+            {
+                (Item(DinoData.ByName("T. Rex"))),
+                (Item(DinoData.ByName("Spinosaurus"))),
+                (Item(DinoData.ByName("Triceratops"))),
+                (Item(DinoData.ByName("Velociraptor"))),
+            }));
+
+            // Space
+            stack.Add(Ui.SectionHeader("Space", "View all", async (_, _) => await Nav.Push(new BrowsePage("Space"))));
+            stack.Add(EntryCards.TwoColumn(new (string, string, string, Action)[]
+            {
+                (ItemS(SpaceData.ByName("Saturn"))),
+                (ItemS(SpaceData.ByName("Sun"))),
+                (ItemS(SpaceData.ByName("Sagittarius A*"))),
+                (ItemS(SpaceData.ByName("Mars"))),
+            }));
+
+            // NovaSaur
+            stack.Add(Ui.SectionHeader("Ask NovaSaur"));
+            stack.Add(NovaCard());
+
+            // Play
+            stack.Add(Ui.SectionHeader("Play"));
+            stack.Add(PlayRow(Ui.IconQuiz, "Quizzes", "Test what you know", async () => await StartQuiz()));
+            stack.Add(PlayRow(Ui.IconBolt, "Dino Battle", "Two creatures face off", async () => await Nav.Push(new BattlePage(null))));
+            stack.Add(PlayRow(Ui.IconList, "Collections", "Curated ranked lists", async () => await Nav.Push(new CollectionsListPage())));
+
+            // Fact
+            stack.Add(Ui.SectionHeader("Did you know?"));
+            stack.Add(FactCard());
+
+            Content = new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
+        }
+
+        private static (string, string, string, Action) Item(Dinosaur? d)
+        {
+            d ??= DinoData.All[0];
+            return (d.ImageFile, d.Name, d.Era, async () => await Nav.OpenDino(d));
+        }
+
+        private static (string, string, string, Action) ItemS(SpaceObject? s)
+        {
+            s ??= SpaceData.All[0];
+            return (s.ImageFile, s.Name, s.TypeLabel, async () => await Nav.OpenSpace(s));
+        }
+
+        // ----- masthead: friend's logo, serif fallback -----
+        private View Masthead()
+        {
+            var grid = new Grid { HeightRequest = 46 };
+
+            var fallback = new Label
+            {
+                Text = "DinoSpace",
+                FontFamily = Ui.Display,
+                FontSize = 30,
+                TextColor = Theme.Accent,
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center
+            };
             var logo = new Image
             {
                 Source = "mainlogo.png",
                 Aspect = Aspect.AspectFit,
-                HeightRequest = 96,
-                HorizontalOptions = LayoutOptions.Center
+                HeightRequest = 42,
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center
             };
-            Ui.Describe(logo, "DinoSpace");
-            stack.Add(logo);
-
-            // ----- featured of the day -----
-            _featuredCard = BuildFeatured();
-            stack.Add(_featuredCard);
-
-            // ----- quick actions -----
-            stack.Add(Ui.Overline("Jump in"));
-            stack.Add(QuickActions());
-
-            // ----- progress -----
-            stack.Add(ProgressRow());
-
-            // ----- fact -----
-            stack.Add(FactCard());
-
-            Content = new ScrollView { Content = stack };
-            RefreshProgress();
-            RefreshFeatured();
+            // If the logo art loads, it covers the wordmark; until then the
+            // serif wordmark carries the masthead.
+            grid.Add(fallback);
+            grid.Add(logo);
+            Ui.Describe(grid, "DinoSpace");
+            return grid;
         }
 
+        // ----- featured story -----
         private Border BuildFeatured()
         {
-            var tag = new Label { Text = "DINOSAUR OF THE DAY", FontFamily = Ui.Fonts, FontSize = 11, FontAttributes = FontAttributes.Bold, CharacterSpacing = 1.2, TextColor = Theme.AccentDino };
-            var name = new Label { Text = _dino.Name, FontFamily = Ui.Display, FontSize = 26, TextColor = Theme.TextPrimary };
-            var sub = new Label { Text = _dino.ShortDescription, FontFamily = Ui.Fonts, FontSize = 13.5, TextColor = Theme.TextSecondary };
+            var img = new Image { Source = _dino.ImageFile, Aspect = Aspect.AspectFill, HeightRequest = 250 };
+            var imgWrap = new Grid { HeightRequest = 250, BackgroundColor = Theme.ImgPlaceholder };
+            imgWrap.Add(img);
 
-            var img = new Image { Source = _dino.ImageFile, Aspect = Aspect.AspectFill, HeightRequest = 150 };
-            var imgWrap = new Border
+            // Red round FEATURED badge, like the reference.
+            var badge = new Border
             {
-                Content = img,
-                BackgroundColor = Colors.Transparent,
-                Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 14 },
-                HeightRequest = 150,
-                Margin = new Thickness(0, 10, 0, 12)
+                WidthRequest = 78, HeightRequest = 78,
+                BackgroundColor = Theme.Accent,
+                Stroke = Colors.White, StrokeThickness = 2.5,
+                StrokeShape = new RoundRectangle { CornerRadius = 39 },
+                HorizontalOptions = LayoutOptions.Start,
+                VerticalOptions = LayoutOptions.Start,
+                Margin = new Thickness(14, 14, 0, 0),
+                Content = new Label
+                {
+                    Text = "OF THE\nDAY",
+                    FontFamily = Ui.Fonts, FontSize = 11.5, FontAttributes = FontAttributes.Bold,
+                    CharacterSpacing = 0.8, TextColor = Colors.White,
+                    HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
+                }
             };
+            imgWrap.Add(badge);
 
-            var textCol = new VerticalStackLayout { Spacing = 3 };
-            textCol.Add(tag); textCol.Add(name); textCol.Add(sub);
+            // Big flip pill — generous hitbox this time.
+            var flipContent = new HorizontalStackLayout
+            {
+                Spacing = 6,
+                Children =
+                {
+                    Ui.Icon(Ui.IconSwap, 18, Theme.TextPrimary),
+                    new Label { Text = "Flip", FontFamily = Ui.Fonts, FontSize = 13.5, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center }
+                }
+            };
+            var flip = new Border
+            {
+                Content = flipContent,
+                BackgroundColor = Colors.White,
+                Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 100 },
+                Padding = new Thickness(16, 10),
+                MinimumHeightRequest = 42,
+                HorizontalOptions = LayoutOptions.End,
+                VerticalOptions = LayoutOptions.Start,
+                Margin = new Thickness(0, 12, 12, 0),
+                Shadow = Theme.CardShadow()
+            };
+            Ui.OnTap(flip, (_, _) => { _showDino = !_showDino; RefreshFeatured(); });
+            Ui.Describe(flip, "Flip between dinosaur and space object of the day");
+            imgWrap.Add(flip);
 
-            // Tapping the card opens the entry; Flip switches dino <-> space.
-            var flipBtn = new Label { Text = "Flip ⇄", FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, HorizontalOptions = LayoutOptions.End };
-            Ui.OnTap(flipBtn, (_, _) => { _showDino = !_showDino; RefreshFeatured(); });
+            var tag = new Label { Text = "DINOSAUR OF THE DAY", FontFamily = Ui.Fonts, FontSize = 11, FontAttributes = FontAttributes.Bold, CharacterSpacing = 1.8, TextColor = Theme.Accent };
+            var name = new Label { Text = _dino.Name, FontFamily = Ui.Display, FontSize = Ui.S(26), LineHeight = 1.05, TextColor = Theme.TextPrimary };
+            var sub = new Label { Text = "“" + _dino.ShortDescription + "”", FontFamily = Ui.Fonts, FontSize = Ui.S(14), LineHeight = 1.4, TextColor = Theme.TextSecondary };
+
+            var info = new VerticalStackLayout { Spacing = 6, Padding = new Thickness(16, 14, 16, 18) };
+            info.Add(tag); info.Add(name); info.Add(sub);
 
             var col = new VerticalStackLayout { Spacing = 0 };
-            col.Add(textCol);
             col.Add(imgWrap);
-            col.Add(flipBtn);
+            col.Add(info);
 
             var card = new Border
             {
                 Content = col,
-                Background = Grad("#2A1E10"),
-                Stroke = Theme.HairlineSoft,
-                StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 20 },
-                Padding = new Thickness(16)
+                BackgroundColor = Theme.Surface,
+                Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 18 },
+                Padding = 0,
+                Shadow = Theme.CardShadow()
             };
             Ui.OnTap(card, async (_, _) =>
             {
@@ -112,142 +214,110 @@ namespace dinospace.Views
                 else await Nav.OpenSpace(_space);
             });
 
-            card.BindingContext = new FeaturedRefs(tag, name, sub, img, card);
+            card.BindingContext = new FeaturedRefs(tag, name, sub, img);
             return card;
         }
 
-        private record FeaturedRefs(Label Tag, Label Name, Label Sub, Image Img, Border Card);
+        private record FeaturedRefs(Label Tag, Label Name, Label Sub, Image Img);
 
         private void RefreshFeatured()
         {
             if (_featuredCard.BindingContext is not FeaturedRefs r) return;
             if (_showDino)
             {
-                r.Tag.Text = "DINOSAUR OF THE DAY"; r.Tag.TextColor = Theme.AccentDino;
-                r.Name.Text = _dino.Name; r.Sub.Text = _dino.ShortDescription;
+                r.Tag.Text = "DINOSAUR OF THE DAY";
+                r.Name.Text = _dino.Name;
+                r.Sub.Text = "“" + _dino.ShortDescription + "”";
                 r.Img.Source = _dino.ImageFile;
-                r.Card.Background = Grad("#2A1E10");
             }
             else
             {
-                r.Tag.Text = "SPACE OBJECT OF THE DAY"; r.Tag.TextColor = Theme.AccentSpace;
-                r.Name.Text = _space.Name; r.Sub.Text = _space.ShortDescription;
+                r.Tag.Text = "SPACE OBJECT OF THE DAY";
+                r.Name.Text = _space.Name;
+                r.Sub.Text = "“" + _space.ShortDescription + "”";
                 r.Img.Source = _space.ImageFile;
-                r.Card.Background = Grad("#1B2050");
             }
         }
 
-        private static Brush Grad(string top) => new LinearGradientBrush(new GradientStopCollection
+        // ----- Nova card -----
+        private View NovaCard()
         {
-            new GradientStop(Color.FromArgb(top), 0f),
-            new GradientStop(Theme.Surface, 1f)
-        }, new Point(0, 0), new Point(1, 1));
-
-        private View QuickActions()
-        {
-            var grid = new Grid { ColumnSpacing = 12, RowSpacing = 12 };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            grid.Add(ActionCard("Dinosaurs", "dinopedialogo.png", () => { ExploreView.RequestSegment(1); _goTab(1); }), 0, 0);
-            grid.Add(ActionCard("Space", "spacepedialogo.png", () => { ExploreView.RequestSegment(2); _goTab(1); }), 1, 0);
-            grid.Add(ActionCard("Ask Nova AI", "askailogo.png", async () => await Nav.Push(new NovaPage())), 0, 1);
-            grid.Add(ActionCard("Play & Quiz", "quizlogo.png", () => _goTab(2)), 1, 1);
-            return grid;
+            var col = new VerticalStackLayout { Spacing = 10 };
+            col.Add(new Label
+            {
+                Text = "Curious about anything prehistoric or cosmic?",
+                FontFamily = Ui.Display, FontSize = Ui.S(20), LineHeight = 1.15, TextColor = Theme.TextPrimary
+            });
+            col.Add(new Label
+            {
+                Text = "NovaSaur answers right on your phone — no internet needed.",
+                FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), LineHeight = 1.4, TextColor = Theme.TextSecondary
+            });
+            col.Add(Ui.PrimaryButton("ASK A QUESTION", async (_, _) => await Nav.Push(new NovaPage())));
+            return Ui.Card(col, radius: 18, padding: new Thickness(18, 16));
         }
 
-        // Square: friend-supplied logo image on top, title below. Nothing else.
-        private Border ActionCard(string title, string image, Action onTap)
+        // ----- play rows -----
+        private View PlayRow(string icon, string title, string sub, Func<System.Threading.Tasks.Task> onTap)
         {
-            var img = new Image
+            var iconWrap = new Border
             {
-                Source = image,
-                Aspect = Aspect.AspectFit,
-                HeightRequest = 64,
-                HorizontalOptions = LayoutOptions.Center
+                WidthRequest = 44, HeightRequest = 44,
+                BackgroundColor = Theme.AccentSoft,
+                Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 22 },
+                VerticalOptions = LayoutOptions.Center,
+                Content = Ui.Icon(icon, 22, Theme.Accent)
             };
 
-            var col = new VerticalStackLayout { Spacing = 10 };
-            col.Add(img);
-            col.Add(new Label { Text = title, FontFamily = Ui.Display, FontSize = 16, TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center });
+            var info = new VerticalStackLayout { Spacing = 1, VerticalOptions = LayoutOptions.Center };
+            info.Add(new Label { Text = title, FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
+            info.Add(new Label { Text = sub, FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), TextColor = Theme.TextSecondary });
 
-            var card = new Border
-            {
-                Content = col,
-                BackgroundColor = Theme.Surface,
-                Stroke = Theme.HairlineSoft,
-                StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 16 },
-                Padding = new Thickness(14, 16)
-            };
-            Ui.OnTap(card, (_, _) => onTap());
-            Ui.Describe(card, title);
+            var chevron = Ui.Icon(Ui.IconChevron, 24, Theme.TextHint);
+            chevron.VerticalOptions = LayoutOptions.Center;
+
+            var grid = new Grid { ColumnSpacing = 14 };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.Add(iconWrap, 0, 0);
+            grid.Add(info, 1, 0);
+            grid.Add(chevron, 2, 0);
+
+            var card = Ui.Card(grid, radius: 16, padding: new Thickness(14, 12));
+            Ui.OnTap(card, async (_, _) => await onTap());
             return card;
         }
 
-        private View ProgressRow()
+        private async System.Threading.Tasks.Task StartQuiz()
         {
-            var grid = new Grid { ColumnSpacing = 12 };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-
-            _streakValue = StatNumber();
-            _seenValue = StatNumber();
-            _savedValue = StatNumber();
-            grid.Add(StatTile("Day streak", _streakValue), 0, 0);
-            grid.Add(StatTile("Entries seen", _seenValue), 1, 0);
-            grid.Add(StatTile("Bookmarks", _savedValue), 2, 0);
-            return grid;
+            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (page == null) return;
+            string mode = await page.DisplayActionSheet("Pick a quiz", "Cancel", null, "Dinosaurs", "Space", "Mixed");
+            if (mode is not ("Dinosaurs" or "Space" or "Mixed")) return;
+            string choice = await page.DisplayActionSheet("How many questions?", "Cancel", null, "5", "10", "25", "50", "100");
+            if (!int.TryParse(choice, out int count)) return;
+            await Nav.Push(new QuizPage(mode, count));
         }
 
-        private Label StatNumber() => new()
-        { FontFamily = Ui.Display, FontSize = 24, TextColor = Theme.TextPrimary };
-
-        private Border StatTile(string label, Label value)
-        {
-            var col = new VerticalStackLayout { Spacing = 2, HorizontalOptions = LayoutOptions.Center };
-            col.Add(value);
-            col.Add(new Label { Text = label, FontFamily = Ui.Fonts, FontSize = 11, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center });
-            return new Border
-            {
-                Content = col,
-                BackgroundColor = Theme.Surface,
-                Stroke = Theme.HairlineSoft,
-                StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 14 },
-                Padding = new Thickness(8, 14)
-            };
-        }
-
+        // ----- fact -----
         private View FactCard()
         {
-            _factLabel = new Label { Text = FactData.Random(), FontFamily = Ui.Fonts, FontSize = 14, LineHeight = 1.4, TextColor = Theme.TextPrimary };
-            var col = new VerticalStackLayout { Spacing = 8 };
-            col.Add(new Label { Text = "DID YOU KNOW?", FontFamily = Ui.Fonts, FontSize = 11, FontAttributes = FontAttributes.Bold, CharacterSpacing = 1.2, TextColor = Theme.AccentNova });
-            col.Add(_factLabel);
-            col.Add(new Label { Text = "Tap for another", FontFamily = Ui.Fonts, FontSize = 12, TextColor = Theme.TextHint });
-
-            var card = new Border
+            _factLabel = new Label
             {
-                Content = col,
-                BackgroundColor = Theme.Surface,
-                Stroke = Theme.HairlineSoft,
-                StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 16 },
-                Padding = new Thickness(16)
+                Text = FactData.Random(),
+                FontFamily = Ui.Display,
+                FontSize = Ui.S(18),
+                LineHeight = 1.25,
+                TextColor = Theme.TextPrimary
             };
+            var col = new VerticalStackLayout { Spacing = 10 };
+            col.Add(_factLabel);
+            col.Add(new Label { Text = "Tap for another", FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint });
+            var card = Ui.Card(col, radius: 18, padding: new Thickness(18, 16));
             Ui.OnTap(card, (_, _) => _factLabel.Text = FactData.Random());
             return card;
-        }
-
-        private void RefreshProgress()
-        {
-            _streakValue.Text = StatsStore.Streak().ToString();
-            _seenValue.Text = (StatsStore.DinosSeen() + StatsStore.SpaceSeen()).ToString();
-            _savedValue.Text = SavedStore.Count.ToString();
         }
     }
 }

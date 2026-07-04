@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
@@ -5,31 +6,48 @@ using Microsoft.Maui.Graphics;
 
 namespace dinospace
 {
-    // Small, consistent view builders shared across screens. Keeping these in
-    // one place is what makes every list row, chip, and card look identical
-    // and lets the pages stay short.
+    // Shared view builders — the app's editorial component kit.
+    // Serif for headlines, clean sans for body, caps+rule section headers,
+    // white cards with soft shadows.
     public static class Ui
     {
-        public const string Fonts = "Nunito";
-        public const string Display = "Baloo";
+        public const string Fonts = "Nunito";        // body sans
+        public const string Display = "Serif";       // DM Serif Display
+        public const string DisplayItalic = "SerifItalic";
+        public const string Icons = "Icons";         // Material icons
 
-        // Text-size accessibility scale. Screens built on navigation (detail
-        // pages, quiz) pick this up immediately; the persistent tabs pick it up
-        // next time they're opened.
+        // Material icon glyphs used across the app.
+        public const string IconHome = "";
+        public const string IconSearch = "";
+        public const string IconSaved = "";     // bookmark_border
+        public const string IconSavedFill = ""; // bookmark
+        public const string IconSettings = "";
+        public const string IconBack = "";      // arrow_back
+        public const string IconChevron = "";   // chevron_right
+        public const string IconClose = "";
+        public const string IconStar = "";
+        public const string IconStarBorder = "";
+        public const string IconSwap = "";      // swap_horiz
+        public const string IconBolt = "";      // offline_bolt (battles)
+        public const string IconQuiz = "";      // library_books-ish
+        public const string IconList = "";      // list
+        public const string IconChat = "";      // chat
+
         public static double Scale => AppSettings.FontScale;
         public static double S(double size) => size * Scale;
 
-        // ---------- primitives ----------
+        // ---------- type ----------
 
-        public static Label Title(string text, double size = 28) => new()
+        public static Label Title(string text, double size = 30) => new()
         {
             Text = text,
             FontFamily = Display,
             FontSize = S(size),
-            TextColor = Theme.TextPrimary
+            TextColor = Theme.TextPrimary,
+            LineHeight = 1.08
         };
 
-        public static Label Heading(string text, double size = 19) => new()
+        public static Label Heading(string text, double size = 21) => new()
         {
             Text = text,
             FontFamily = Display,
@@ -42,7 +60,7 @@ namespace dinospace
             Text = text,
             FontFamily = Fonts,
             FontSize = S(size),
-            LineHeight = 1.42,
+            LineHeight = 1.45,
             TextColor = color ?? Theme.TextPrimary
         };
 
@@ -55,61 +73,147 @@ namespace dinospace
             TextColor = Theme.TextSecondary
         };
 
-        public static Label Overline(string text, Color? color = null) => new()
+        public static Label Icon(string glyph, double size, Color color) => new()
         {
-            Text = text.ToUpperInvariant(),
-            FontFamily = Fonts,
-            FontSize = 11,
-            CharacterSpacing = 1.6,
-            FontAttributes = FontAttributes.Bold,
-            TextColor = color ?? Theme.TextHint
+            Text = glyph,
+            FontFamily = Icons,
+            FontSize = size,
+            TextColor = color,
+            HorizontalTextAlignment = TextAlignment.Center,
+            VerticalTextAlignment = TextAlignment.Center
         };
 
-        // ---------- cards & chips ----------
+        // ALL-CAPS letterspaced section header with a thin rule underneath —
+        // the magazine look from the reference.
+        public static View SectionHeader(string title, string? action = null, System.EventHandler<TappedEventArgs>? onAction = null)
+        {
+            var caps = new Label
+            {
+                Text = title.ToUpperInvariant(),
+                FontFamily = Fonts,
+                FontSize = S(14),
+                FontAttributes = FontAttributes.Bold,
+                CharacterSpacing = 2.2,
+                TextColor = Theme.TextPrimary,
+                VerticalOptions = LayoutOptions.End
+            };
 
-        public static Border Card(View content, Color? bg = null, Color? stroke = null, double radius = 18, Thickness? padding = null) => new()
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.Add(caps, 0, 0);
+            if (!string.IsNullOrEmpty(action))
+            {
+                var link = new Label
+                {
+                    Text = action,
+                    FontFamily = Fonts,
+                    FontSize = S(13),
+                    FontAttributes = FontAttributes.Bold,
+                    TextColor = Theme.Accent,
+                    VerticalOptions = LayoutOptions.End
+                };
+                if (onAction != null) OnTap(link, onAction);
+                grid.Add(link, 1, 0);
+            }
+
+            var rule = new BoxView { HeightRequest = 1.5, Color = Theme.Hairline, Margin = new Thickness(0, 8, 0, 0) };
+            return new VerticalStackLayout { Spacing = 0, Margin = new Thickness(0, 10, 0, 2), Children = { grid, rule } };
+        }
+
+        // ---------- cards ----------
+
+        // White card, rounded, soft shadow. No border strokes.
+        public static Border Card(View content, double radius = 16, Thickness? padding = null) => new()
         {
             Content = content,
-            BackgroundColor = bg ?? Theme.Surface,
-            Stroke = stroke ?? Theme.HairlineSoft,
-            StrokeThickness = 1,
+            BackgroundColor = Theme.Surface,
+            Stroke = Colors.Transparent,
             StrokeShape = new RoundRectangle { CornerRadius = radius },
-            Padding = padding ?? new Thickness(16)
+            Padding = padding ?? new Thickness(16),
+            Shadow = Theme.CardShadow()
         };
 
         public static Border Chip(string text, Color? bg = null, Color? textColor = null) => new()
         {
             BackgroundColor = bg ?? Theme.ChipBg,
             Stroke = Colors.Transparent,
-            StrokeShape = new RoundRectangle { CornerRadius = 10 },
-            Padding = new Thickness(9, 3),
+            StrokeShape = new RoundRectangle { CornerRadius = 100 },
+            Padding = new Thickness(12, 6),
             VerticalOptions = LayoutOptions.Center,
             Content = new Label
             {
                 Text = text,
                 FontFamily = Fonts,
-                FontSize = 11,
+                FontSize = S(12),
                 FontAttributes = FontAttributes.Bold,
                 TextColor = textColor ?? Theme.ChipText
             }
         };
 
-        // A colored dot + label pill, used for diet/type tags.
         public static View TintChip(string text, Color accent)
-            => Chip(text, MultiplyAlpha(accent, 0.16f), accent);
+            => Chip(text, Theme.AccentSoft, Theme.Accent);
 
-        // ---------- tappable helpers ----------
+        // Filled red pill button, like the reference's SUBSCRIBE.
+        public static Border PrimaryButton(string text, System.EventHandler<TappedEventArgs> onTap)
+        {
+            var label = new Label
+            {
+                Text = text,
+                FontFamily = Fonts,
+                FontSize = S(15),
+                FontAttributes = FontAttributes.Bold,
+                CharacterSpacing = 0.6,
+                TextColor = Theme.TextOnAccent,
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Center
+            };
+            var btn = new Border
+            {
+                Content = label,
+                BackgroundColor = Theme.Accent,
+                Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 14 },
+                Padding = new Thickness(16, 15),
+                Shadow = Theme.CardShadow()
+            };
+            return OnTap(btn, onTap);
+        }
 
-        public static T OnTap<T>(T view, EventHandler<TappedEventArgs> handler, bool haptic = true) where T : View
+        public static Border GhostButton(string text, System.EventHandler<TappedEventArgs> onTap)
+        {
+            var label = new Label
+            {
+                Text = text,
+                FontFamily = Fonts,
+                FontSize = S(15),
+                FontAttributes = FontAttributes.Bold,
+                TextColor = Theme.Accent,
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Center
+            };
+            var btn = new Border
+            {
+                Content = label,
+                BackgroundColor = Theme.Surface,
+                Stroke = Theme.Hairline,
+                StrokeThickness = 1.2,
+                StrokeShape = new RoundRectangle { CornerRadius = 14 },
+                Padding = new Thickness(16, 14)
+            };
+            return OnTap(btn, onTap);
+        }
+
+        // ---------- interaction ----------
+
+        public static T OnTap<T>(T view, System.EventHandler<TappedEventArgs> handler, bool haptic = true) where T : View
         {
             var tap = new TapGestureRecognizer();
             tap.Tapped += async (s, e) =>
             {
                 if (haptic) AppSettings.Tap();
-                // Instant pressed feedback so taps never feel dead while the
-                // action (navigation, refresh) is starting.
                 var v = s as View ?? view;
-                v.Opacity = 0.55;
+                v.Opacity = 0.6;
                 handler(s, e);
                 await Task.Delay(120);
                 v.Opacity = 1;
@@ -118,76 +222,17 @@ namespace dinospace
             return view;
         }
 
-        // Screen-reader label (TalkBack / VoiceOver).
         public static T Describe<T>(T view, string description) where T : View
         {
             Microsoft.Maui.Controls.SemanticProperties.SetDescription(view, description);
             return view;
         }
 
-        // ---------- list rows ----------
+        // ---------- images ----------
 
-        // Thumbnail | (title row + subtitle) | chevron, inside a rounded card.
-        public static Border EntryRow(string image, string title, string chipText, string subtitle, Color accent, EventHandler<TappedEventArgs> tapped)
-        {
-            var thumb = Thumb(image, 58, accent);
-
-            var titleRow = new HorizontalStackLayout { Spacing = 8, VerticalOptions = LayoutOptions.Center };
-            titleRow.Add(new Label
-            {
-                Text = title,
-                FontFamily = Display,
-                FontSize = 17,
-                TextColor = Theme.TextPrimary,
-                VerticalOptions = LayoutOptions.Center
-            });
-            if (!string.IsNullOrEmpty(chipText))
-                titleRow.Add(TintChip(chipText, accent));
-
-            var info = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };
-            info.Add(titleRow);
-            if (!string.IsNullOrEmpty(subtitle))
-                info.Add(Muted(subtitle, 12.5));
-
-            var chevron = new Label
-            {
-                Text = "›",
-                FontSize = 24,
-                TextColor = Theme.TextHint,
-                VerticalOptions = LayoutOptions.Center
-            };
-
-            var grid = new Grid { ColumnSpacing = 12, VerticalOptions = LayoutOptions.Center };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.Add(thumb, 0, 0);
-            grid.Add(info, 1, 0);
-            grid.Add(chevron, 2, 0);
-
-            var card = new Border
-            {
-                Content = grid,
-                BackgroundColor = Theme.Surface,
-                Stroke = Theme.HairlineSoft,
-                StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 16 },
-                Padding = new Thickness(10, 10),
-                Margin = new Thickness(0, 4)
-            };
-            return OnTap(card, tapped);
-        }
-
-        // Rounded thumbnail. No outline — the image should stand on its own.
         public static Border Thumb(string image, double size, Color accent)
         {
-            var img = new Image
-            {
-                Source = image,
-                WidthRequest = size,
-                HeightRequest = size,
-                Aspect = Aspect.AspectFill
-            };
+            var img = new Image { Source = image, WidthRequest = size, HeightRequest = size, Aspect = Aspect.AspectFill };
             return new Border
             {
                 Content = img,
@@ -195,13 +240,12 @@ namespace dinospace
                 HeightRequest = size,
                 BackgroundColor = Colors.Transparent,
                 Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 14 }
+                StrokeShape = new RoundRectangle { CornerRadius = 12 }
             };
         }
 
         // ---------- stat bars ----------
 
-        // Label + track + fill, normalized to a 0..1 fraction.
         public static View StatBar(string label, string value, double fraction, Color accent)
         {
             fraction = System.Math.Clamp(fraction, 0.04, 1.0);
@@ -214,7 +258,7 @@ namespace dinospace
             {
                 Text = value,
                 FontFamily = Fonts,
-                FontSize = 13,
+                FontSize = S(13),
                 FontAttributes = FontAttributes.Bold,
                 TextColor = Theme.TextPrimary,
                 HorizontalOptions = LayoutOptions.End
@@ -225,53 +269,23 @@ namespace dinospace
                 BackgroundColor = accent,
                 Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 5 },
-                HeightRequest = 8,
+                HeightRequest = 7,
                 HorizontalOptions = LayoutOptions.Start
             };
-
             var track = new Border
             {
                 BackgroundColor = Theme.SurfaceAlt,
                 Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 5 },
-                HeightRequest = 8,
+                HeightRequest = 7,
                 Content = fill
             };
-            // Size the fill once the track has a width.
-            track.SizeChanged += (_, _) =>
-            {
-                if (track.Width > 0) fill.WidthRequest = track.Width * fraction;
-            };
+            track.SizeChanged += (_, _) => { if (track.Width > 0) fill.WidthRequest = track.Width * fraction; };
 
             return new VerticalStackLayout { Spacing = 6, Children = { top, track } };
         }
 
-        // ---------- section header ----------
-
-        public static View SectionHeader(string title, string? action = null, EventHandler<TappedEventArgs>? onAction = null)
-        {
-            var grid = new Grid { Margin = new Thickness(0, 4) };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.Add(Heading(title), 0, 0);
-            if (!string.IsNullOrEmpty(action))
-            {
-                var link = new Label
-                {
-                    Text = action,
-                    FontFamily = Fonts,
-                    FontSize = 13,
-                    FontAttributes = FontAttributes.Bold,
-                    TextColor = Theme.AccentNova,
-                    VerticalOptions = LayoutOptions.Center
-                };
-                if (onAction != null) OnTap(link, onAction);
-                grid.Add(link, 1, 0);
-            }
-            return grid;
-        }
-
-        // ---------- color math ----------
+        // ---------- colour math ----------
 
         public static Color MultiplyAlpha(Color c, float alpha)
             => new Color(c.Red, c.Green, c.Blue, alpha);

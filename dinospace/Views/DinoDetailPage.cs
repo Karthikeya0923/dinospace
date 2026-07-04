@@ -3,19 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Maui.Controls;
-using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
-    // Rich profile for one prehistoric creature: hero, quick stats, animated
-    // stat bars (incl. bite force), an "Ask Nova" hook, a battle launcher,
-    // deep sections, and related creatures. Sits on the dino backdrop.
+    // Editorial profile for one prehistoric creature: clean hero, serif
+    // headline, quick stats, stat bars, deep sections, related, and the
+    // Nova/battle actions at the end.
     public class DinoDetailPage : ContentPage
     {
         private readonly Dinosaur _d;
         private Label _saveIcon = null!;
-        private static readonly Color Accent = Theme.AccentDino;
+        private static readonly Color Accent = Theme.Accent;
 
         public DinoDetailPage(Dinosaur d)
         {
@@ -27,13 +26,10 @@ namespace dinospace.Views
 
         private void Build()
         {
-            var stack = new VerticalStackLayout { Spacing = 14, Padding = new Thickness(16, 16, 16, 28) };
+            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(18, 16, 18, 30) };
 
-            stack.Add(new Label
-            {
-                Text = $"“{_d.Meaning}” · {_d.Diet} · {_d.Era}",
-                FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), TextColor = Theme.TextSecondary
-            });
+            stack.Add(DetailUi.TitleBlock(_d.Name, _d.Pronunciation,
+                $"“{_d.Meaning}”  ·  {_d.Diet}  ·  {_d.Era}"));
 
             stack.Add(DetailUi.StatChipRow(new (string, string, Color)[]
             {
@@ -47,8 +43,8 @@ namespace dinospace.Views
             stack.Add(StatBars());
 
             stack.Add(DetailUi.Section("About", _d.AboutText, Accent));
-            stack.Add(DetailUi.Section("Key Features", _d.KeyFeaturesText, Accent));
-            stack.Add(DetailUi.Section("Habitat & Environment", _d.LifeEnvironmentText, Accent));
+            stack.Add(DetailUi.Section("Key features", _d.KeyFeaturesText, Accent));
+            stack.Add(DetailUi.Section("Habitat & environment", _d.LifeEnvironmentText, Accent));
             stack.Add(DetailUi.Section("Behaviour", _d.BehaviourText, Accent));
             stack.Add(DetailUi.FunFacts(_d.FunFactsText, Accent));
 
@@ -58,20 +54,18 @@ namespace dinospace.Views
                 related = DinoData.All.Where(x => x.Name != _d.Name).Take(6).Select(x => (x.ImageFile, x.Name, (object)x)).ToList();
             stack.Add(DetailUi.Related(related, Accent));
 
-            // Actions live at the end so they don't interrupt the reading flow.
             stack.Add(DetailUi.AskNovaButton(_d.Name));
-            stack.Add(BattleButton());
+            stack.Add(Ui.GhostButton("Battle this creature", async (_, _) => await Nav.Push(new BattlePage(_d))));
 
             var scrollContent = new VerticalStackLayout { Spacing = 0 };
-            scrollContent.Add(DetailUi.Hero(_d.ImageFile, _d.Name, _d.Pronunciation));
+            scrollContent.Add(DetailUi.Hero(_d.ImageFile, _d.Name));
             scrollContent.Add(stack);
 
-            var scroll = new ScrollView { Content = scrollContent };
+            var scroll = new ScrollView { Content = scrollContent, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
             var topBar = DetailUi.TopBar(SavedStore.IsDinoSaved(_d.Name), OnBack, OnSave, out _saveIcon);
             ((View)topBar).VerticalOptions = LayoutOptions.Start;
 
             var root = new Grid { BackgroundColor = Theme.Bg };
-            root.Add(Backdrop.For("dinobackground.png"));
             root.Add(scroll);
             root.Add(topBar);
             Content = root;
@@ -86,33 +80,13 @@ namespace dinospace.Views
             double maxBite = DinoData.All.Max(x => Num(x.BiteForce));
 
             var col = new VerticalStackLayout { Spacing = 14 };
-            col.Add(DetailUi.TitleRow("Stats", Accent));
+            col.Add(Ui.SectionHeader("How it measures up"));
             if (Num(_d.Length) > 0) col.Add(Ui.StatBar("Length", _d.Length, Num(_d.Length) / maxLen, Accent));
             if (Num(_d.Height) > 0) col.Add(Ui.StatBar("Height", _d.Height, Num(_d.Height) / maxH, Accent));
             if (Num(_d.Weight) > 0) col.Add(Ui.StatBar("Weight", _d.Weight, Num(_d.Weight) / maxW, Accent));
             if (Num(_d.Speed) > 0) col.Add(Ui.StatBar("Top speed", _d.Speed, Num(_d.Speed) / maxS, Accent));
-            if (Num(_d.BiteForce) > 0 && maxBite > 0) col.Add(Ui.StatBar("Bite force", _d.BiteForce, Num(_d.BiteForce) / maxBite, Theme.Danger));
-            return DetailUi.Card(col);
-        }
-
-        private View BattleButton()
-        {
-            var label = new Label
-            {
-                Text = "⚔  Battle this creature",
-                FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold,
-                TextColor = Accent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
-            };
-            var btn = new Border
-            {
-                Content = label,
-                BackgroundColor = Ui.MultiplyAlpha(Accent, 0.16f),
-                Stroke = Ui.MultiplyAlpha(Accent, 0.5f), StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 16 },
-                Padding = new Thickness(16, 13)
-            };
-            Ui.OnTap(btn, async (_, _) => await Nav.Push(new BattlePage(_d)));
-            return btn;
+            if (Num(_d.BiteForce) > 0 && maxBite > 0) col.Add(Ui.StatBar("Bite force", _d.BiteForce, Num(_d.BiteForce) / maxBite, Accent));
+            return col;
         }
 
         private async void OnBack()
@@ -124,8 +98,8 @@ namespace dinospace.Views
         {
             bool nowSaved = SavedStore.ToggleDino(_d.Name);
             AppSettings.LongPress();
-            _saveIcon.Text = nowSaved ? "★" : "☆";
-            _saveIcon.TextColor = nowSaved ? Accent : Theme.TextPrimary;
+            _saveIcon.Text = nowSaved ? Ui.IconSavedFill : Ui.IconSaved;
+            _saveIcon.TextColor = nowSaved ? Theme.Accent : Theme.TextPrimary;
         }
 
         private static double Num(string s)

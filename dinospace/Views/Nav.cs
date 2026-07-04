@@ -24,34 +24,29 @@ namespace dinospace.Views
         public static async Task OpenDino(Dinosaur d) => await Push(new DinoDetailPage(d));
         public static async Task OpenSpace(SpaceObject s) => await Push(new SpaceDetailPage(s));
 
-        // A ScrollView of `content` on the gradient background, with a slim
-        // top bar (back chevron + title). Used by every pushed detail page.
+        // `content` under a slim top bar (back arrow + small serif title).
+        // Used by every pushed utility page.
         public static View DetailScaffold(string title, View content, Color accent, out ScrollView scroll)
         {
-            var back = new Label
-            {
-                Text = "‹",
-                FontSize = 34,
-                TextColor = Theme.TextPrimary,
-                VerticalOptions = LayoutOptions.Center,
-                Padding = new Thickness(4, 0, 12, 0)
-            };
+            var back = Ui.Icon(Ui.IconBack, 24, Theme.TextPrimary);
+            back.Padding = new Thickness(6, 8, 14, 8);
             Ui.OnTap(back, async (_, _) =>
             {
                 try { if (Shell.Current.Navigation.NavigationStack.Count > 1) await Shell.Current.Navigation.PopAsync(); } catch { }
-            });
+            }, haptic: false);
+            Ui.Describe(back, "Go back");
 
             var titleLabel = new Label
             {
                 Text = title,
                 FontFamily = Ui.Display,
-                FontSize = 18,
+                FontSize = 19,
                 TextColor = Theme.TextPrimary,
                 VerticalOptions = LayoutOptions.Center,
                 LineBreakMode = LineBreakMode.TailTruncation
             };
 
-            var bar = new Grid { Padding = new Thickness(8, 8, 16, 6), ColumnSpacing = 2 };
+            var bar = new Grid { Padding = new Thickness(10, 6, 16, 6), ColumnSpacing = 2 };
             bar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             bar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             bar.Add(back, 0, 0);

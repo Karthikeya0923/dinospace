@@ -5,8 +5,8 @@ namespace dinospace
         public App()
         {
             InitializeComponent();
-            // Single fixed deep-space theme.
-            UserAppTheme = AppTheme.Dark;
+            // Single fixed editorial light theme.
+            UserAppTheme = AppTheme.Light;
         }
 
         protected override Window CreateWindow(IActivationState? activationState)

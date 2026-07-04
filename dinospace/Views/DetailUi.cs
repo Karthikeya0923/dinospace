@@ -7,83 +7,110 @@ using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
-    // Shared building blocks for the dinosaur and space detail pages, so both
-    // look identical in structure and only differ in content.
+    // Shared building blocks for the dinosaur and space detail pages —
+    // editorial style: clean full-bleed image (no scrim), serif headline
+    // below it, caps+rule section headers with body text on the paper.
     public static class DetailUi
     {
-        // Full-bleed hero: image + a dark gradient scrim + overlaid title.
-        // No chips overlaid — the image is the star.
-        public static View Hero(string image, string title, string pronunciation)
+        // Plain hero image. No overlays, no gradient boxes — the photo breathes.
+        public static View Hero(string image, string title)
         {
             var img = new Image { Source = image, Aspect = Aspect.AspectFill, HorizontalOptions = LayoutOptions.Fill, VerticalOptions = LayoutOptions.Fill };
             Ui.Describe(img, title);
-
-            var scrim = new Border
-            {
-                Background = new LinearGradientBrush(new GradientStopCollection
-                {
-                    new GradientStop(Colors.Transparent, 0f),
-                    new GradientStop(Color.FromArgb("#33060A12"), 0.55f),
-                    new GradientStop(Color.FromArgb("#F2060A12"), 1f),
-                }, new Point(0, 0), new Point(0, 1)),
-                Stroke = Colors.Transparent,
-                InputTransparent = true
-            };
-
-            var name = new Label { Text = title, FontFamily = Ui.Display, FontSize = Ui.S(30), TextColor = Theme.TextPrimary };
-            var pron = new Label { Text = pronunciation, FontFamily = Ui.Fonts, FontSize = Ui.S(13), FontAttributes = FontAttributes.Italic, TextColor = Theme.TextSecondary };
-
-            var overlay = new VerticalStackLayout { Spacing = 4, Padding = new Thickness(16, 0, 16, 16), VerticalOptions = LayoutOptions.End };
-            overlay.Add(name);
-            if (!string.IsNullOrWhiteSpace(pronunciation)) overlay.Add(pron);
-
-            var grid = new Grid { HeightRequest = 320, BackgroundColor = Colors.Transparent };
+            var grid = new Grid { HeightRequest = 320, BackgroundColor = Theme.ImgPlaceholder };
             grid.Add(img);
-            grid.Add(scrim);
-            grid.Add(overlay);
             return grid;
+        }
+
+        // The headline block that sits under the hero.
+        public static View TitleBlock(string title, string pronunciation, string meta)
+        {
+            var col = new VerticalStackLayout { Spacing = 6 };
+            col.Add(new Label
+            {
+                Text = title,
+                FontFamily = Ui.Display,
+                FontSize = Ui.S(32),
+                LineHeight = 1.05,
+                TextColor = Theme.TextPrimary
+            });
+            if (!string.IsNullOrWhiteSpace(pronunciation))
+                col.Add(new Label
+                {
+                    Text = pronunciation,
+                    FontFamily = Ui.DisplayItalic,
+                    FontSize = Ui.S(15),
+                    TextColor = Theme.TextSecondary
+                });
+            if (!string.IsNullOrWhiteSpace(meta))
+                col.Add(new Label
+                {
+                    Text = meta,
+                    FontFamily = Ui.Fonts,
+                    FontSize = Ui.S(13),
+                    TextColor = Theme.TextSecondary,
+                    Margin = new Thickness(0, 4, 0, 0)
+                });
+            return col;
         }
 
         public static View StatChip(string label, string value, Color accent)
         {
-            var col = new VerticalStackLayout { Spacing = 2 };
-            col.Add(new Label { Text = label.ToUpperInvariant(), FontFamily = Ui.Fonts, FontSize = Ui.S(10), FontAttributes = FontAttributes.Bold, CharacterSpacing = 0.8, TextColor = accent });
-            col.Add(new Label { Text = value, FontFamily = Ui.Display, FontSize = Ui.S(17), TextColor = Theme.TextPrimary });
+            var col = new VerticalStackLayout { Spacing = 3 };
+            col.Add(new Label
+            {
+                Text = label.ToUpperInvariant(),
+                FontFamily = Ui.Fonts, FontSize = Ui.S(10), FontAttributes = FontAttributes.Bold,
+                CharacterSpacing = 1.2, TextColor = Theme.Accent
+            });
+            col.Add(new Label
+            {
+                Text = value,
+                FontFamily = Ui.Display, FontSize = Ui.S(17), TextColor = Theme.TextPrimary
+            });
             return new Border
             {
                 Content = col,
                 BackgroundColor = Theme.Surface,
-                Stroke = Theme.HairlineSoft,
-                StrokeThickness = 1,
+                Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 },
-                Padding = new Thickness(14, 10),
-                MinimumWidthRequest = 96
+                Padding = new Thickness(14, 11),
+                MinimumWidthRequest = 96,
+                Shadow = Theme.CardShadow()
             };
         }
 
         public static View StatChipRow(IEnumerable<(string label, string value, Color accent)> stats)
         {
-            var row = new HorizontalStackLayout { Spacing = 10, Padding = new Thickness(0, 2) };
+            var row = new HorizontalStackLayout { Spacing = 10, Padding = new Thickness(2, 4, 2, 8) };
             foreach (var (label, value, accent) in stats)
                 if (!string.IsNullOrWhiteSpace(value))
                     row.Add(StatChip(label, value, accent));
             return new ScrollView { Orientation = ScrollOrientation.Horizontal, HorizontalScrollBarVisibility = ScrollBarVisibility.Never, Content = row };
         }
 
+        // Caps+rule header with the body text directly on the paper.
         public static View Section(string title, string body, Color accent)
         {
             if (string.IsNullOrWhiteSpace(body)) return new ContentView { IsVisible = false };
-            var col = new VerticalStackLayout { Spacing = 8 };
-            col.Add(TitleRow(title, accent));
-            col.Add(new Label { Text = body, FontFamily = Ui.Fonts, FontSize = Ui.S(14.5), LineHeight = 1.45, TextColor = Theme.TextPrimary });
-            return Card(col);
+            var col = new VerticalStackLayout { Spacing = 10 };
+            col.Add(Ui.SectionHeader(title));
+            col.Add(new Label
+            {
+                Text = body,
+                FontFamily = Ui.Fonts,
+                FontSize = Ui.S(15),
+                LineHeight = 1.55,
+                TextColor = Theme.TextPrimary
+            });
+            return col;
         }
 
         public static View FunFacts(string funFacts, Color accent)
         {
             if (string.IsNullOrWhiteSpace(funFacts)) return new ContentView { IsVisible = false };
-            var col = new VerticalStackLayout { Spacing = 8 };
-            col.Add(TitleRow("Fun Facts", accent));
+            var col = new VerticalStackLayout { Spacing = 12 };
+            col.Add(Ui.SectionHeader("Fun facts"));
 
             foreach (var raw in funFacts.Split('\n'))
             {
@@ -91,53 +118,33 @@ namespace dinospace.Views
                 if (line.Length == 0) continue;
                 var dot = new Border
                 {
-                    WidthRequest = 7, HeightRequest = 7, BackgroundColor = accent,
+                    WidthRequest = 7, HeightRequest = 7, BackgroundColor = Theme.Accent,
                     Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 4 },
-                    Margin = new Thickness(0, 7, 0, 0), VerticalOptions = LayoutOptions.Start
+                    Margin = new Thickness(0, 8, 0, 0), VerticalOptions = LayoutOptions.Start
                 };
-                var text = new Label { Text = line, FontFamily = Ui.Fonts, FontSize = Ui.S(14), LineHeight = 1.4, TextColor = Theme.TextPrimary };
-                var row = new Grid { ColumnSpacing = 10 };
+                var text = new Label { Text = line, FontFamily = Ui.Fonts, FontSize = Ui.S(14.5), LineHeight = 1.5, TextColor = Theme.TextPrimary };
+                var row = new Grid { ColumnSpacing = 12 };
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
                 row.Add(dot, 0, 0);
                 row.Add(text, 1, 0);
                 col.Add(row);
             }
-            return Card(col);
+            return col;
         }
 
-        public static View TitleRow(string title, Color accent)
-        {
-            var bar = new Border { WidthRequest = 4, HeightRequest = 18, BackgroundColor = accent, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 2 }, VerticalOptions = LayoutOptions.Center };
-            var label = new Label { Text = title, FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center };
-            return new HorizontalStackLayout { Spacing = 10, Children = { bar, label } };
-        }
+        public static View TitleRow(string title, Color accent) => Ui.SectionHeader(title);
 
-        public static Border Card(View content) => new()
-        {
-            Content = content,
-            BackgroundColor = Theme.Surface,
-            Stroke = Theme.HairlineSoft,
-            StrokeThickness = 1,
-            StrokeShape = new RoundRectangle { CornerRadius = 18 },
-            Padding = new Thickness(16)
-        };
+        public static Border Card(View content) => Ui.Card(content);
 
-        // Floating top bar over the hero: back on the left, bookmark on the right.
+        // Floating over the hero: back left, bookmark right — white circles.
         public static View TopBar(bool saved, Action onBack, Action onSave, out Label saveIcon)
         {
-            var back = RoundGlyph("‹", 30);
+            var back = RoundIcon(Ui.IconBack, Theme.TextPrimary);
             Ui.OnTap(back, (_, _) => onBack(), haptic: false);
             Ui.Describe(back, "Go back");
 
-            saveIcon = new Label
-            {
-                Text = saved ? "★" : "☆",
-                FontSize = Ui.S(22),
-                TextColor = saved ? Theme.AccentDino : Theme.TextPrimary,
-                HorizontalTextAlignment = TextAlignment.Center,
-                VerticalTextAlignment = TextAlignment.Center
-            };
+            saveIcon = Ui.Icon(saved ? Ui.IconSavedFill : Ui.IconSaved, 22, saved ? Theme.Accent : Theme.TextPrimary);
             var saveBtn = RoundWrap(saveIcon);
             Ui.OnTap(saveBtn, (_, _) => onSave());
             Ui.Describe(saveBtn, saved ? "Remove bookmark" : "Save to bookmarks");
@@ -151,69 +158,45 @@ namespace dinospace.Views
             return grid;
         }
 
-        private static Border RoundGlyph(string glyph, double size)
-        {
-            var label = new Label
-            {
-                Text = glyph,
-                FontSize = Ui.S(size),
-                TextColor = Theme.TextPrimary,
-                HorizontalTextAlignment = TextAlignment.Center,
-                VerticalTextAlignment = TextAlignment.Center
-            };
-            return RoundWrap(label);
-        }
+        private static Border RoundIcon(string glyph, Color color) => RoundWrap(Ui.Icon(glyph, 22, color));
 
         private static Border RoundWrap(View content) => new()
         {
             Content = content,
-            WidthRequest = 40, HeightRequest = 40,
-            BackgroundColor = Color.FromArgb("#99060A12"),
-            Stroke = Theme.HairlineSoft, StrokeThickness = 1,
-            StrokeShape = new RoundRectangle { CornerRadius = 20 }
+            WidthRequest = 42, HeightRequest = 42,
+            BackgroundColor = Colors.White,
+            Stroke = Colors.Transparent,
+            StrokeShape = new RoundRectangle { CornerRadius = 21 },
+            Shadow = Theme.CardShadow()
         };
 
-        // Primary "Ask Nova about this" call-to-action.
         public static View AskNovaButton(string name)
-        {
-            var label = new Label
-            {
-                Text = $"Ask Nova about {name}",
-                FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold,
-                TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center,
-                VerticalTextAlignment = TextAlignment.Center
-            };
-            var btn = new Border
-            {
-                Content = label,
-                BackgroundColor = Theme.AccentNova,
-                Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 16 },
-                Padding = new Thickness(16, 14)
-            };
-            Ui.OnTap(btn, async (_, _) =>
+            => Ui.PrimaryButton($"ASK NOVASAUR ABOUT {name.ToUpperInvariant()}", async (_, _) =>
             {
                 NovaView.Ask($"Tell me an interesting fact about {name}.");
                 await Nav.Push(new NovaPage());
             });
-            return btn;
-        }
 
-        // Related entries strip (same domain). No outline on the thumbnails.
+        // Related entries strip.
         public static View Related(IEnumerable<(string image, string name, object data)> items, Color accent)
         {
-            var row = new HorizontalStackLayout { Spacing = 12 };
+            var row = new HorizontalStackLayout { Spacing = 12, Padding = new Thickness(2, 4) };
             foreach (var (image, name, data) in items)
             {
-                var img = new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = 84, WidthRequest = 120 };
+                var img = new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = 84, WidthRequest = 124 };
                 var wrap = new Border
                 {
-                    Content = img, WidthRequest = 120, HeightRequest = 84,
-                    BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent,
-                    StrokeShape = new RoundRectangle { CornerRadius = 12 }
+                    Content = img, WidthRequest = 124, HeightRequest = 84,
+                    BackgroundColor = Theme.ImgPlaceholder, Stroke = Colors.Transparent,
+                    StrokeShape = new RoundRectangle { CornerRadius = 12 },
+                    Shadow = Theme.CardShadow()
                 };
-                var label = new Label { Text = name, FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextSecondary, MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation, WidthRequest = 120 };
-                var col = new VerticalStackLayout { Spacing = 5, Children = { wrap, label } };
+                var label = new Label
+                {
+                    Text = name, FontFamily = Ui.Display, FontSize = Ui.S(13.5),
+                    TextColor = Theme.TextPrimary, MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation, WidthRequest = 124
+                };
+                var col = new VerticalStackLayout { Spacing = 6, Children = { wrap, label } };
                 Ui.OnTap(col, async (_, _) =>
                 {
                     if (data is Dinosaur d) await Nav.OpenDino(d);
@@ -221,8 +204,8 @@ namespace dinospace.Views
                 });
                 row.Add(col);
             }
-            var section = new VerticalStackLayout { Spacing = 10 };
-            section.Add(TitleRow("You might also like", accent));
+            var section = new VerticalStackLayout { Spacing = 12 };
+            section.Add(Ui.SectionHeader("You might also like"));
             section.Add(new ScrollView { Orientation = ScrollOrientation.Horizontal, HorizontalScrollBarVisibility = ScrollBarVisibility.Never, Content = row });
             return section;
         }

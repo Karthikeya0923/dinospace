@@ -11,8 +11,12 @@ namespace dinospace
                 .UseMauiApp<App>()
                 .ConfigureFonts(fonts =>
                 {
-                    // Baloo2 -> friendly rounded headings; Nunito -> body text.
+                    // DM Serif Display -> editorial headlines; Nunito -> body;
+                    // Material Icons -> tab bar and buttons.
                     fonts.AddFont("Nunito-Regular.ttf", "Nunito");
+                    fonts.AddFont("DMSerifDisplay-Regular.ttf", "Serif");
+                    fonts.AddFont("DMSerifDisplay-Italic.ttf", "SerifItalic");
+                    fonts.AddFont("MaterialIcons-Regular.ttf", "Icons");
                     fonts.AddFont("Baloo2-Bold.ttf", "Baloo");
                 });
 

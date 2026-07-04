@@ -16,7 +16,6 @@ namespace dinospace.Views
         {
             BackgroundColor = Theme.Bg;
             _root = new Grid();
-            _root.Add(Backdrop.For("mainbackground.png"));
             Content = _root;
         }
 

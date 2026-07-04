@@ -2,41 +2,57 @@ using Microsoft.Maui.Graphics;
 
 namespace dinospace
 {
-    // Code-behind mirror of Resources/Styles/Colors.xaml so views built in C#
-    // read the exact same palette as XAML. One source of truth per value.
+    // DinoSpace design tokens — warm editorial light theme.
+    // One accent (red), warm paper surfaces, black serif headlines, soft
+    // shadows instead of hard borders. Inspired by classy recipe-magazine
+    // apps rather than "android settings screen".
     public static class Theme
     {
-        public static readonly Color Bg = Color.FromArgb("#070B14");
-        public static readonly Color BgRaised = Color.FromArgb("#0C1322");
-        public static readonly Color Surface = Color.FromArgb("#131B2E");
-        public static readonly Color SurfaceAlt = Color.FromArgb("#1A2440");
-        public static readonly Color SurfaceSunken = Color.FromArgb("#0A101D");
+        // Surfaces
+        public static readonly Color Bg = Color.FromArgb("#FBF9F5");   // warm paper
+        public static readonly Color BgRaised = Color.FromArgb("#FFFFFF");
+        public static readonly Color Surface = Color.FromArgb("#FFFFFF");   // cards
+        public static readonly Color SurfaceAlt = Color.FromArgb("#F3EFE8");   // subtle wells / tracks
+        public static readonly Color SurfaceSunken = Color.FromArgb("#F3EFE8");
 
-        public static readonly Color Hairline = Color.FromArgb("#26314F");
-        public static readonly Color HairlineSoft = Color.FromArgb("#1C2740");
+        // Lines — thin warm rules like a magazine
+        public static readonly Color Hairline = Color.FromArgb("#E7E0D2");
+        public static readonly Color HairlineSoft = Color.FromArgb("#EEE9DD");
 
-        public static readonly Color TextPrimary = Color.FromArgb("#F2F5FC");
-        public static readonly Color TextSecondary = Color.FromArgb("#9AA7C4");
-        public static readonly Color TextHint = Color.FromArgb("#5F6C8C");
-        public static readonly Color TextOnAccent = Color.FromArgb("#0B1020");
+        // Ink
+        public static readonly Color TextPrimary = Color.FromArgb("#1C1B1A");
+        public static readonly Color TextSecondary = Color.FromArgb("#6E6963");
+        public static readonly Color TextHint = Color.FromArgb("#A39D93");
+        public static readonly Color TextOnAccent = Colors.White;
 
-        public static readonly Color AccentDino = Color.FromArgb("#FFB74D");
-        public static readonly Color AccentSpace = Color.FromArgb("#8C9EFF");
-        public static readonly Color AccentNova = Color.FromArgb("#40E0C8");
+        // One accent. Red. Like the reference.
+        public static readonly Color Accent = Color.FromArgb("#D93025");
+        public static readonly Color AccentSoft = Color.FromArgb("#FBE9E7");
 
-        public static readonly Color Success = Color.FromArgb("#4ADE80");
-        public static readonly Color Danger = Color.FromArgb("#FF7A7A");
+        // Legacy aliases so every existing view recolours itself without a
+        // hundred edits. All three domains now share the single accent.
+        public static readonly Color AccentDino = Accent;
+        public static readonly Color AccentSpace = Accent;
+        public static readonly Color AccentNova = Accent;
 
-        public static readonly Color ChipBg = Color.FromArgb("#223055");
-        public static readonly Color ChipText = Color.FromArgb("#C9D4EE");
-        public static readonly Color ImgPlaceholder = Color.FromArgb("#182238");
+        // Feedback
+        public static readonly Color Success = Color.FromArgb("#2E7D32");
+        public static readonly Color Danger = Color.FromArgb("#C62828");
 
-        // The accent that represents a given content domain.
-        public static Color AccentFor(string category) => category switch
+        // Chips
+        public static readonly Color ChipBg = Color.FromArgb("#F3EFE8");
+        public static readonly Color ChipText = Color.FromArgb("#57524B");
+        public static readonly Color ImgPlaceholder = Color.FromArgb("#EFEAE0");
+
+        public static Color AccentFor(string category) => Accent;
+
+        // The soft card shadow used everywhere instead of borders.
+        public static Shadow CardShadow() => new()
         {
-            "Space" => AccentSpace,
-            "Nova" => AccentNova,
-            _ => AccentDino,
+            Brush = new SolidColorBrush(Color.FromArgb("#241C1B1A")),
+            Offset = new Microsoft.Maui.Graphics.Point(0, 3),
+            Radius = 12,
+            Opacity = 1f
         };
     }
 }

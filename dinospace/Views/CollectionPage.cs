@@ -30,10 +30,7 @@ namespace dinospace.Views
                 stack.Add(Row(rank++, e, accent));
 
             var content = Nav.DetailScaffold(c?.Title ?? "Collection", new ScrollView { Content = stack }, accent, out _);
-            var root = new Grid { BackgroundColor = Theme.Bg };
-            root.Add(Backdrop.For("mainbackground.png"));
-            root.Add(content);
-            Content = root;
+            Content = new Grid { BackgroundColor = Theme.Bg, Children = { content } };
         }
 
         private View Row(int rank, CollectionEntry e, Color accent)
