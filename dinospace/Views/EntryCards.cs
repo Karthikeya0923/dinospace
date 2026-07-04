@@ -11,6 +11,10 @@ namespace dinospace.Views
     // Cards auto-size vertically so titles never get clipped.
     public static class EntryCards
     {
+        // Fixed heights so every card is identical whether the name is one or
+        // two lines. The title area always reserves two lines and the meta
+        // sits pinned at the bottom, so "Late Cretaceous" never gets clipped
+        // and short-named cards don't leave an awkward gap.
         public static View GridCard(string image, string title, string meta, Action onTap)
         {
             var img = new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = 118 };
@@ -21,11 +25,12 @@ namespace dinospace.Views
             {
                 Text = title,
                 FontFamily = Ui.Display,
-                FontSize = Ui.S(17),
-                LineHeight = 1.12,
+                FontSize = Ui.S(16.5),
+                LineHeight = 1.1,
                 MaxLines = 2,
                 LineBreakMode = LineBreakMode.TailTruncation,
-                TextColor = Theme.TextPrimary
+                TextColor = Theme.TextPrimary,
+                VerticalOptions = LayoutOptions.Start
             };
             var sub = new Label
             {
@@ -34,12 +39,16 @@ namespace dinospace.Views
                 FontSize = Ui.S(12),
                 MaxLines = 1,
                 LineBreakMode = LineBreakMode.TailTruncation,
-                TextColor = Theme.TextSecondary
+                TextColor = Theme.TextSecondary,
+                VerticalOptions = LayoutOptions.End
             };
 
-            var info = new VerticalStackLayout { Spacing = 5, Padding = new Thickness(12, 11, 12, 14) };
-            info.Add(name);
-            if (!string.IsNullOrEmpty(meta)) info.Add(sub);
+            // Title (reserves 2 lines) on top, meta pinned to the bottom.
+            var info = new Grid { Padding = new Thickness(12, 10, 12, 12), RowSpacing = 4, HeightRequest = 82 };
+            info.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
+            info.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            info.Add(name, 0, 0);
+            if (!string.IsNullOrEmpty(meta)) info.Add(sub, 0, 1);
 
             var col = new VerticalStackLayout { Spacing = 0 };
             col.Add(imgWrap);
@@ -53,6 +62,7 @@ namespace dinospace.Views
                 StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 },
                 Padding = 0,
+                HeightRequest = 200,
                 Shadow = Theme.CardShadow()
             };
             Ui.OnTap(card, (_, _) => onTap());

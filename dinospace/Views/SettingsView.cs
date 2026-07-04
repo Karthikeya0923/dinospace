@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Media;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
@@ -102,23 +103,32 @@ namespace dinospace.Views
         {
             AppSettings.DarkMode = dark;
             var window = Application.Current?.Windows.FirstOrDefault();
-            var rp = RootPage.Current;
 
+            // 1. Freeze the current screen as an image.
+            byte[]? snap = null;
+            try
+            {
+                if (Screenshot.Default.IsCaptureSupported)
+                {
+                    var result = await Screenshot.Default.CaptureAsync();
+                    using var s = await result.OpenReadAsync();
+                    using var ms = new System.IO.MemoryStream();
+                    await s.CopyToAsync(ms);
+                    snap = ms.ToArray();
+                }
+            }
+            catch { }
+
+            // 2. Repaint everything to the new theme (window bg too, so any
+            //    gap is the target colour, not white).
             Theme.Apply(dark);
             ThemeFx.SetWindowBackground(Theme.Bg);
             if (Application.Current != null)
                 Application.Current.UserAppTheme = dark ? AppTheme.Dark : AppTheme.Light;
-
-            // Dissolve the (still old-coloured) UI out to the new window bg.
-            try
-            {
-                if (rp != null) await rp.FadeTo(0, 150, Easing.CubicOut);
-                else if (window?.Page != null) await window.Page.FadeTo(0, 150, Easing.CubicOut);
-            }
-            catch { }
-
             NovaPage.ResetShared();
-            RootPage.FadeInOnAppear = true;  // new RootPage fades up, same tab
+
+            // 3. Rebuild under the frozen snapshot; RootPage dissolves it away.
+            RootPage.CrossfadeSnapshot = snap;
             if (window != null)
                 window.Page = new AppShell();
         }

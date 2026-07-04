@@ -30,11 +30,13 @@ namespace dinospace.Views
         public static RootPage? Current { get; private set; }
         public void SwitchTab(int index) => GoToTab(index);
 
-        // Set by the theme toggle so the rebuilt UI fades in smoothly and
-        // lands on the same tab the user was on (not always Home).
-        public static bool FadeInOnAppear;
+        // A snapshot of the pre-toggle screen. The theme toggle rebuilds the
+        // window under it, then fades this away for a true Discord-style
+        // cross-dissolve (no solid-colour flash). LastTab keeps the same tab.
+        public static byte[]? CrossfadeSnapshot;
         public static int LastTab;
-        private bool _didFadeIn;
+        private Grid _rootGrid = null!;
+        private bool _didCrossfade;
 
         public RootPage()
         {
@@ -69,6 +71,7 @@ namespace dinospace.Views
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             root.Add(_content, 0, 0);
             root.Add(nav, 0, 1);
+            _rootGrid = root;
             Content = root;
         }
 
@@ -252,15 +255,36 @@ namespace dinospace.Views
         protected override void OnAppearing()
         {
             base.OnAppearing();
-            if (FadeInOnAppear && !_didFadeIn)
+            if (CrossfadeSnapshot != null && !_didCrossfade)
             {
-                _didFadeIn = true;
-                FadeInOnAppear = false;
-                Opacity = 0;
-                _ = this.FadeTo(1, 190, Easing.CubicIn);
+                _didCrossfade = true;
+                var bytes = CrossfadeSnapshot;
+                CrossfadeSnapshot = null;
+                RunCrossfade(bytes);
             }
             if (_current >= 0)
                 (_tabs[_current].view as ITabView)?.OnSelected();
+        }
+
+        // Lay the frozen old screen over the freshly themed UI, then dissolve
+        // it away — the new theme is revealed underneath, in place, no flash.
+        private void RunCrossfade(byte[] bytes)
+        {
+            var cover = new Image
+            {
+                Source = ImageSource.FromStream(() => new System.IO.MemoryStream(bytes)),
+                Aspect = Aspect.Fill,
+                InputTransparent = true
+            };
+            _rootGrid.Add(cover);
+            Grid.SetRowSpan(cover, 2);
+
+            Dispatcher.Dispatch(async () =>
+            {
+                await Task.Delay(16);
+                await cover.FadeTo(0, 320, Easing.SinInOut);
+                _rootGrid.Remove(cover);
+            });
         }
 
         protected override bool OnBackButtonPressed()

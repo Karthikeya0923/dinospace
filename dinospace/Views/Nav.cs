@@ -13,10 +13,12 @@ namespace dinospace.Views
     {
         private static DateTime _lastPush = DateTime.MinValue;
 
-        public static async Task Push(Page page, bool animated = true)
+        // Forward navigation is instant (no slide) so it feels immediate; the
+        // page is virtualized so there's nothing heavy to wait on.
+        public static async Task Push(Page page, bool animated = false)
         {
             if (page == null) return;
-            if ((DateTime.Now - _lastPush).TotalMilliseconds < 350) return; // debounce
+            if ((DateTime.Now - _lastPush).TotalMilliseconds < 300) return; // debounce
             _lastPush = DateTime.Now;
             try { await Shell.Current.Navigation.PushAsync(page, animated); } catch { }
         }
