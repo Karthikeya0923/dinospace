@@ -105,7 +105,7 @@ namespace dinospace.Views
             var thumb = new Border
             {
                 Content = new Image { Source = image, Aspect = Aspect.AspectFill, WidthRequest = 48, HeightRequest = 48 },
-                WidthRequest = 48, HeightRequest = 48, BackgroundColor = Theme.ImgPlaceholder,
+                WidthRequest = 48, HeightRequest = 48, BackgroundColor = Colors.Transparent,
                 Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 12 }
             };
             var info = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };

@@ -37,7 +37,7 @@ namespace dinospace.Views
             overlay.Add(name);
             if (!string.IsNullOrWhiteSpace(pronunciation)) overlay.Add(pron);
 
-            var grid = new Grid { HeightRequest = 320, BackgroundColor = Theme.ImgPlaceholder };
+            var grid = new Grid { HeightRequest = 320, BackgroundColor = Colors.Transparent };
             grid.Add(img);
             grid.Add(scrim);
             grid.Add(overlay);
@@ -194,8 +194,7 @@ namespace dinospace.Views
             Ui.OnTap(btn, async (_, _) =>
             {
                 NovaView.Ask($"Tell me an interesting fact about {name}.");
-                try { while (Shell.Current.Navigation.NavigationStack.Count > 1) await Shell.Current.Navigation.PopAsync(false); } catch { }
-                RootPage.Current?.SwitchTab(2);
+                await Nav.Push(new NovaPage());
             });
             return btn;
         }
@@ -210,7 +209,7 @@ namespace dinospace.Views
                 var wrap = new Border
                 {
                     Content = img, WidthRequest = 120, HeightRequest = 84,
-                    BackgroundColor = Theme.ImgPlaceholder, Stroke = Colors.Transparent,
+                    BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent,
                     StrokeShape = new RoundRectangle { CornerRadius = 12 }
                 };
                 var label = new Label { Text = name, FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextSecondary, MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation, WidthRequest = 120 };

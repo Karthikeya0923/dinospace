@@ -17,23 +17,36 @@ namespace dinospace.Views
         private Grid _content = null!;
         private int _current = -1;
 
-        // Lets pushed detail pages jump to a tab (e.g. "Ask Nova about this").
+        // Lets pushed pages and the Android fling detector reach the tab host.
         public static RootPage? Current { get; private set; }
         public void SwitchTab(int index) => GoToTab(index);
+
+        // Called by MainActivity's fling detector. delta: +1 next, -1 previous.
+        public void HandleFling(int delta)
+        {
+            try
+            {
+                // Only when the tab host itself is on screen (nothing pushed).
+                if (Shell.Current?.Navigation?.NavigationStack?.Count > 1) return;
+            }
+            catch { return; }
+            int target = _current + delta;
+            if (target < 0 || target >= _tabs.Count) return;
+            AppSettings.Tap();
+            GoToTab(target);
+        }
 
         public RootPage()
         {
             Current = this;
             var home = new HomeView(GoToTab);
             var explore = new ExploreView();
-            var nova = new NovaView();
             var play = new PlayView(GoToTab);
             var you = new YouView();
 
             _tabs.Add(("Home", home, Theme.AccentDino));
             _tabs.Add(("Explore", explore, Theme.AccentSpace));
-            _tabs.Add(("Nova AI", nova, Theme.AccentNova));
-            _tabs.Add(("Play", play, Theme.AccentDino));
+            _tabs.Add(("Play", play, Theme.AccentNova));
             _tabs.Add(("You", you, Theme.AccentSpace));
 
             Build();
@@ -49,13 +62,9 @@ namespace dinospace.Views
                 _content.Add(view);
             }
 
-            // Swipe left/right to move between tabs (like the old carousel).
-            var swipeLeft = new SwipeGestureRecognizer { Direction = SwipeDirection.Left };
-            swipeLeft.Swiped += (_, _) => GoToTab(_current + 1);
-            var swipeRight = new SwipeGestureRecognizer { Direction = SwipeDirection.Right };
-            swipeRight.Swiped += (_, _) => GoToTab(_current - 1);
-            _content.GestureRecognizers.Add(swipeLeft);
-            _content.GestureRecognizers.Add(swipeRight);
+            // Tab swiping is handled by MainActivity's fling detector (gesture
+            // recognizers on this grid never fire — scrollable children eat
+            // every touch first).
 
             var nav = BuildNav();
 

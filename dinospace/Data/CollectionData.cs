@@ -30,10 +30,38 @@ namespace dinospace.Data
             new() { Id = "biggest", Title = "Biggest Creatures Ever", Subtitle = "Ranked by length, longest first", Domain = "Dino" },
             new() { Id = "speed", Title = "Speed Demons", Subtitle = "Fastest creatures, quickest first", Domain = "Dino" },
             new() { Id = "bite", Title = "Strongest Bites", Subtitle = "Ranked by bite force in PSI", Domain = "Dino" },
-            new() { Id = "sea", Title = "Rulers of the Deep", Subtitle = "Giants of the ancient oceans", Domain = "Dino" },
-            new() { Id = "planets", Title = "A Journey From the Sun", Subtitle = "The eight planets in order", Domain = "Space" },
+            new() { Id = "farthest", Title = "Farthest From Earth", Subtitle = "Every space object, nearest to farthest", Domain = "Space" },
             new() { Id = "cosmic", Title = "Cosmic Giants", Subtitle = "The largest objects in space", Domain = "Space" },
             new() { Id = "hottest", Title = "Hottest to Coldest", Subtitle = "Worlds ranked by temperature", Domain = "Space" },
+        };
+
+        // Every space entry ordered by distance from Earth (closest approach /
+        // typical figures, kid-friendly rounding).
+        private static readonly (string name, string distance)[] FarthestOrder =
+        {
+            ("Earth", "You are here!"),
+            ("Milky Way", "We live inside it"),
+            ("International Space Station", "400 km up"),
+            ("Moon", "384,400 km"),
+            ("Venus", "40 million km"),
+            ("Mars", "56 million km"),
+            ("Mercury", "77 million km"),
+            ("Sun", "150 million km"),
+            ("Asteroid Belt", "330 million km"),
+            ("Jupiter", "588 million km"),
+            ("Europa", "588 million km"),
+            ("Saturn", "1.2 billion km"),
+            ("Uranus", "2.6 billion km"),
+            ("Neptune", "4.3 billion km"),
+            ("Pluto", "5.7 billion km"),
+            ("Halley's Comet", "up to 5.3 billion km"),
+            ("Voyager 1", "24+ billion km"),
+            ("Betelgeuse", "550 light-years"),
+            ("Orion", "1,344 light-years"),
+            ("Orion Nebula", "1,344 light-years"),
+            ("Sagittarius A*", "26,000 light-years"),
+            ("Andromeda Galaxy", "2.5 million light-years"),
+            ("Phoenix A*", "5.8 billion light-years"),
         };
 
         // Approximate surface (or effective) temperatures for the ranking.
@@ -70,14 +98,11 @@ namespace dinospace.Data
                     return DinoData.All.Where(d => d.BiteForce.Length > 0)
                         .OrderByDescending(d => Num(d.BiteForce))
                         .Select(d => Entry(d, d.BiteForce)).ToList();
-                case "sea":
-                    return DinoData.All.Where(d => d.Category == "Sea")
-                        .OrderByDescending(d => Num(d.Length))
-                        .Select(d => Entry(d, d.Length)).ToList();
-                case "planets":
-                    var order = new[] { "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune" };
-                    return order.Select(SpaceData.ByName).Where(s => s != null)
-                        .Select(s => EntryS(s!, s!.Stat2Value)).ToList();
+                case "farthest":
+                    return FarthestOrder
+                        .Select(x => (obj: SpaceData.ByName(x.name), x.distance))
+                        .Where(x => x.obj != null)
+                        .Select(x => EntryS(x.obj!, x.distance)).ToList();
                 case "cosmic":
                     var big = new[] { "Phoenix A*", "Milky Way", "Andromeda Galaxy", "Betelgeuse", "Sagittarius A*", "Sun", "Jupiter", "Saturn" };
                     return big.Select(SpaceData.ByName).Where(s => s != null)

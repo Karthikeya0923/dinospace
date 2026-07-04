@@ -21,7 +21,9 @@ namespace dinospace.Services
     // topics (extinction, how stars form, ...) via the KnowledgeBase.
     public static class Retriever
     {
-        private const int MaxNotesChars = 1500;
+        // Small on purpose: notes are the biggest chunk of the prompt, and
+        // prompt length is what makes on-device answers slow.
+        private const int MaxNotesChars = 700;
 
         public static Grounding Ground(string normalizedQuestion, IReadOnlyList<string> carryover)
         {
@@ -48,7 +50,7 @@ namespace dinospace.Services
             }
 
             bool comparison = HasAny(normalizedQuestion, "vs", "versus", "beat", "beats", "fight", "battle", "compare", "stronger", "bigger", "faster", "against", "win", "or");
-            int keep = comparison ? 3 : 2;
+            int keep = comparison ? 2 : 1;
             var top = hits.OrderByDescending(h => h.Score).ThenBy(h => h.Name)
                           .GroupBy(h => h.Name).Select(x => x.First())
                           .Take(keep).ToList();
@@ -160,7 +162,7 @@ namespace dinospace.Services
             if (Has(d.Weight)) stats.Add("weight " + d.Weight);
             if (Has(d.Speed)) stats.Add("top speed " + d.Speed);
             if (stats.Count > 0) sb.Append("Size: ").Append(string.Join(", ", stats)).Append(". ");
-            sb.Append(Snip(d.AboutText, 260));
+            sb.Append(Snip(d.AboutText, 150));
             string extra = FirstFunFact(d.FunFactsText);
             if (extra.Length > 0) sb.Append(" Fact: ").Append(extra);
             return sb.ToString();
@@ -175,7 +177,7 @@ namespace dinospace.Services
             Add(s.Stat1Label, s.Stat1Value); Add(s.Stat2Label, s.Stat2Value);
             Add(s.Stat3Label, s.Stat3Value); Add(s.Stat4Label, s.Stat4Value);
             if (stats.Count > 0) sb.Append(string.Join(", ", stats)).Append(". ");
-            sb.Append(Snip(s.AboutText, 260));
+            sb.Append(Snip(s.AboutText, 150));
             string extra = FirstFunFact(s.FunFactsText);
             if (extra.Length > 0) sb.Append(" Fact: ").Append(extra);
             return sb.ToString();
@@ -205,7 +207,7 @@ namespace dinospace.Services
                 }
                 if (score > 0) matched.Add((n, score));
             }
-            return matched.OrderByDescending(x => x.score).Take(2).Select(x => x.n).ToList();
+            return matched.OrderByDescending(x => x.score).Take(1).Select(x => x.n).ToList();
         }
 
         // ---------- superlatives ----------

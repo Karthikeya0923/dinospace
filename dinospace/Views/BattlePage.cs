@@ -102,7 +102,7 @@ namespace dinospace.Views
             else
             {
                 var img = new Image { Source = d!.ImageFile, Aspect = Aspect.AspectFill, HeightRequest = 100 };
-                var imgWrap = new Border { Content = img, HeightRequest = 100, BackgroundColor = Theme.ImgPlaceholder, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 12 } };
+                var imgWrap = new Border { Content = img, HeightRequest = 100, BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 12 } };
                 inner = new VerticalStackLayout
                 {
                     Spacing = 6,
@@ -122,7 +122,8 @@ namespace dinospace.Views
                 StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(12), HeightRequest = 210
             };
             // Only empty slots are tappable; filled slots are just images.
-            if (empty) Ui.OnTap(card, async (_, _) => await Nav.Push(new CreaturePickerPage(picked => Set(isA, picked))));
+            // No push animation - the picker should feel instant.
+            if (empty) Ui.OnTap(card, async (_, _) => await Nav.Push(new CreaturePickerPage(picked => Set(isA, picked)), animated: false));
             return card;
         }
 

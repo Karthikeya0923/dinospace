@@ -103,7 +103,17 @@ namespace dinospace
         public static T OnTap<T>(T view, EventHandler<TappedEventArgs> handler, bool haptic = true) where T : View
         {
             var tap = new TapGestureRecognizer();
-            tap.Tapped += (s, e) => { if (haptic) AppSettings.Tap(); handler(s, e); };
+            tap.Tapped += async (s, e) =>
+            {
+                if (haptic) AppSettings.Tap();
+                // Instant pressed feedback so taps never feel dead while the
+                // action (navigation, refresh) is starting.
+                var v = s as View ?? view;
+                v.Opacity = 0.55;
+                handler(s, e);
+                await Task.Delay(120);
+                v.Opacity = 1;
+            };
             view.GestureRecognizers.Add(tap);
             return view;
         }
@@ -183,7 +193,7 @@ namespace dinospace
                 Content = img,
                 WidthRequest = size,
                 HeightRequest = size,
-                BackgroundColor = Theme.ImgPlaceholder,
+                BackgroundColor = Colors.Transparent,
                 Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 }
             };

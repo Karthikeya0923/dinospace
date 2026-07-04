@@ -62,14 +62,13 @@ namespace dinospace.Views
         private bool _modelInited;
         private bool _modelReady;
 
-        // live stream bubble
-        private Label? _streamLabel;
+        // thinking status
         private View? _thinking;
         private Label? _thinkingLabel;
         private IDispatcherTimer? _thinkingTimer;
         private int _thinkingTicks;
 
-        // typewriter reveal (instant replies only)
+        // typewriter reveal
         private Label? _revealLabel;
         private string[]? _revealWords;
         private int _revealIndex;
@@ -131,6 +130,22 @@ namespace dinospace.Views
 
         private View BuildHeader()
         {
+            var back = new Label
+            {
+                Text = "‹", FontSize = 32, TextColor = Theme.TextPrimary,
+                VerticalOptions = LayoutOptions.Center, Padding = new Thickness(0, 0, 6, 2)
+            };
+            Ui.OnTap(back, async (_, _) =>
+            {
+                try
+                {
+                    var nav = Shell.Current?.Navigation;
+                    if (nav != null && nav.NavigationStack.Count > 1) await nav.PopAsync();
+                }
+                catch { }
+            }, haptic: false);
+            Ui.Describe(back, "Go back");
+
             var dot = new Border
             {
                 WidthRequest = 40, HeightRequest = 40,
@@ -145,11 +160,12 @@ namespace dinospace.Views
             var clear = new Label { Text = "Clear", FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.Center };
             Ui.OnTap(clear, (_, _) => ClearChat());
 
-            var grid = new Grid { Padding = new Thickness(16, 14, 16, 8), ColumnSpacing = 12 };
+            var grid = new Grid { Padding = new Thickness(10, 14, 16, 8), ColumnSpacing = 10 };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.Add(dot, 0, 0); grid.Add(title, 1, 0); grid.Add(clear, 2, 0);
+            grid.Add(back, 0, 0); grid.Add(dot, 1, 0); grid.Add(title, 2, 0); grid.Add(clear, 3, 0);
             return grid;
         }
 
@@ -282,11 +298,7 @@ namespace dinospace.Views
             string answer;
             try
             {
-                // Tokens stream in live; the bubble grows as the model writes.
-                answer = await NovaSaurService.AskAsync(
-                    turn.Prompt!,
-                    partial => MainThread.BeginInvokeOnMainThread(() => ShowPartial(myGen, partial)),
-                    CancellationToken.None);
+                answer = await NovaSaurService.AskAsync(turn.Prompt!, CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -298,40 +310,11 @@ namespace dinospace.Views
             FinishAnswer(myGen, answer);
         }
 
-        // First streamed text replaces the thinking status with a live bubble.
-        private void ShowPartial(int myGen, string partial)
-        {
-            if (myGen != _gen) return;
-            if (_streamLabel == null)
-            {
-                StopThinking();
-                _streamLabel = StartNovaBubble();
-            }
-            _streamLabel.Text = partial.TrimStart();
-            _ = _chatScroll.ScrollToAsync(0, _chatStack.Height, false);
-        }
-
         private void FinishAnswer(int myGen, string finalAnswer)
         {
             if (myGen != _gen) return;
             StopThinking();
-
-            if (_streamLabel != null)
-            {
-                // Swap the raw streamed text for the cleaned final answer.
-                _streamLabel.Text = finalAnswer;
-                _streamLabel = null;
-                _messages.Add(new ChatMessage { IsUser = false, Text = finalAnswer });
-                SaveHistory();
-                _busy = false;
-                _sendIcon.Text = "➤";
-                ShowSuggestions();
-                _ = ScrollToEnd();
-            }
-            else
-            {
-                Reveal(finalAnswer); // nothing streamed (fallback path) - type it out
-            }
+            Reveal(finalAnswer);
         }
 
         private void StopGeneration()
@@ -339,13 +322,6 @@ namespace dinospace.Views
             if (_revealActive && _revealLabel != null) { FinishRevealNow(); return; }
             _gen++;
             StopThinking();
-            // If text already streamed in, keep it as the answer.
-            if (_streamLabel != null)
-            {
-                string kept = (_streamLabel.Text ?? "").Trim();
-                if (kept.Length > 0) { _messages.Add(new ChatMessage { IsUser = false, Text = kept }); SaveHistory(); }
-                _streamLabel = null;
-            }
             _busy = false;
             _sendIcon.Text = "➤";
             ShowSuggestions();
@@ -520,7 +496,6 @@ namespace dinospace.Views
             _gen++;
             _revealTimer?.Stop();
             _revealActive = false; _revealLabel = null; _revealWords = null;
-            _streamLabel = null;
             StopThinking();
             _busy = false; _sendIcon.Text = "➤";
             _messages.Clear();

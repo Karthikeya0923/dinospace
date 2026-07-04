@@ -65,7 +65,7 @@ namespace dinospace.Views
             var thumb = new Border
             {
                 Content = img, WidthRequest = 48, HeightRequest = 48,
-                BackgroundColor = Theme.ImgPlaceholder, Stroke = Colors.Transparent,
+                BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 12 }
             };
 

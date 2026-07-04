@@ -78,7 +78,7 @@ namespace dinospace.Views
             var imgWrap = new Border
             {
                 Content = img,
-                BackgroundColor = Theme.ImgPlaceholder,
+                BackgroundColor = Colors.Transparent,
                 Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 },
                 HeightRequest = 150,
@@ -153,8 +153,8 @@ namespace dinospace.Views
 
             grid.Add(ActionCard("Dinosaurs", "dinopedialogo.png", () => { ExploreView.RequestSegment(1); _goTab(1); }), 0, 0);
             grid.Add(ActionCard("Space", "spacepedialogo.png", () => { ExploreView.RequestSegment(2); _goTab(1); }), 1, 0);
-            grid.Add(ActionCard("Ask Nova AI", "askailogo.png", () => _goTab(2)), 0, 1);
-            grid.Add(ActionCard("Play & Quiz", "quizlogo.png", () => _goTab(3)), 1, 1);
+            grid.Add(ActionCard("Ask Nova AI", "askailogo.png", async () => await Nav.Push(new NovaPage())), 0, 1);
+            grid.Add(ActionCard("Play & Quiz", "quizlogo.png", () => _goTab(2)), 1, 1);
             return grid;
         }
 

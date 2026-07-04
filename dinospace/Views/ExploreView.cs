@@ -201,7 +201,7 @@ namespace dinospace.Views
             var info = new VerticalStackLayout { Spacing = 4, Padding = new Thickness(11, 10, 11, 12) };
             info.Add(chip); info.Add(name); info.Add(sub);
 
-            var imgWrap = new Grid { BackgroundColor = Theme.ImgPlaceholder, HeightRequest = 124 };
+            var imgWrap = new Grid { BackgroundColor = Colors.Transparent, HeightRequest = 124 };
             imgWrap.Add(img);
 
             var col = new Grid { RowSpacing = 0 };

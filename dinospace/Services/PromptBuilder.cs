@@ -51,49 +51,49 @@ namespace dinospace.Services
             return turn;
         }
 
+        // Kept deliberately tiny: on a phone CPU, prompt length is the main
+        // driver of how long the user stares at "thinking…". Every line here
+        // costs real seconds on-device.
         private static string Compose(string question, string notes, IReadOnlyList<ChatMessage> history)
         {
             bool grounded = !string.IsNullOrEmpty(notes);
             var sb = new StringBuilder();
 
-            sb.AppendLine("You are NovaSaur, a friendly dinosaur and space expert in a kids' app. Answer the question in 2 to 4 clear, warm sentences a 10-year-old can understand. Be accurate and specific, use real numbers when you know them, and never use scary or grown-up details. No emojis, no markdown, no lists.");
+            sb.Append("You are NovaSaur, a friendly dinosaur and space expert for kids. Answer in 2 to 3 short, clear, accurate sentences a 10-year-old understands. No emojis, no lists.");
             if (grounded)
-                sb.AppendLine("Use the FACTS below as your source of truth. Copy exact numbers from them. If the FACTS don't cover part of the question, fill it in from your own knowledge. Do not mention the word FACTS.");
-            sb.AppendLine();
-
-            sb.AppendLine("Example");
-            sb.AppendLine("Q: Could a T. Rex beat a Triceratops?");
-            sb.AppendLine("A: It would be a close fight! T. Rex had a bone-crushing bite, but Triceratops could defend itself with three sharp horns and a thick, bony neck frill. Many Triceratops likely fought off T. Rex and survived.");
+                sb.Append(" Trust these facts and copy their exact numbers: ");
             sb.AppendLine();
 
             if (grounded)
             {
-                sb.AppendLine("FACTS");
                 sb.AppendLine(notes.Trim());
-                sb.AppendLine();
             }
 
-            string hist = History(history);
+            // Only spend tokens on history when the question actually needs it
+            // (short follow-ups like "how fast was it?").
+            string hist = History(history, question);
             if (!string.IsNullOrEmpty(hist))
-            {
-                sb.AppendLine("Earlier in the chat");
                 sb.AppendLine(hist);
-                sb.AppendLine();
-            }
 
             sb.AppendLine("Q: " + question);
             sb.Append("A:");
             return sb.ToString();
         }
 
-        // Last one Q/A pair, compressed, so "how fast was it?" has context.
-        private static string History(IReadOnlyList<ChatMessage> messages)
+        // Last Q/A pair, compressed — included only for short follow-ups.
+        private static string History(IReadOnlyList<ChatMessage> messages, string question)
         {
             if (messages == null || messages.Count == 0) return "";
+            int words = question.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+            string q = " " + Retriever.Normalize(question) + " ";
+            bool followUp = words <= 6 ||
+                new[] { " it ", " its ", " they ", " them ", " that ", " this ", " he ", " she " }.Any(q.Contains);
+            if (!followUp) return "";
+
             for (int i = messages.Count - 1; i >= 1; i--)
             {
                 if (!messages[i].IsUser && messages[i - 1].IsUser)
-                    return "Q: " + Snip(messages[i - 1].Text, 120) + "\nA: " + Snip(messages[i].Text, 160);
+                    return "Q: " + Snip(messages[i - 1].Text, 90) + "\nA: " + Snip(messages[i].Text, 120);
             }
             return "";
         }

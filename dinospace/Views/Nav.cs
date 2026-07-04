@@ -13,12 +13,12 @@ namespace dinospace.Views
     {
         private static DateTime _lastPush = DateTime.MinValue;
 
-        public static async Task Push(Page page)
+        public static async Task Push(Page page, bool animated = true)
         {
             if (page == null) return;
             if ((DateTime.Now - _lastPush).TotalMilliseconds < 350) return; // debounce
             _lastPush = DateTime.Now;
-            try { await Shell.Current.Navigation.PushAsync(page); } catch { }
+            try { await Shell.Current.Navigation.PushAsync(page, animated); } catch { }
         }
 
         public static async Task OpenDino(Dinosaur d) => await Push(new DinoDetailPage(d));
