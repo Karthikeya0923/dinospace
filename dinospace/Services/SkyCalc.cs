@@ -64,10 +64,12 @@ namespace dinospace
         // Null when the sun never rises or never sets there that day.
         public static (DateTime? riseUtc, DateTime? setUtc) SunRiseSet(DateTime localDate, double lat, double lon)
         {
-            var noonUtc = new DateTime(localDate.Year, localDate.Month, localDate.Day, 12, 0, 0, DateTimeKind.Local).ToUniversalTime();
             int doy = localDate.DayOfYear;
 
-            double g = 2 * Math.PI / 365.0 * (doy - 1 + (noonUtc.Hour - 12) / 24.0);
+            // Fractional year evaluated at the location's own solar noon, so
+            // the result doesn't depend on what time zone the phone is set to.
+            double solarNoonUtcHours = 12 - lon / 15.0;
+            double g = 2 * Math.PI / 365.0 * (doy - 1 + (solarNoonUtcHours - 12) / 24.0);
             double eqTime = 229.18 * (0.000075 + 0.001868 * Math.Cos(g) - 0.032077 * Math.Sin(g)
                           - 0.014615 * Math.Cos(2 * g) - 0.040849 * Math.Sin(2 * g));
             double decl = 0.006918 - 0.399912 * Math.Cos(g) + 0.070257 * Math.Sin(g)

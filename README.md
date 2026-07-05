@@ -1,39 +1,59 @@
-## DinoSpace
+# DinoSpace
 
-DinoSpace is a mobile encyclopedia app for all ages showcasing the prehistoric world and outer space. Browse hundreds of dinosaurs and space objects, search by name, filter by category, and read fun facts written to be exciting and easy to understand — no internet required.
+**A fully offline dinosaur & space encyclopedia for Android, with its own on-device AI and a live astronomy engine.** Built from scratch in C# with .NET MAUI.
+
+DinoSpace blends the two things every kid (and plenty of adults) can't get enough of — dinosaurs and outer space — into one app that works with zero internet: a hand-written encyclopedia, an AI guide that runs entirely on the phone, and a personalized report of tonight's actual sky.
 
 ![Platform](https://img.shields.io/badge/platform-Android-green)
 ![Language](https://img.shields.io/badge/language-C%23-blue)
 ![Framework](https://img.shields.io/badge/framework-.NET%20MAUI-purple)
-![Status](https://img.shields.io/badge/status-In%20Development-orange)
+![Status](https://img.shields.io/badge/status-Play%20Store%20prep-orange)
+
+(add screenshot of home screen) (add screenshot of Sky Tonight) (add screenshot of NovaSaur chat)
 
 ---
 
-## Features
+## Highlights
 
-- **DinoPedia** — Browse dinosaurs filtered by Land, Flying, or Sea
-- **SpacePedia** — Explore space objects filtered by Solar System, Stars, or Deep Space
-- **Search** — Search across both encyclopedias from the home screen
-- **Detail Pages** — Each entry has stats, fun facts, behaviour, habitat, and more
-- **Saved** — Save your favourite dinosaurs and space objects
-- **Explore** — Explore fun facts, quizzes, and the daily highlights
-- **Settings** — Customize your DinoSpace experience
-- **Ask AI** — Ask anything about dinosaurs or space, answered on-device
-- **Sky Tonight** — Live moon phase, plus the planets and constellations above you right now, computed on-device from NASA-verified astronomy (location optional)
-- **Fully Offline** — No internet connection needed
+### 🦖 The encyclopedia
+33 dinosaurs and prehistoric creatures, 23 space objects — every entry hand-written and fact-checked against sources like NASA and published paleontology research. Stats, fun facts, behaviour, habitat, era, and full-page write-ups, with search, category filters, bookmarks, and curated ranked collections.
+
+### 🌙 Sky Tonight
+Open the app and it tells you what's above you *right now*: the moon's phase (drawn with the real terminator curve), which planets are visible and where to look, the constellations overhead, and sunset/sunrise times. All of it is computed on-device by [SkyScanner](https://github.com/Karthikeya0923/SkyScanner), an astronomy engine verified against NASA JPL's Horizons ephemeris to within a few hundredths of a degree. Location is optional — say no and you still get a general Northern-sky view. A built-in "Learn the sky" page explains every moon phase and how to tell a planet from a star.
+
+### 🤖 Ask NovaSaur
+An AI guide powered by Google's Gemma running locally through [NovaSaur](https://github.com/Karthikeya0923/novasaur), the inference engine built for this app. Questions are grounded in the encyclopedia through retrieval, so common questions get instant, always-accurate answers without touching the model — and open-ended ones fall back to the LLM with strict timeouts so the chat never hangs. NovaSaur even answers live sky questions ("is the moon full tonight?") from the astronomy engine, something a frozen language model could never know.
+
+### 🎮 Play
+Quizzes (5 to 100 questions, dinosaurs / space / mixed), Dino Battles with stat-driven verdicts that argue each matchup like a sports column, daily featured creatures, and a streak to keep explorers coming back.
+
+### 🎨 Six app themes
+Full looks — wallpaper plus a matching colour palette on every page — switched with a seamless cross-fade: a hand-painted twilight, starry midnight, aurora, dusk, nebula, and a warm parchment light theme.
 
 ---
 
-## Built With
+## Engineering notes
 
-- [.NET MAUI](https://learn.microsoft.com/en-us/dotnet/maui/) — Cross-platform mobile framework
-- C# — Primary language
-- Visual Studio 2022
-- Android target
+- **All-C# UI** — every screen is built in code (no XAML pages), on a small component kit with a serif/sans editorial design system and design tokens for theming.
+- **On-device RAG** — a retriever matches questions against entry names, aliases (typo-tolerant, edit-distance based), and a curated knowledge base, then builds compact grounded prompts for the model. Chat history and follow-up pronouns ("how fast was *it*?") resolve against the last-mentioned entities.
+- **3 GB model delivery** — the AI model ships via Google Play Asset Delivery in 1 GB chunks and assembles on first run; a resumable in-app download is the fallback. No notification or foreground-service permissions needed.
+- **True edge-to-edge** — window insets are intercepted natively so the tab bar and chat input reach the physical bottom edge of the screen on every Android version.
+- **Zero-warning build** — the project compiles with 0 errors and 0 warnings.
+
+## Built with
+
+- [.NET MAUI](https://learn.microsoft.com/en-us/dotnet/maui/) (net10.0-android), C#
+- [NovaSaur](https://github.com/Karthikeya0923/novasaur) — on-device LLM engine (Kotlin/Java, LiteRT-LM)
+- [SkyScanner](https://github.com/Karthikeya0923/SkyScanner) — NASA-verified astronomy engine (C#)
+
+## Privacy
+
+No accounts, no ads, no analytics, no data collection — everything runs and stays on-device. Full policy: [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
+
 ---
 > 📋 **[View the official project roadmap →](https://github.com/users/Karthikeya0923/projects/4)**
 ---
 
-## About the Developer
+## About the developer
 
-Karthikeya Arikirevula is a class of 2030 Software Engineering (Co-op) student at the University of Guelph, who built DinoSpace from scratch with no prior app development experience. Driven by a lifelong love of dinosaurs and space!
+Karthikeya Arikirevula is a Software Engineering (Co-op) student at the University of Guelph who grew up obsessed with dinosaurs and space, and built DinoSpace to put both in one pocket-sized, offline package — from the UI down to the AI engine and the orbital math.
