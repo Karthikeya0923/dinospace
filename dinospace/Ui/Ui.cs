@@ -325,6 +325,20 @@ namespace dinospace
             return new VerticalStackLayout { Spacing = 6, Children = { top, track } };
         }
 
+        // ---------- page backdrop ----------
+
+        // Standard page root: theme colour, plus the theme's wallpaper (when
+        // one is picked) stretched behind the content. Every page uses this so
+        // a wallpaper theme actually shows up everywhere, not just on Home.
+        public static Grid PageRoot(View body)
+        {
+            var root = new Grid { BackgroundColor = Theme.Bg };
+            if (Theme.Wallpaper is string wp)
+                root.Add(new Image { Source = wp, Aspect = Aspect.AspectFill, InputTransparent = true });
+            root.Add(body);
+            return root;
+        }
+
         // ---------- colour math ----------
 
         public static Color MultiplyAlpha(Color c, float alpha)

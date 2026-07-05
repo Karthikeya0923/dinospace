@@ -15,6 +15,8 @@ namespace dinospace.Views
         public string Title { get; init; } = "";
         public string Meta { get; init; } = "";
         public object Data { get; init; } = null!;
+        // First letter, shown on the night-sky stand-in until real art loads.
+        public string Initial => Title.Length > 0 ? Title[..1].ToUpperInvariant() : "•";
     }
 
     // The Search tab: big rounded field, All/Dinosaurs/Space filter, and a
@@ -73,6 +75,8 @@ namespace dinospace.Views
                 ItemsSource = _rows,
                 SelectionMode = SelectionMode.Single,
                 ItemTemplate = new DataTemplate(RowTemplate),
+                // Uniform rows: measure one, not all — snappier segment switches.
+                ItemSizingStrategy = ItemSizingStrategy.MeasureFirstItem,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Never,
                 Margin = new Thickness(18, 0, 18, 12)
             };
@@ -99,7 +103,8 @@ namespace dinospace.Views
             var underline = new BoxView { HeightRequest = 2.5, Color = Colors.Transparent, Margin = new Thickness(0, 5, 0, 0) };
             var col = new VerticalStackLayout { Spacing = 0, Children = { label, underline } };
             col.BindingContext = (label, underline, index);
-            Ui.OnTap(col, (_, _) => { _segment = index; SyncSegments(); Refresh(); });
+            // Underline moves immediately; the list swap follows a frame later.
+            Ui.OnTap(col, async (_, _) => { _segment = index; SyncSegments(); await System.Threading.Tasks.Task.Yield(); Refresh(); });
             return col;
         }
 

@@ -33,6 +33,9 @@ namespace dinospace.Views
 
         // Keeps the same tab across a theme rebuild.
         public static int LastTab;
+        // Set by ThemesPage: it re-pushes itself after a rebuild and dissolves
+        // the freeze-frame itself, so RootPage should leave the cover alone.
+        public static bool HoldThemeCoverOnce;
         private Grid _rootGrid = null!;
 
         // The bottom system-bar (navigation/gesture) inset in DIPs, reported
@@ -85,6 +88,13 @@ namespace dinospace.Views
             var root = new Grid { BackgroundColor = Theme.Bg, RowSpacing = 0 };
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            // Wallpaper themes draw their art behind the tabs too.
+            if (Theme.Wallpaper is string wp)
+            {
+                var art = new Image { Source = wp, Aspect = Aspect.AspectFill, InputTransparent = true };
+                root.Add(art, 0, 0);
+                Grid.SetRowSpan(art, 2);
+            }
             root.Add(_content, 0, 0);
             root.Add(nav, 0, 1);
             _rootGrid = root;
@@ -238,6 +248,9 @@ namespace dinospace.Views
                 cur.IsVisible = false;
                 cur.TranslationX = 0;
                 _current = neighbor;
+                // Swipes must update this too, or a theme rebuild jumps back
+                // to whichever tab was last *tapped* (usually Home).
+                LastTab = neighbor;
                 _panNeighbor = -1;
                 AppSettings.Tap();
                 SyncNav();
@@ -287,8 +300,10 @@ namespace dinospace.Views
 
             // If a theme switch just rebuilt the app, the previous screen is
             // frozen on top at the native level — dissolve it away now that the
-            // new UI is on screen. No-op on a normal appearance.
-            ThemeFx.FadeOutThemeCover();
+            // new UI is on screen. No-op on a normal appearance. (ThemesPage
+            // handles its own dissolve after it re-pushes itself.)
+            if (HoldThemeCoverOnce) HoldThemeCoverOnce = false;
+            else ThemeFx.FadeOutThemeCover();
 
             if (_current >= 0)
                 (_tabs[_current].view as ITabView)?.OnSelected();

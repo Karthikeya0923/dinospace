@@ -84,6 +84,10 @@ namespace dinospace
                 iv.Clickable = true; // swallow taps during the transition
                 decor.AddView(iv);
                 _themeCover = iv;
+
+                // Safety net: if anything goes wrong with the rebuild, the
+                // cover melts away on its own instead of blocking the app.
+                iv.PostDelayed(() => { if (_themeCover == iv) FadeOutThemeCover(); }, 2500);
             }
             catch { }
 #endif

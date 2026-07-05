@@ -46,11 +46,19 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 
-		<!-- Always emit portable debug symbols so "Start Debugging" (F5) works
-		     regardless of the active Debug/Release configuration. -->
+	</PropertyGroup>
+
+	<!-- Debug builds are fully debuggable so "Start Debugging" (F5) just works:
+	     symbols on, no linking, and fast deployment (assemblies NOT embedded in
+	     the APK — embedding them is what disables the debugger). Release keeps
+	     the store-ready defaults; a debuggable Release would be rejected by
+	     Google Play. -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
 		<DebugSymbols>true</DebugSymbols>
 		<DebugType>portable</DebugType>
 		<AndroidIncludeDebugSymbols>true</AndroidIncludeDebugSymbols>
+		<EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+		<AndroidLinkMode>None</AndroidLinkMode>
 	</PropertyGroup>
 
 	<ItemGroup>

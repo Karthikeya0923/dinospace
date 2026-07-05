@@ -293,6 +293,7 @@ namespace dinospace.Views
             Ui.SetIcon(_sendIcon, Ui.IconStop, Theme.TextOnAccent);
             int myGen = ++_gen;
             StartThinking();
+            _ = FailsafeAsync(myGen);   // hard guarantee: "thinking…" can never last forever
             await ScrollToEnd();
 
             NovaTurn turn;
@@ -311,19 +312,17 @@ namespace dinospace.Views
             }
 
             // This question needs the language model. Load it on demand the
-            // first time it's actually required, so we never block the chat up
-            // front just to answer questions the encyclopedia already covers.
+            // first time it's actually required — but never wait on it forever.
             if (!NovaSaurService.IsReady)
             {
                 if (_thinkingLabel != null) _thinkingLabel.Text = "NovaSaur is waking up… first time takes a moment.";
-                try { await NovaSaurService.InitAsync(); }
-                catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova init: " + ex); }
+                bool ready = await NovaSaurService.InitWithTimeoutAsync(TimeSpan.FromSeconds(60));
                 if (myGen != _gen) return;
-            }
-            if (!NovaSaurService.IsReady)
-            {
-                FinishAnswer(myGen, "I can answer loads of dinosaur and space questions on the spot, but that one needs my bigger brain — and it couldn't wake up. Your device may be low on free memory, so try closing a few other apps.");
-                return;
+                if (!ready)
+                {
+                    FinishAnswer(myGen, "I can answer loads of dinosaur and space questions on the spot, but that one needs my bigger brain — and it's still waking up. Ask me again in a minute, or try a question about a specific dinosaur or planet!");
+                    return;
+                }
             }
 
             string answer;
@@ -346,6 +345,16 @@ namespace dinospace.Views
             if (myGen != _gen) return;
             StopThinking();
             Reveal(finalAnswer);
+        }
+
+        // Backstop for anything unforeseen (a wedged native call, a swallowed
+        // exception): if this turn is somehow still "thinking" after 100
+        // seconds, end it with a friendly timeout instead of hanging the chat.
+        private async Task FailsafeAsync(int myGen)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(100));
+            if (myGen == _gen && _busy && !_revealActive)
+                FinishAnswer(myGen, NovaSaurService.TimeoutMessage);
         }
 
         private void StopGeneration()

@@ -7,16 +7,28 @@ namespace dinospace.Services
     // screen can read them without plumbing.
     public static class AppSettings
     {
-        public static bool Haptics
+        // 0 = Off, 1 = Light, 2 = Medium, 3 = Strong. Older installs migrate
+        // from the on/off switch: on -> Medium, off -> Off.
+        public static int HapticLevel
         {
-            get => Preferences.Get("set_haptics", true);
-            set => Preferences.Set("set_haptics", value);
+            get => Preferences.Get("set_hapticlevel", Preferences.Get("set_haptics", true) ? 2 : 0);
+            set => Preferences.Set("set_hapticlevel", value);
         }
+
+        public static bool Haptics => HapticLevel > 0;
 
         public static bool DarkMode
         {
             get => Preferences.Get("set_darkmode", false);
             set => Preferences.Set("set_darkmode", value);
+        }
+
+        // "classic" follows the dark-mode switch; otherwise a wallpaper theme
+        // id like "theme1".."theme6".
+        public static string ThemeId
+        {
+            get => Preferences.Get("set_theme", "classic");
+            set => Preferences.Set("set_theme", value);
         }
 
         // 0 = Small, 1 = Default, 2 = Large, 3 = Extra large.
@@ -34,20 +46,23 @@ namespace dinospace.Services
             _ => 1.0,
         };
 
-        // A clear, feelable tap. A short vibration pulse is far more noticeable
-        // than the system "click" haptic, which many phones barely render.
+        // A clear, feelable tap, scaled by the chosen strength. A vibration
+        // pulse is far more noticeable than the system "click" haptic, which
+        // many phones barely render.
         public static void Tap()
         {
-            if (!Haptics) return;
-            try { Vibration.Default.Vibrate(TimeSpan.FromMilliseconds(18)); }
+            int ms = HapticLevel switch { 1 => 10, 2 => 18, 3 => 30, _ => 0 };
+            if (ms == 0) return;
+            try { Vibration.Default.Vibrate(TimeSpan.FromMilliseconds(ms)); }
             catch { try { HapticFeedback.Default.Perform(HapticFeedbackType.Click); } catch { } }
         }
 
         // A stronger pulse for saves and important confirmations.
         public static void LongPress()
         {
-            if (!Haptics) return;
-            try { Vibration.Default.Vibrate(TimeSpan.FromMilliseconds(35)); }
+            int ms = HapticLevel switch { 1 => 20, 2 => 35, 3 => 55, _ => 0 };
+            if (ms == 0) return;
+            try { Vibration.Default.Vibrate(TimeSpan.FromMilliseconds(ms)); }
             catch { try { HapticFeedback.Default.Perform(HapticFeedbackType.LongPress); } catch { } }
         }
     }

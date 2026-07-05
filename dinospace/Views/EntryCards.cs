@@ -44,7 +44,8 @@ namespace dinospace.Views
         {
             var img = new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = 118 };
             var imgWrap = new Grid { HeightRequest = 118 };
-            imgWrap.Add(ArtFallback(title, 30));
+            // stars:false — a plain label fallback keeps grids of cards cheap.
+            imgWrap.Add(ArtFallback(title, 30, stars: false));
             imgWrap.Add(img);
 
             var name = new Label

@@ -50,7 +50,7 @@ namespace dinospace.Views
             }
 
             var body = Nav.DetailScaffold("", new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never }, Theme.Accent, out _);
-            Content = new Grid { BackgroundColor = Theme.Bg, Children = { body } };
+            Content = Ui.PageRoot(body);
             SwipeBack.Attach(this);
         }
     }

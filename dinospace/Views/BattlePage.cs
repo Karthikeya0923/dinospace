@@ -62,7 +62,7 @@ namespace dinospace.Views
             stack.Add(_resultArea);
 
             var content = Nav.DetailScaffold("", new ScrollView { Content = stack }, Theme.AccentDino, out _);
-            Content = new Grid { BackgroundColor = Theme.Bg, Children = { content } };
+            Content = Ui.PageRoot(content);
             RefreshArena();
             SwipeBack.Attach(this);
         }

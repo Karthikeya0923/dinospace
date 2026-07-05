@@ -77,7 +77,7 @@ namespace dinospace.Views
             main.Add(_progress, 0, 1);
             main.Add(new ScrollView { Content = _body }, 0, 2);
 
-            Content = new Grid { BackgroundColor = Theme.Bg, Children = { main } };
+            Content = Ui.PageRoot(main);
         }
 
         private void ShowQuestion()

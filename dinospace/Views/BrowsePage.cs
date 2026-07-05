@@ -61,6 +61,9 @@ namespace dinospace.Views
                 SelectionMode = SelectionMode.Single,
                 ItemsLayout = new GridItemsLayout(2, ItemsLayoutOrientation.Vertical) { HorizontalItemSpacing = 12, VerticalItemSpacing = 12 },
                 ItemTemplate = new DataTemplate(CardTemplate),
+                // Every card is the same fixed height — measuring one instead
+                // of all of them makes filter switches noticeably snappier.
+                ItemSizingStrategy = ItemSizingStrategy.MeasureFirstItem,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Never,
                 Margin = new Thickness(18, 4, 18, 16)
             };
@@ -73,7 +76,7 @@ namespace dinospace.Views
             col.Add(_grid, 0, 1);
 
             var body = Nav.DetailScaffold("", col, Theme.Accent, out _);
-            Content = new Grid { BackgroundColor = Theme.Bg, Children = { body } };
+            Content = Ui.PageRoot(body);
             Refresh();
         }
 
@@ -98,7 +101,16 @@ namespace dinospace.Views
                     Padding = new Thickness(14, 7)
                 };
                 var cc = c;
-                Ui.OnTap(chip, (_, _) => { _category = cc == "All" ? "" : cc; BuildChips(); Refresh(); });
+                // Paint the chip's active state first, then rebuild the list a
+                // frame later — the tap responds instantly instead of freezing
+                // until the grid has re-laid dozens of cards.
+                Ui.OnTap(chip, async (_, _) =>
+                {
+                    _category = cc == "All" ? "" : cc;
+                    BuildChips();
+                    await System.Threading.Tasks.Task.Yield();
+                    Refresh();
+                });
                 _chips.Add(chip);
             }
         }
@@ -107,7 +119,15 @@ namespace dinospace.Views
         {
             var img = new Image { Aspect = Aspect.AspectFill, HeightRequest = 118 };
             img.SetBinding(Image.SourceProperty, new Binding(nameof(EntryRow.Image)));
-            var imgWrap = new Grid { HeightRequest = 118, BackgroundColor = Theme.ImgPlaceholder };
+            // Night-sky stand-in behind the art (cheap: colour + one label).
+            var initial = new Label
+            {
+                FontFamily = Ui.Display, FontSize = 30, TextColor = Color.FromArgb("#E3BE55"),
+                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
+            };
+            initial.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Initial)));
+            var imgWrap = new Grid { HeightRequest = 118, BackgroundColor = Color.FromArgb("#111527") };
+            imgWrap.Add(initial);
             imgWrap.Add(img);
 
             var name = new Label { FontFamily = Ui.Display, FontSize = Ui.S(16.5), LineHeight = 1.1, MaxLines = 2, LineBreakMode = LineBreakMode.TailTruncation, TextColor = Theme.TextPrimary };

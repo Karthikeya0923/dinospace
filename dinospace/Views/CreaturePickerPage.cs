@@ -52,7 +52,7 @@ namespace dinospace.Views
             col.Add(_list, 0, 1);
 
             var content = Nav.DetailScaffold("Choose a creature", col, Theme.AccentDino, out _);
-            Content = new Grid { BackgroundColor = Theme.Bg, Children = { content } };
+            Content = Ui.PageRoot(content);
         }
 
         private View RowTemplate()

@@ -5,9 +5,10 @@ namespace dinospace
         public App()
         {
             InitializeComponent();
-            // Editorial theme: warm paper + red, or black + gold in dark mode.
-            Theme.Apply(AppSettings.DarkMode);
-            UserAppTheme = AppSettings.DarkMode ? AppTheme.Dark : AppTheme.Light;
+            // Whatever look the user last picked: classic light/dark or one of
+            // the wallpaper themes.
+            Theme.ApplyCurrent();
+            UserAppTheme = Theme.IsDark ? AppTheme.Dark : AppTheme.Light;
         }
 
         protected override Window CreateWindow(IActivationState? activationState)

@@ -60,8 +60,7 @@ namespace dinospace.Views
             var topBar = DetailUi.TopBar(SavedStore.IsSpaceSaved(_s.Name), OnBack, OnSave, out _saveIcon);
             ((View)topBar).VerticalOptions = LayoutOptions.Start;
 
-            var root = new Grid { BackgroundColor = Theme.Bg };
-            root.Add(scroll);
+            var root = Ui.PageRoot(scroll);
             root.Add(topBar);
             Content = root;
         }

@@ -40,20 +40,43 @@ namespace dinospace.Services
 #endif
         }
 
-        // Loads the model into memory. Safe to call more than once; blocks
-        // until ready, so call it off the UI thread.
+        private static Task? _initTask;
+        private static readonly object _initGate = new();
+
+        // Loads the model into memory. Single-flight: every caller shares one
+        // native Init — running two at once (background warm-up + on-demand
+        // load) can wedge the engine, which showed up as an endless
+        // "thinking…" on the second question.
         public static Task InitAsync()
         {
 #if ANDROID
-            return Task.Run(() =>
+            lock (_initGate)
             {
-                if (Com.Novasaur.NovaSaurModule.IsReady) return;
-                var ctx = Android.App.Application.Context;
-                Com.Novasaur.NovaSaurModule.Init(ctx);
-            });
+                if (_initTask == null || _initTask.IsFaulted)
+                    _initTask = Task.Run(() =>
+                    {
+                        if (Com.Novasaur.NovaSaurModule.IsReady) return;
+                        var ctx = Android.App.Application.Context;
+                        Com.Novasaur.NovaSaurModule.Init(ctx);
+                    });
+                return _initTask;
+            }
 #else
             return Task.CompletedTask;
 #endif
+        }
+
+        // Waits for the model to load, but never past `cap` — the chat must
+        // always come back with something.
+        public static async Task<bool> InitWithTimeoutAsync(TimeSpan cap)
+        {
+            var init = InitAsync();
+            var done = await Task.WhenAny(init, Task.Delay(cap));
+            if (done == init)
+            {
+                try { await init; } catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova init: " + ex); }
+            }
+            return IsReady;
         }
 
         // Runs one prompt to completion and returns the cleaned answer, or a

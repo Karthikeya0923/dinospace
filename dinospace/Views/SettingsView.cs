@@ -41,7 +41,7 @@ namespace dinospace.Views
             stack.Add(Ui.SectionHeader("Preferences"));
             stack.Add(SwitchRow("Dark mode", "Switch between the light and dark theme.", AppSettings.DarkMode, ToggleDarkMode));
             stack.Add(Rule());
-            stack.Add(SwitchRow("Haptic feedback", "Tiny vibrations when you tap, save, or answer.", AppSettings.Haptics, v => { AppSettings.Haptics = v; if (v) AppSettings.Tap(); }));
+            stack.Add(HapticRow());
             stack.Add(Rule());
             stack.Add(TextSizeRow());
             stack.Add(Rule());
@@ -49,6 +49,11 @@ namespace dinospace.Views
             // General
             stack.Add(Ui.SectionHeader("General"));
             stack.Add(LinkRow("Contact us", "dinospace.app@gmail.com", OpenFeedback));
+            stack.Add(Rule());
+
+            // App themes — full looks with wallpapers, beyond plain light/dark.
+            stack.Add(Ui.SectionHeader("App themes"));
+            stack.Add(LinkRow("Choose a theme", CurrentThemeName(), async () => await Nav.Push(() => new ThemesPage())));
             stack.Add(Rule());
             stack.Add(DangerRow("Reset progress & bookmarks", ConfirmReset));
             stack.Add(Rule());
@@ -129,11 +134,70 @@ namespace dinospace.Views
 
             // 3. Apply the new palette and rebuild. RootPage.OnAppearing re-tints
             //    the window/system bars and dissolves the freeze-frame away once
-            //    the new UI is on screen.
-            Theme.Apply(dark);
+            //    the new UI is on screen. Flipping dark mode also returns to the
+            //    classic look if a wallpaper theme was active.
+            AppSettings.ThemeId = "classic";
+            Theme.ApplyCurrent();
             NovaPage.ResetShared();
             if (window != null)
                 window.Page = new AppShell();
+        }
+
+        private static string CurrentThemeName()
+        {
+            foreach (var s in Theme.Wallpapers)
+                if (s.Id == Theme.CurrentId) return s.Name;
+            return "Classic";
+        }
+
+        // Off / Light / Medium / Strong — a toggle wasn't enough, people feel
+        // vibration very differently phone to phone.
+        private HorizontalStackLayout _hapticPills = null!;
+
+        private View HapticRow()
+        {
+            _hapticPills = new HorizontalStackLayout { Spacing = 8 };
+            BuildHapticPills();
+
+            var col = new VerticalStackLayout { Spacing = 10, Padding = new Thickness(0, 14) };
+            col.Add(RowTitle("Haptic feedback"));
+            col.Add(new Label { Text = "How strong taps and saves feel.", FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint });
+            col.Add(_hapticPills);
+            return col;
+        }
+
+        private void BuildHapticPills()
+        {
+            _hapticPills.Children.Clear();
+            string[] labels = { "Off", "Light", "Medium", "Strong" };
+            for (int i = 0; i < labels.Length; i++)
+            {
+                int idx = i;
+                bool active = AppSettings.HapticLevel == i;
+                var label = new Label
+                {
+                    Text = labels[i],
+                    FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold,
+                    TextColor = active ? Theme.TextOnAccent : Theme.ChipText,
+                    HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
+                };
+                var pill = new Border
+                {
+                    Content = label, MinimumWidthRequest = 62, HeightRequest = 40,
+                    BackgroundColor = active ? Theme.Accent : Theme.ChipBg,
+                    Stroke = Colors.Transparent,
+                    StrokeShape = new RoundRectangle { CornerRadius = 12 },
+                    Padding = new Thickness(10, 0)
+                };
+                // haptic:false — the demo pulse below is the feedback here.
+                Ui.OnTap(pill, (_, _) =>
+                {
+                    AppSettings.HapticLevel = idx;
+                    BuildHapticPills();
+                    AppSettings.Tap();   // let them feel the level they just picked
+                }, haptic: false);
+                _hapticPills.Add(pill);
+            }
         }
 
         private View TextSizeRow()
