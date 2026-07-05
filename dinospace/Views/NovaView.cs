@@ -500,7 +500,7 @@ namespace dinospace.Views
             if (string.IsNullOrWhiteSpace(text)) return;
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null) return;
-            string choice = await page.DisplayActionSheet(null, "Cancel", null, "Copy");
+            string choice = await page.DisplayActionSheetAsync(null, "Cancel", null, "Copy");
             if (choice == "Copy") { try { await Clipboard.Default.SetTextAsync(text); } catch { } }
         }
 
@@ -744,17 +744,17 @@ namespace dinospace.Views
             long needed = Math.Max(500_000_000, ModelManager.RequiredFreeBytes - ModelManager.GetPartialSizeBytes());
             if (free >= 0 && free < needed && page != null)
             {
-                await page.DisplayAlert("Not enough space", $"NovaSaur needs about {needed / 1_000_000_000.0:0.0} GB free. Free up some space and try again.", "OK");
+                await page.DisplayAlertAsync("Not enough space", $"NovaSaur needs about {needed / 1_000_000_000.0:0.0} GB free. Free up some space and try again.", "OK");
                 return;
             }
             if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet && page != null)
             {
-                await page.DisplayAlert("No internet", "Connect to the internet to download NovaSaur.", "OK");
+                await page.DisplayAlertAsync("No internet", "Connect to the internet to download NovaSaur.", "OK");
                 return;
             }
             if (!Connectivity.Current.ConnectionProfiles.Contains(ConnectionProfile.WiFi) && page != null)
             {
-                bool go = await page.DisplayAlert("Not on wifi", "This is a large download (about 3 GB). Downloading over mobile data may use up your plan. Download anyway?", "Download", "Wait for wifi");
+                bool go = await page.DisplayAlertAsync("Not on wifi", "This is a large download (about 3 GB). Downloading over mobile data may use up your plan. Download anyway?", "Download", "Wait for wifi");
                 if (!go) return;
             }
             ModelManager.Start();
@@ -772,7 +772,7 @@ namespace dinospace.Views
         {
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null) return;
-            bool sure = await page.DisplayAlert("Stop download?", "This deletes what's downloaded so far. You'd start over next time.", "Stop", "Keep downloading");
+            bool sure = await page.DisplayAlertAsync("Stop download?", "This deletes what's downloaded so far. You'd start over next time.", "Stop", "Keep downloading");
             if (!sure) return;
             ModelManager.Stop();
             RefreshOverlay();

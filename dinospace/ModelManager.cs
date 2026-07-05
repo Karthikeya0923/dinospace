@@ -49,10 +49,10 @@ namespace dinospace
         public static long TotalBytes { get; private set; } = 0;
         public static long DoneBytes { get; private set; } = 0;
 
-        public static event Action Changed;
+        public static event Action? Changed;
 
         private static readonly object _lock = new object();
-        private static CancellationTokenSource _cts;
+        private static CancellationTokenSource? _cts;
         private static bool _stopAndDelete = false;
 
         public static bool IsModelDownloaded()
@@ -133,7 +133,7 @@ namespace dinospace
         // Finds the delivered chunks and checks they form a complete set:
         // part numbers 1..N with no gaps. Returns null while packs are still
         // arriving (or were never shipped, e.g. a dev sideload).
-        private static ChunkSet FindCompleteChunkSet()
+        private static ChunkSet? FindCompleteChunkSet()
         {
             var found = new SortedDictionary<int, string>();
             foreach (var file in PlayAssetPacks.FindDeliveredChunkFiles())
@@ -191,7 +191,7 @@ namespace dinospace
         // them into the real model file. Returns true if the install started.
         public static bool TryBeginBundledInstall()
         {
-            ChunkSet set;
+            ChunkSet? set;
             lock (_lock)
             {
                 if (IsModelDownloaded()) { State = DownloadState.Completed; Notify(); return false; }

@@ -255,7 +255,7 @@ namespace dinospace
                 // runs, and navigation yields a frame (see Nav.Push) so the
                 // press paints before any heavy work.
                 v.Opacity = 0.55;
-                v.FadeTo(1, 160, Easing.CubicOut);
+                v.FadeToAsync(1, 160, Easing.CubicOut);
                 handler(s, e);
             };
             view.GestureRecognizers.Add(tap);

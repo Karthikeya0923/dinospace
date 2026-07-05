@@ -231,8 +231,8 @@ namespace dinospace.Views
             {
                 var nv = _tabs[neighbor].view;
                 uint ms = 190;
-                var t1 = cur.TranslateTo(dir > 0 ? -w : w, 0, ms, Easing.CubicOut);
-                var t2 = nv.TranslateTo(0, 0, ms, Easing.CubicOut);
+                var t1 = cur.TranslateToAsync(dir > 0 ? -w : w, 0, ms, Easing.CubicOut);
+                var t2 = nv.TranslateToAsync(0, 0, ms, Easing.CubicOut);
                 await System.Threading.Tasks.Task.WhenAll(t1, t2);
 
                 cur.IsVisible = false;
@@ -245,11 +245,11 @@ namespace dinospace.Views
             else
             {
                 uint ms = 170;
-                var tasks = new List<System.Threading.Tasks.Task> { cur.TranslateTo(0, 0, ms, Easing.CubicOut) };
+                var tasks = new List<System.Threading.Tasks.Task> { cur.TranslateToAsync(0, 0, ms, Easing.CubicOut) };
                 if (_panNeighbor >= 0 && _panNeighbor != _current)
                 {
                     var nv = _tabs[_panNeighbor].view;
-                    tasks.Add(nv.TranslateTo(dir > 0 ? w : -w, 0, ms, Easing.CubicOut));
+                    tasks.Add(nv.TranslateToAsync(dir > 0 ? w : -w, 0, ms, Easing.CubicOut));
                 }
                 await System.Threading.Tasks.Task.WhenAll(tasks);
                 if (_panNeighbor >= 0 && _panNeighbor != _current)

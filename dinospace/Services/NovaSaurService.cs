@@ -86,7 +86,7 @@ namespace dinospace.Services
                 return TimeoutMessage;
             }
 
-            string raw;
+            string? raw;
             try { raw = await work; }
             catch (Exception ex)
             {

@@ -41,9 +41,12 @@ namespace dinospace
 
         private sealed class BottomInsetListener : Java.Lang.Object, AndroidX.Core.View.IOnApplyWindowInsetsListener
         {
-            public AndroidX.Core.View.WindowInsetsCompat OnApplyWindowInsets(Android.Views.View v, AndroidX.Core.View.WindowInsetsCompat insets)
+            public AndroidX.Core.View.WindowInsetsCompat? OnApplyWindowInsets(Android.Views.View? v, AndroidX.Core.View.WindowInsetsCompat? insets)
             {
+                if (v == null || insets == null) return insets;
+
                 var bars = insets.GetInsets(AndroidX.Core.View.WindowInsetsCompat.Type.SystemBars());
+                if (bars == null) return insets;
                 float density = v.Resources?.DisplayMetrics?.Density ?? 2.75f;
                 double bottomDip = bars.Bottom / density;
 
@@ -54,9 +57,9 @@ namespace dinospace
                 });
 
                 var noBottom = AndroidX.Core.Graphics.Insets.Of(bars.Left, bars.Top, bars.Right, 0);
-                return new AndroidX.Core.View.WindowInsetsCompat.Builder(insets)
-                    .SetInsets(AndroidX.Core.View.WindowInsetsCompat.Type.SystemBars(), noBottom)
-                    .Build();
+                var builder = new AndroidX.Core.View.WindowInsetsCompat.Builder(insets)
+                    .SetInsets(AndroidX.Core.View.WindowInsetsCompat.Type.SystemBars(), noBottom);
+                return builder?.Build() ?? insets;
             }
         }
 

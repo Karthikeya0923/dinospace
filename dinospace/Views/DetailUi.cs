@@ -17,7 +17,8 @@ namespace dinospace.Views
         {
             var img = new Image { Source = image, Aspect = Aspect.AspectFill, HorizontalOptions = LayoutOptions.Fill, VerticalOptions = LayoutOptions.Fill };
             Ui.Describe(img, title);
-            var grid = new Grid { HeightRequest = 320, BackgroundColor = Theme.ImgPlaceholder };
+            var grid = new Grid { HeightRequest = 320 };
+            grid.Add(EntryCards.ArtFallback(title, 56));
             grid.Add(img);
             return grid;
         }
@@ -184,11 +185,13 @@ namespace dinospace.Views
             var row = new HorizontalStackLayout { Spacing = 12, Padding = new Thickness(2, 4) };
             foreach (var (image, name, data) in items)
             {
-                var img = new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = 84, WidthRequest = 124 };
+                var imgGrid = new Grid();
+                imgGrid.Add(EntryCards.ArtFallback(name, 22, stars: false));
+                imgGrid.Add(new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = 84, WidthRequest = 124 });
                 var wrap = new Border
                 {
-                    Content = img, WidthRequest = 124, HeightRequest = 84,
-                    BackgroundColor = Theme.ImgPlaceholder, Stroke = Colors.Transparent,
+                    Content = imgGrid, WidthRequest = 124, HeightRequest = 84,
+                    Stroke = Colors.Transparent,
                     StrokeShape = new RoundRectangle { CornerRadius = 12 },
                     Shadow = Theme.CardShadow()
                 };

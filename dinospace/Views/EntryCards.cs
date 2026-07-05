@@ -11,6 +11,31 @@ namespace dinospace.Views
     // Cards auto-size vertically so titles never get clipped.
     public static class EntryCards
     {
+        // Shown behind every entry image: a small window of night sky with the
+        // entry's initial in gold. Entries whose art hasn't arrived yet look
+        // intentional instead of like an empty beige box; when the image loads
+        // it simply covers this.
+        public static View ArtFallback(string title, double letterSize, bool stars = true)
+        {
+            var grid = new Grid { BackgroundColor = Color.FromArgb("#111527") };
+            if (stars)
+            {
+                int seed = 0;
+                foreach (char c in title) seed = seed * 31 + c;   // stable per entry
+                grid.Add(new GraphicsView { Drawable = new StarFieldDrawable { Seed = seed }, InputTransparent = true });
+            }
+            grid.Add(new Label
+            {
+                Text = string.IsNullOrEmpty(title) ? "•" : title[..1].ToUpperInvariant(),
+                FontFamily = Ui.Display,
+                FontSize = letterSize,
+                TextColor = Color.FromArgb("#E3BE55"),
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center
+            });
+            return grid;
+        }
+
         // Fixed heights so every card is identical whether the name is one or
         // two lines. The title area always reserves two lines and the meta
         // sits pinned at the bottom, so "Late Cretaceous" never gets clipped
@@ -18,7 +43,8 @@ namespace dinospace.Views
         public static View GridCard(string image, string title, string meta, Action onTap)
         {
             var img = new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = 118 };
-            var imgWrap = new Grid { HeightRequest = 118, BackgroundColor = Theme.ImgPlaceholder };
+            var imgWrap = new Grid { HeightRequest = 118 };
+            imgWrap.Add(ArtFallback(title, 30));
             imgWrap.Add(img);
 
             var name = new Label
@@ -90,11 +116,13 @@ namespace dinospace.Views
         // Compact list row for Search and Saved: thumb, serif name, meta, chevron.
         public static View ListRow(string image, string title, string meta, Action onTap)
         {
+            var thumbGrid = new Grid();
+            thumbGrid.Add(ArtFallback(title, 20, stars: false));
+            thumbGrid.Add(new Image { Source = image, Aspect = Aspect.AspectFill, WidthRequest = 54, HeightRequest = 54 });
             var thumb = new Border
             {
-                Content = new Image { Source = image, Aspect = Aspect.AspectFill, WidthRequest = 54, HeightRequest = 54 },
+                Content = thumbGrid,
                 WidthRequest = 54, HeightRequest = 54,
-                BackgroundColor = Theme.ImgPlaceholder,
                 Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 10 }
             };

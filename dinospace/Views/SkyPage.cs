@@ -257,7 +257,7 @@ namespace dinospace.Views
             var loc = await SkyService.RequestDeviceLocationAsync();
             if (loc == null)
             {
-                await DisplayAlert("No location", "DinoSpace couldn't get your location, so it will keep showing the general view. You can allow location for DinoSpace in your phone's settings any time.", "OK");
+                await DisplayAlertAsync("No location", "DinoSpace couldn't get your location, so it will keep showing the general view. You can allow location for DinoSpace in your phone's settings any time.", "OK");
                 return;
             }
             _report = SkyService.BuildReport(loc);

@@ -35,8 +35,13 @@ namespace dinospace
                 var win = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity?.Window;
                 if (win == null) return;
 
-                win.SetStatusBarColor(Android.Graphics.Color.Transparent);
-                win.SetNavigationBarColor(Android.Graphics.Color.Transparent);
+                // Android 15+ enforces transparent bars itself and retires
+                // these setters, so they only need calling on older versions.
+                if (!System.OperatingSystem.IsAndroidVersionAtLeast(35))
+                {
+                    win.SetStatusBarColor(Android.Graphics.Color.Transparent);
+                    win.SetNavigationBarColor(Android.Graphics.Color.Transparent);
+                }
 
                 var deco = win.DecorView;
                 if (deco != null)

@@ -183,7 +183,10 @@ namespace dinospace.Views
         private Border BuildFeatured()
         {
             var img = new Image { Source = _dino.ImageFile, Aspect = Aspect.AspectFill, HeightRequest = 250 };
-            var imgWrap = new Grid { HeightRequest = 250, BackgroundColor = Theme.ImgPlaceholder };
+            var imgWrap = new Grid { HeightRequest = 250 };
+            var fallback = new Grid();
+            fallback.Add(EntryCards.ArtFallback(_dino.Name, 44));
+            imgWrap.Add(fallback);
             imgWrap.Add(img);
 
             // Big flip pill — generous hitbox, top-right of the photo.
@@ -239,11 +242,11 @@ namespace dinospace.Views
                 else await Nav.OpenSpace(_space);
             });
 
-            card.BindingContext = new FeaturedRefs(tag, name, sub, img);
+            card.BindingContext = new FeaturedRefs(tag, name, sub, img, fallback);
             return card;
         }
 
-        private record FeaturedRefs(Label Tag, Label Name, Label Sub, Image Img);
+        private record FeaturedRefs(Label Tag, Label Name, Label Sub, Image Img, Grid Fallback);
 
         private void RefreshFeatured()
         {
@@ -262,6 +265,9 @@ namespace dinospace.Views
                 r.Sub.Text = "“" + _space.ShortDescription + "”";
                 r.Img.Source = _space.ImageFile;
             }
+            // Keep the night-sky stand-in's initial in step with the flip.
+            r.Fallback.Children.Clear();
+            r.Fallback.Add(EntryCards.ArtFallback(_showDino ? _dino.Name : _space.Name, 44));
         }
 
         // ----- Nova card -----
@@ -319,9 +325,9 @@ namespace dinospace.Views
         {
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null) return;
-            string mode = await page.DisplayActionSheet("Pick a quiz", "Cancel", null, "Dinosaurs", "Space", "Mixed");
+            string mode = await page.DisplayActionSheetAsync("Pick a quiz", "Cancel", null, "Dinosaurs", "Space", "Mixed");
             if (mode is not ("Dinosaurs" or "Space" or "Mixed")) return;
-            string choice = await page.DisplayActionSheet("How many questions?", "Cancel", null, "5", "10", "25", "50", "100");
+            string choice = await page.DisplayActionSheetAsync("How many questions?", "Cancel", null, "5", "10", "25", "50", "100");
             if (!int.TryParse(choice, out int count)) return;
             await Nav.Push(() => new QuizPage(mode, count));
         }

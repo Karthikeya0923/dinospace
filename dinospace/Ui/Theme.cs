@@ -12,14 +12,14 @@ namespace dinospace
     {
         private sealed class Palette
         {
-            public Color Bg, BgRaised, Surface, SurfaceAlt, SurfaceSunken;
-            public Color Hairline, HairlineSoft;
-            public Color TextPrimary, TextSecondary, TextHint, TextOnAccent;
-            public Color Accent, AccentSoft;
-            public Color Success, Danger;
-            public Color ChipBg, ChipText, ImgPlaceholder;
-            public Color CardStroke;
-            public float ShadowAlpha;
+            public required Color Bg, BgRaised, Surface, SurfaceAlt, SurfaceSunken;
+            public required Color Hairline, HairlineSoft;
+            public required Color TextPrimary, TextSecondary, TextHint, TextOnAccent;
+            public required Color Accent, AccentSoft;
+            public required Color Success, Danger;
+            public required Color ChipBg, ChipText, ImgPlaceholder;
+            public required Color CardStroke;
+            public required float ShadowAlpha;
         }
 
         private static readonly Palette Light = new()
