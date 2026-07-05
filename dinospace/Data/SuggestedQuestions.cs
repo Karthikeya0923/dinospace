@@ -35,6 +35,12 @@ namespace dinospace.Data
             "How big was the Megalodon?",
             "How long was Titanoboa?",
 
+            // Tonight's sky (answered live by the Sky Tonight engine)
+            "What phase is the moon tonight?",
+            "What planets can I see tonight?",
+            "When is the next full moon?",
+            "What time is sunset today?",
+
             // Space
             "What is a black hole?",
             "How do stars form?",

@@ -168,6 +168,10 @@ namespace dinospace
 
         // ---------- friendly wording ----------
 
+        // "9:03 p.m." — Canadian-style times.
+        public static string FormatTime(DateTime t)
+            => t.ToString("h:mm") + (t.Hour < 12 ? " a.m." : " p.m.");
+
         // "high in the southeast", "low in the west" ...
         public static string Describe(double altDeg, double azDeg)
         {

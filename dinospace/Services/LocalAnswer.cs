@@ -22,6 +22,11 @@ namespace dinospace.Services
         {
             if (string.IsNullOrWhiteSpace(question)) return null;
 
+            // 0) Live sky questions ("is the moon full tonight?") — the model
+            //    can't know tonight's sky, but the Sky Tonight engine can.
+            var sky = SkyAnswer(q);
+            if (sky != null) return sky;
+
             var dinos = new List<Dinosaur>();
             var spaces = new List<SpaceObject>();
             foreach (var name in g.Entities)
@@ -65,6 +70,83 @@ namespace dinospace.Services
             if (nugget != null) return nugget.Fact;
 
             return null;
+        }
+
+        // ---------- live sky ----------
+
+        // Questions about tonight's actual sky, answered by the same astronomy
+        // engine behind Sky Tonight. Cues are kept tight so "how big is the
+        // moon" still goes to the encyclopedia, not the sky report.
+        private static string? SkyAnswer(string q)
+        {
+            bool tonight = Has(q, "tonight", "now", "currently", "today", "evening");
+
+            // Moon phase, and next full/new moon dates.
+            if (q.Contains("moon") && Has(q, "phase", "full", "new", "crescent", "gibbous", "quarter", "lit", "cycle", "waxing", "waning"))
+            {
+                var m = SkyCalc.Moon(DateTime.UtcNow);
+                if (Has(q, "next", "when"))
+                {
+                    if (q.Contains("new"))
+                        return $"The next new moon is on {m.NextNewUtc.ToLocalTime():dddd, MMMM d} — the best night for spotting faint stars.";
+                    return $"The next full moon is on {m.NextFullUtc.ToLocalTime():dddd, MMMM d}.";
+                }
+                string trend = m.Waxing ? "growing a little brighter every night" : "shrinking a little every night";
+                string next = m.Waxing
+                    ? $"It will be full on {m.NextFullUtc.ToLocalTime():MMMM d}."
+                    : $"It will be new on {m.NextNewUtc.ToLocalTime():MMMM d}.";
+                return $"Tonight the moon is a {m.PhaseName} — about {m.Illumination * 100:0}% lit and {trend}. {next}";
+            }
+
+            // "What can I see tonight?", "which constellations are out?" ...
+            bool wantsSky = (Has(q, "sky", "see", "visible", "spot", "look", "out") && tonight)
+                          || (Has(q, "constellation", "constellations") && Has(q, "see", "visible", "tonight", "now", "above", "overhead", "out", "my"))
+                          || (Has(q, "planet", "planets") && Has(q, "see", "visible", "tonight", "now", "spot", "out"));
+            if (wantsSky) return SkySummary();
+
+            // Sunset and sunrise times ("why does the sun rise" stays conceptual).
+            if (!q.StartsWith("why") &&
+                (Has(q, "sunset", "sunrise") || (q.Contains("sun") && Has(q, "set", "sets", "rise", "rises"))))
+            {
+                var r = SkyService.BuildReport(SkyService.Cached);
+                if (r.NextSunsetLocal is DateTime set && r.NextSunriseLocal is DateTime rise)
+                    return $"The sun sets at {SkyService.FormatTime(set)} and rises again at {SkyService.FormatTime(rise)}. " +
+                           $"The sky is dark enough for stargazing about an hour and a half after sunset.";
+                return null;
+            }
+
+            return null;
+        }
+
+        private static string SkySummary()
+        {
+            var r = SkyService.BuildReport(SkyService.Cached);
+            var sb = new StringBuilder();
+            string when = r.IsNight ? "right now" : "after dark tonight";
+
+            if (r.Planets.Count > 0)
+                sb.Append($"Planets you can spot {when}: {JoinNames(r.Planets.Select(p => $"{p.Name} in the {SkyCalc.Compass(p.AzDeg)}"))}. ");
+            else
+                sb.Append($"No bright planets are up {when} — they're hiding in the daytime sky. ");
+
+            if (r.Constellations.Count > 0)
+                sb.Append($"Constellations to look for: {JoinNames(r.Constellations.Take(3).Select(c => c.Constellation.Name))}. ");
+
+            sb.Append($"The moon is a {r.Moon.PhaseName}, about {r.Moon.Illumination * 100:0}% lit.");
+            if (!r.Where.FromDevice)
+                sb.Append(" For your exact sky, open Sky Tonight on the Home tab and allow location.");
+            return sb.ToString();
+        }
+
+        private static string JoinNames(IEnumerable<string> items)
+        {
+            var list = items.ToList();
+            return list.Count switch
+            {
+                0 => "",
+                1 => list[0],
+                _ => string.Join(", ", list.Take(list.Count - 1)) + " and " + list[^1]
+            };
         }
 
         // ---------- intent detection ----------

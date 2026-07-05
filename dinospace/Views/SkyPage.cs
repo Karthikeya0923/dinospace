@@ -211,11 +211,11 @@ namespace dinospace.Views
         {
             var col = new VerticalStackLayout { Spacing = 10 };
             if (_report.NextSunsetLocal is DateTime set)
-                col.Add(InfoRow("Sunset", FormatTime(set)));
+                col.Add(InfoRow("Sunset", SkyService.FormatTime(set)));
             if (_report.NextSunriseLocal is DateTime rise)
-                col.Add(InfoRow("Sunrise", FormatTime(rise)));
+                col.Add(InfoRow("Sunrise", SkyService.FormatTime(rise)));
             if (_report.NextSunsetLocal is DateTime s2)
-                col.Add(Ui.Muted($"Best stargazing starts around {FormatTime(s2.AddMinutes(90))}, once the sky is properly dark.", 12.5));
+                col.Add(Ui.Muted($"Best stargazing starts around {SkyService.FormatTime(s2.AddMinutes(90))}, once the sky is properly dark.", 12.5));
 
             var card = Ui.Card(col, 16, new Thickness(16, 14));
             var sun = SpaceData.ByName("Sun");
@@ -237,9 +237,6 @@ namespace dinospace.Views
             }, 1, 0);
             return grid;
         }
-
-        private static string FormatTime(DateTime t)
-            => t.ToString("h:mm") + (t.Hour < 12 ? " a.m." : " p.m.");
 
         // ----- location -----
 
