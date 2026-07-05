@@ -31,21 +31,28 @@ namespace dinospace.Views
         public static RootPage? Current { get; private set; }
         public void SwitchTab(int index) => GoToTab(index);
 
-        // A snapshot of the pre-toggle screen. The theme toggle rebuilds the
-        // window under it, then fades this away for a true Discord-style
-        // cross-dissolve (no solid-colour flash). LastTab keeps the same tab.
-        public static byte[]? CrossfadeSnapshot;
-        // The outgoing theme's background colour, painted behind the snapshot
-        // for the frame or two before its image decodes, so there is never a
-        // flash of the new background colour.
-        public static Color CrossfadeCoverColor = Colors.Transparent;
-        // Set when a theme switch happens without a usable snapshot, so the new
-        // UI fades in gently instead of hard-cutting.
-        public static bool FadeInOnAppear;
+        // Keeps the same tab across a theme rebuild.
         public static int LastTab;
         private Grid _rootGrid = null!;
-        private View? _cover;
-        private bool _didCrossfade;
+
+        // The bottom system-bar (navigation/gesture) inset in DIPs, reported
+        // from MainActivity. The tab bar pads its bottom by this so it fills the
+        // area right down to the bottom edge of the screen — no gap.
+        private static double _bottomInset;
+        private VerticalStackLayout? _navBar;
+
+        // Push the tab bar down into the navigation-bar area.
+        public static void SetBottomInset(double bottom)
+        {
+            _bottomInset = bottom;
+            Current?.ApplyBottomInset();
+        }
+
+        private void ApplyBottomInset()
+        {
+            if (_navBar != null)
+                _navBar.Padding = new Thickness(0, 0, 0, _bottomInset);
+        }
 
         public RootPage()
         {
@@ -82,27 +89,6 @@ namespace dinospace.Views
             root.Add(nav, 0, 1);
             _rootGrid = root;
             Content = root;
-
-            // If a theme switch just happened, lay the frozen previous screen
-            // over everything from the very first frame, so the re-themed UI
-            // building underneath is never seen — no flash. It dissolves away in
-            // OnAppearing. A solid fallback colour (the old background) sits
-            // behind the snapshot in case its image takes a frame to decode.
-            if (CrossfadeSnapshot != null)
-            {
-                var bytes = CrossfadeSnapshot;
-                CrossfadeSnapshot = null;
-                var cover = new Grid { BackgroundColor = CrossfadeCoverColor, InputTransparent = true };
-                cover.Add(new Image
-                {
-                    Source = ImageSource.FromStream(() => new System.IO.MemoryStream(bytes)),
-                    Aspect = Aspect.Fill,
-                    InputTransparent = true
-                });
-                _rootGrid.Add(cover);
-                Grid.SetRowSpan(cover, 2);
-                _cover = cover;
-            }
         }
 
         // ----- tab bar: icons + labels, white bar, thin top rule -----
@@ -136,12 +122,16 @@ namespace dinospace.Views
             }
 
             var rule = new BoxView { HeightRequest = 1, Color = Theme.Hairline };
-            return new VerticalStackLayout
+            _navBar = new VerticalStackLayout
             {
                 Spacing = 0,
                 BackgroundColor = Theme.BgRaised,
+                // Fill the navigation-bar/gesture area so the bar reaches the
+                // very bottom of the screen; the icons stay above it.
+                Padding = new Thickness(0, 0, 0, _bottomInset),
                 Children = { rule, grid }
             };
+            return _navBar;
         }
 
         private void GoToTab(int index)
@@ -295,29 +285,10 @@ namespace dinospace.Views
             if (Application.Current != null)
                 Application.Current.UserAppTheme = Theme.IsDark ? AppTheme.Dark : AppTheme.Light;
 
-            if (_cover != null && !_didCrossfade)
-            {
-                _didCrossfade = true;
-                var cover = _cover; _cover = null;
-                Dispatcher.Dispatch(async () =>
-                {
-                    // Give the new UI a couple of frames to settle under the
-                    // cover, then dissolve the cover away — a clean, in-place
-                    // cross-dissolve from the old screen to the new one.
-                    await Task.Delay(48);
-                    await cover.FadeTo(0, 340, Easing.SinInOut);
-                    _rootGrid.Remove(cover);
-                });
-            }
-            else if (FadeInOnAppear && !_didCrossfade)
-            {
-                // Snapshot capture wasn't available — still avoid a hard cut by
-                // gently fading the freshly themed UI up from the new bg colour.
-                _didCrossfade = true;
-                FadeInOnAppear = false;
-                _rootGrid.Opacity = 0;
-                _rootGrid.FadeTo(1, 260, Easing.SinInOut);
-            }
+            // If a theme switch just rebuilt the app, the previous screen is
+            // frozen on top at the native level — dissolve it away now that the
+            // new UI is on screen. No-op on a normal appearance.
+            ThemeFx.FadeOutThemeCover();
 
             if (_current >= 0)
                 (_tabs[_current].view as ITabView)?.OnSelected();

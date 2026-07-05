@@ -18,6 +18,46 @@ namespace dinospace
             base.OnCreate(savedInstanceState);
             // Paint the window the theme background so nothing flashes white.
             try { ThemeFx.SetWindowBackground(global::dinospace.Theme.Bg); } catch { }
+            try { SetupInsets(); } catch { }
+        }
+
+        // The app draws edge-to-edge. MAUI still clears the status bar at the
+        // top, but we intercept the window insets and hand MAUI a copy with the
+        // BOTTOM inset removed, so it no longer leaves an empty strip above the
+        // navigation bar. The real bottom inset is reported to the bars that sit
+        // at the bottom (the tab bar and the NovaSaur input) so they fill that
+        // area themselves and reach the very bottom of the screen.
+        private void SetupInsets()
+        {
+            var window = Window;
+            if (window == null) return;
+            AndroidX.Core.View.WindowCompat.SetDecorFitsSystemWindows(window, false);
+
+            var content = FindViewById(Android.Resource.Id.Content);
+            if (content == null) return;
+            AndroidX.Core.View.ViewCompat.SetOnApplyWindowInsetsListener(content, new BottomInsetListener());
+            AndroidX.Core.View.ViewCompat.RequestApplyInsets(content);
+        }
+
+        private sealed class BottomInsetListener : Java.Lang.Object, AndroidX.Core.View.IOnApplyWindowInsetsListener
+        {
+            public AndroidX.Core.View.WindowInsetsCompat OnApplyWindowInsets(Android.Views.View v, AndroidX.Core.View.WindowInsetsCompat insets)
+            {
+                var bars = insets.GetInsets(AndroidX.Core.View.WindowInsetsCompat.Type.SystemBars());
+                float density = v.Resources?.DisplayMetrics?.Density ?? 2.75f;
+                double bottomDip = bars.Bottom / density;
+
+                Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    try { dinospace.Views.RootPage.SetBottomInset(bottomDip); } catch { }
+                    try { dinospace.Views.NovaView.SetBottomInset(bottomDip); } catch { }
+                });
+
+                var noBottom = AndroidX.Core.Graphics.Insets.Of(bars.Left, bars.Top, bars.Right, 0);
+                return new AndroidX.Core.View.WindowInsetsCompat.Builder(insets)
+                    .SetInsets(AndroidX.Core.View.WindowInsetsCompat.Type.SystemBars(), noBottom)
+                    .Build();
+            }
         }
 
         // Finger-tracking tab pager, ViewPager-style, implemented at the

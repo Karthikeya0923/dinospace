@@ -76,7 +76,24 @@ namespace dinospace.Views
         private readonly StringBuilder _revealSb = new();
         private IDispatcherTimer? _revealTimer;
 
-        public NovaView() => Build();
+        // The live instance + reported bottom inset, so the input bar can sit
+        // above the navigation/gesture area instead of under it.
+        private static NovaView? _live;
+        private static double _bottomInset;
+
+        public NovaView() { _live = this; Build(); }
+
+        public static void SetBottomInset(double bottom)
+        {
+            _bottomInset = bottom;
+            _live?.ApplyBottomInset();
+        }
+
+        private void ApplyBottomInset()
+        {
+            if (_inputArea != null)
+                _inputArea.Padding = new Thickness(16, 8, 16, 14 + _bottomInset);
+        }
 
         public void OnSelected()
         {
@@ -193,7 +210,7 @@ namespace dinospace.Views
             Ui.OnTap(_sendBtn, (_, _) => OnSend());
             Ui.Describe(_sendBtn, "Send question");
 
-            var grid = new Grid { Padding = new Thickness(16, 8, 16, 14), ColumnSpacing = 10 };
+            var grid = new Grid { Padding = new Thickness(16, 8, 16, 14 + _bottomInset), ColumnSpacing = 10 };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             grid.Add(entryWrap, 0, 0);
