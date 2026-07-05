@@ -189,7 +189,7 @@ namespace dinospace.Views
         // ----- featured story -----
         private Border BuildFeatured()
         {
-            double heroH = Ui.D(250);
+            double heroH = 250;
             var img = new Image { Source = _dino.ImageFile, Aspect = Aspect.AspectFill, HeightRequest = heroH };
             var imgWrap = new Grid { HeightRequest = heroH };
             var fallback = new Grid();

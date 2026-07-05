@@ -48,8 +48,10 @@ namespace dinospace.Views
             });
 
             _stack.Add(MoonHero());
+            _stack.Add(Ui.PrimaryButton("✦  POINT AT THE SKY", async (_, _) => await Nav.Push(() => new SkyViewPage())));
             _stack.Add(MoonDetailCard());
             _stack.Add(LearnRow());
+            _stack.Add(TelescopeCard());
 
             _stack.Add(Ui.SectionHeader("Planets above you"));
             if (_report.Planets.Count == 0)
@@ -138,6 +140,34 @@ namespace dinospace.Views
 
             col.Add(InfoRow("Next full moon", $"{_report.Moon.NextFullUtc.ToLocalTime():dddd, MMMM d}"));
             col.Add(InfoRow("Next new moon", $"{_report.Moon.NextNewUtc.ToLocalTime():dddd, MMMM d}"));
+            return Ui.Card(col, 16, new Thickness(16, 14));
+        }
+
+        // Two or three showpiece deep-sky objects that are actually up now —
+        // the "worth pointing binoculars at" card.
+        private View TelescopeCard()
+        {
+            var utc = DateTime.UtcNow.AddHours(_report.IsNight ? 0 : 3);   // roughly after dark
+            var up = SkyMap.DeepSky
+                .Select(d =>
+                {
+                    var (alt, az) = SkyCalc.AltAz(d.RaHours * 15.0, d.DecDeg, _report.Where.Lat, _report.Where.Lon, utc);
+                    return (d, alt, az);
+                })
+                .Where(x => x.alt > 25)
+                .OrderByDescending(x => x.alt)
+                .Take(3)
+                .ToList();
+            if (up.Count == 0) return new BoxView { HeightRequest = 0 };
+
+            var col = new VerticalStackLayout { Spacing = 10 };
+            col.Add(new Label
+            {
+                Text = "With binoculars tonight",
+                FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary
+            });
+            foreach (var (d, alt, az) in up)
+                col.Add(Ui.Muted($"• {d.Name} — {d.Blurb}. Look {SkyService.Describe(alt, az)}.", 12.5));
             return Ui.Card(col, 16, new Thickness(16, 14));
         }
 

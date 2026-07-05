@@ -119,7 +119,7 @@ namespace dinospace.Views
 
         private View CardTemplate()
         {
-            var img = new Image { Aspect = Aspect.AspectFill, HeightRequest = Ui.D(118) };
+            var img = new Image { Aspect = Aspect.AspectFill, HeightRequest = 118 };
             img.SetBinding(Image.SourceProperty, new Binding(nameof(EntryRow.Image)));
             // Night-sky stand-in behind the art (cheap: colour + one label).
             var initial = new Label
@@ -128,7 +128,7 @@ namespace dinospace.Views
                 HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
             };
             initial.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Initial)));
-            var imgWrap = new Grid { HeightRequest = Ui.D(118), BackgroundColor = Color.FromArgb("#111527") };
+            var imgWrap = new Grid { HeightRequest = 118, BackgroundColor = Color.FromArgb("#111527") };
             imgWrap.Add(initial);
             imgWrap.Add(img);
 
@@ -148,7 +148,7 @@ namespace dinospace.Views
             return new Border
             {
                 Content = colc, BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = Ui.R(14) }, Padding = 0, HeightRequest = Ui.D(196), Shadow = Theme.CardShadow()
+                StrokeShape = new RoundRectangle { CornerRadius = 14 }, Padding = 0, HeightRequest = 196, Shadow = Theme.CardShadow()
             };
         }
 

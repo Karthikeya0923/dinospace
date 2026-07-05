@@ -133,6 +133,88 @@ namespace dinospace.Services
 #endif
         }
 
+        // Streams the answer token by token, ChatGPT-style — the first words
+        // appear in about the time the old blocking call took to *start*.
+        // Same one-at-a-time locking as AskAsync; a sliding inactivity window
+        // replaces the flat timeout, so long answers aren't cut off while
+        // they're still visibly typing.
+        public static async Task<string> AskStreamAsync(string prompt, Action<string> onToken, CancellationToken ct)
+        {
+#if ANDROID
+            if (_lock.CurrentCount == 0)
+                return BusyMessage;
+
+            var sb = new System.Text.StringBuilder();
+            var done = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            long lastActivity = Environment.TickCount64;
+
+            var work = Task.Run(async () =>
+            {
+                await _lock.WaitAsync(CancellationToken.None);
+                try
+                {
+                    var relay = new StreamRelay(
+                        token => { lock (sb) sb.Append(token); lastActivity = Environment.TickCount64; onToken(token); },
+                        () => { string full; lock (sb) full = sb.ToString(); done.TrySetResult(full); },
+                        err => done.TrySetResult("ERROR:" + err));
+                    Com.Novasaur.NovaSaurModule.AskStream(prompt, relay);
+                    // hold the lock until the native side reports done (or a
+                    // hard cap, so a silent native failure can't wedge us)
+                    var finished = await Task.WhenAny(done.Task, Task.Delay(TimeSpan.FromMinutes(3)));
+                    return finished == done.Task ? await done.Task : "ERROR:stream never completed";
+                }
+                finally { _lock.Release(); }
+            }, CancellationToken.None);
+
+            // watch from the outside: generous while tokens are flowing,
+            // impatient when nothing is happening
+            while (!work.IsCompleted)
+            {
+                await Task.Delay(400, CancellationToken.None);
+                long idleMs = Environment.TickCount64 - lastActivity;
+                bool started; lock (sb) started = sb.Length > 0;
+                if ((!started && idleMs > 30_000) || (started && idleMs > 20_000))
+                    return TimeoutMessage;
+            }
+
+            string raw;
+            try { raw = await work; }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("NovaSaur stream: " + ex);
+                return ErrorMessage;
+            }
+            if (raw.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase))
+            {
+                System.Diagnostics.Debug.WriteLine("NovaSaur stream: " + raw);
+                return ErrorMessage;
+            }
+            string cleaned = PromptBuilder.Clean(raw);
+            if (string.IsNullOrWhiteSpace(cleaned)) return ErrorMessage;
+            return NovaGuard.CheckAnswer(cleaned) ?? cleaned;
+#else
+            await Task.CompletedTask;
+            return "NovaSaur runs on Android right now.";
+#endif
+        }
+
+#if ANDROID
+        // Marshals the Java streaming callbacks into plain C# delegates.
+        private sealed class StreamRelay : Java.Lang.Object, Com.Novasaur.IStreamCallback
+        {
+            private readonly Action<string> _onToken;
+            private readonly Action _onDone;
+            private readonly Action<string> _onError;
+
+            public StreamRelay(Action<string> onToken, Action onDone, Action<string> onError)
+            { _onToken = onToken; _onDone = onDone; _onError = onError; }
+
+            public void OnToken(string? token) { if (!string.IsNullOrEmpty(token)) _onToken(token); }
+            public void OnDone() => _onDone();
+            public void OnError(string? error) => _onError(error ?? "unknown");
+        }
+#endif
+
         public const string TimeoutMessage =
             "That one's taking me a while to think through. Give me a few seconds to catch my breath, then try asking it a shorter way!";
         public const string ErrorMessage =

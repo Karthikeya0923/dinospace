@@ -58,6 +58,16 @@ namespace dinospace.Data
             "Why does Uranus spin on its side?",
             "How fast does the ISS travel?",
             "Do aliens exist?",
+            "Could we bring dinosaurs back?",
+            "What colour were dinosaurs?",
+            "Were there dinosaurs in the sea?",
+            "Are sharks older than dinosaurs?",
+            "Why is Pluto not a planet?",
+            "Do black holes suck things in?",
+            "Why do stars twinkle?",
+            "Who was the first person on the Moon?",
+            "What is the smartest dinosaur?",
+            "How long did a T. Rex live?",
         };
     }
 }

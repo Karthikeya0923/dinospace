@@ -38,11 +38,9 @@ namespace dinospace.Views
             stack.Add(_journey);
 
             // Preferences
-            // Visuals — themes, layout, and type size all live together.
+            // Visuals — themes and type size.
             stack.Add(Ui.SectionHeader("Visuals"));
             stack.Add(LinkRow("Choose a theme", CurrentThemeName(), async () => await Nav.Push(() => new ThemesPage())));
-            stack.Add(Rule());
-            stack.Add(LayoutRow());
             stack.Add(Rule());
             stack.Add(TextSizeRow());
             stack.Add(Rule());
@@ -94,77 +92,6 @@ namespace dinospace.Views
             grid.Add(text, 0, 0);
             grid.Add(sw, 1, 0);
             return grid;
-        }
-
-        // Layout presets change the app's whole geometry: card sizes, corner
-        // radii, section-header style. Same freeze-frame trick as themes, and
-        // the rebuild lands right back on this tab.
-        private HorizontalStackLayout _layoutPills = null!;
-
-        private View LayoutRow()
-        {
-            _layoutPills = new HorizontalStackLayout { Spacing = 8 };
-            BuildLayoutPills();
-
-            var col = new VerticalStackLayout { Spacing = 10, Padding = new Thickness(0, 14) };
-            col.Add(RowTitle("Layout"));
-            col.Add(new Label { Text = "How roomy the app feels — cards, corners, and headers.", FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint });
-            col.Add(_layoutPills);
-            return col;
-        }
-
-        private void BuildLayoutPills()
-        {
-            _layoutPills.Children.Clear();
-            (string id, string label)[] options = { ("classic", "Classic"), ("compact", "Compact"), ("bold", "Bold") };
-            foreach (var (id, text) in options)
-            {
-                bool active = AppSettings.LayoutId == id;
-                var label = new Label
-                {
-                    Text = text,
-                    FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold,
-                    TextColor = active ? Theme.TextOnAccent : Theme.ChipText,
-                    HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
-                };
-                var pill = new Border
-                {
-                    Content = label, MinimumWidthRequest = 78, HeightRequest = 40,
-                    BackgroundColor = active ? Theme.Accent : Theme.ChipBg,
-                    Stroke = Colors.Transparent,
-                    StrokeShape = new RoundRectangle { CornerRadius = 12 },
-                    Padding = new Thickness(10, 0)
-                };
-                string picked = id;
-                Ui.OnTap(pill, (_, _) => ApplyLayout(picked));
-                _layoutPills.Add(pill);
-            }
-        }
-
-        private async void ApplyLayout(string id)
-        {
-            if (AppSettings.LayoutId == id) return;
-            AppSettings.LayoutId = id;
-
-            byte[]? snap = null;
-            try
-            {
-                if (Screenshot.Default.IsCaptureSupported)
-                {
-                    var result = await Screenshot.Default.CaptureAsync();
-                    using var s = await result.OpenReadAsync();
-                    using var ms = new System.IO.MemoryStream();
-                    await s.CopyToAsync(ms);
-                    snap = ms.ToArray();
-                }
-            }
-            catch { }
-            if (snap != null) ThemeFx.ShowThemeCover(snap);
-
-            NovaPage.ResetShared();
-            RootPage.LastTab = 3;   // rebuild straight back onto Settings
-            var window = Application.Current?.Windows.FirstOrDefault();
-            if (window != null) window.Page = new AppShell();
         }
 
         private static string CurrentThemeName()

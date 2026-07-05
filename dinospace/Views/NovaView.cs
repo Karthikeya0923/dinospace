@@ -323,10 +323,27 @@ namespace dinospace.Views
                 return;
             }
 
+            // Stream the model's answer straight into a live bubble — words
+            // appear as they're generated instead of after a long silence.
+            StopThinking();
+            var live = StartNovaBubble();
+            var liveSb = new StringBuilder();
+            bool gotTokens = false;
+
             string answer;
             try
             {
-                answer = await NovaSaurService.AskAsync(turn.Prompt!, CancellationToken.None);
+                answer = await NovaSaurService.AskStreamAsync(turn.Prompt!, token =>
+                {
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        if (myGen != _gen) return;
+                        gotTokens = true;
+                        liveSb.Append(token);
+                        live.Text = liveSb.ToString();
+                        try { _ = _chatScroll.ScrollToAsync(0, _chatStack.Height, false); } catch { }
+                    });
+                }, CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -335,7 +352,15 @@ namespace dinospace.Views
             }
 
             if (myGen != _gen) return;
-            FinishAnswer(myGen, answer);
+
+            // final text is the cleaned version (or a friendly failure line)
+            live.Text = answer;
+            if (answer.Length > 0) { _messages.Add(new ChatMessage { IsUser = false, Text = answer }); SaveHistory(); }
+            _busy = false;
+            Ui.SetIcon(_sendIcon, Ui.IconSend, Theme.TextOnAccent);
+            ShowSuggestions();
+            _ = ScrollToEnd();
+            _ = gotTokens;   // (kept for future "was it streamed" telemetry-free logic)
         }
 
         private void FinishAnswer(int myGen, string finalAnswer)

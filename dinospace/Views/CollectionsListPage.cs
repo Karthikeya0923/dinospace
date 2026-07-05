@@ -76,7 +76,7 @@ namespace dinospace.Views
                 Content = plusRow,
                 BackgroundColor = Theme.AccentSoft,
                 Stroke = Theme.Accent, StrokeThickness = 1, StrokeDashArray = new DoubleCollection { 4, 4 },
-                StrokeShape = new RoundRectangle { CornerRadius = Ui.R(16) },
+                StrokeShape = new RoundRectangle { CornerRadius = 16 },
                 Padding = new Thickness(16, 16)
             };
             Ui.OnTap(makeCard, async (_, _) => await CreateList());

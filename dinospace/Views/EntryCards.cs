@@ -42,7 +42,7 @@ namespace dinospace.Views
         // and short-named cards don't leave an awkward gap.
         public static View GridCard(string image, string title, string meta, Action onTap)
         {
-            double imgH = Ui.D(118);
+            double imgH = 118;
             var img = new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = imgH };
             var imgWrap = new Grid { HeightRequest = imgH };
             // stars:false — a plain label fallback keeps grids of cards cheap.
@@ -87,9 +87,9 @@ namespace dinospace.Views
                 BackgroundColor = Theme.Surface,
                 Stroke = Theme.CardStroke,
                 StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = Ui.R(14) },
+                StrokeShape = new RoundRectangle { CornerRadius = 14 },
                 Padding = 0,
-                HeightRequest = Ui.D(196),
+                HeightRequest = 196,
                 Shadow = Theme.CardShadow()
             };
             Ui.OnTap(card, (_, _) => onTap());

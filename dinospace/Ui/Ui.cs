@@ -37,14 +37,6 @@ namespace dinospace
         public static double Scale => AppSettings.FontScale;
         public static double S(double size) => size * Scale;
 
-        // ---------- layout presets ----------
-        // Compact = tighter and denser, Bold = big and rounded. Views read
-        // these at build time, exactly like theme colours.
-        public static double RScale => AppSettings.LayoutId switch { "compact" => 0.55, "bold" => 1.6, _ => 1.0 };
-        public static double Density => AppSettings.LayoutId switch { "compact" => 0.85, "bold" => 1.14, _ => 1.0 };
-        public static double R(double radius) => radius * RScale;
-        public static double D(double size) => size * Density;
-
         // ---------- type ----------
 
         public static Label Title(string text, double size = 30) => new()
@@ -125,23 +117,18 @@ namespace dinospace
             _ => "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z",
         };
 
-        // Section header, styled by the current layout preset:
-        //   classic — ALL-CAPS letterspaced with a thin rule (magazine look)
-        //   compact — the same, just smaller and quieter
-        //   bold    — big serif in the accent colour with a short thick rule
+        // ALL-CAPS letterspaced section header with a thin rule underneath —
+        // the magazine look from the reference.
         public static View SectionHeader(string title, string? action = null, System.EventHandler<TappedEventArgs>? onAction = null)
         {
-            bool bold = AppSettings.LayoutId == "bold";
-            bool compact = AppSettings.LayoutId == "compact";
-
             var caps = new Label
             {
-                Text = bold ? title : title.ToUpperInvariant(),
-                FontFamily = bold ? Display : Fonts,
-                FontSize = S(bold ? 21 : compact ? 12.5 : 14),
-                FontAttributes = bold ? FontAttributes.None : FontAttributes.Bold,
-                CharacterSpacing = bold ? 0 : compact ? 1.4 : 2.2,
-                TextColor = bold ? Theme.Accent : Theme.TextPrimary,
+                Text = title.ToUpperInvariant(),
+                FontFamily = Fonts,
+                FontSize = S(14),
+                FontAttributes = FontAttributes.Bold,
+                CharacterSpacing = 2.2,
+                TextColor = Theme.TextPrimary,
                 VerticalOptions = LayoutOptions.End
             };
 
@@ -164,23 +151,20 @@ namespace dinospace
                 grid.Add(link, 1, 0);
             }
 
-            var rule = bold
-                ? new BoxView { HeightRequest = 3.5, WidthRequest = 42, Color = Theme.Accent, HorizontalOptions = LayoutOptions.Start, Margin = new Thickness(0, 6, 0, 0) }
-                : new BoxView { HeightRequest = 1.5, Color = Theme.Hairline, Margin = new Thickness(0, compact ? 6 : 8, 0, 0) };
-            return new VerticalStackLayout { Spacing = 0, Margin = new Thickness(0, compact ? 6 : 10, 0, 2), Children = { grid, rule } };
+            var rule = new BoxView { HeightRequest = 1.5, Color = Theme.Hairline, Margin = new Thickness(0, 8, 0, 0) };
+            return new VerticalStackLayout { Spacing = 0, Margin = new Thickness(0, 10, 0, 2), Children = { grid, rule } };
         }
 
         // ---------- cards ----------
 
-        // White card, rounded, soft shadow. No border strokes. Corner radius
-        // follows the layout preset (sharper compact, rounder bold).
+        // White card, rounded, soft shadow. No border strokes.
         public static Border Card(View content, double radius = 16, Thickness? padding = null) => new()
         {
             Content = content,
             BackgroundColor = Theme.Surface,
             Stroke = Theme.CardStroke,
             StrokeThickness = 1,
-            StrokeShape = new RoundRectangle { CornerRadius = R(radius) },
+            StrokeShape = new RoundRectangle { CornerRadius = radius },
             Padding = padding ?? new Thickness(16),
             Shadow = Theme.CardShadow()
         };

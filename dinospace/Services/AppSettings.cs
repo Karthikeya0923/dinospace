@@ -31,13 +31,6 @@ namespace dinospace.Services
             set => Preferences.Set("set_theme", value);
         }
 
-        // Layout preset: "classic", "compact", or "bold".
-        public static string LayoutId
-        {
-            get => Preferences.Get("set_layout", "classic");
-            set => Preferences.Set("set_layout", value);
-        }
-
         // 0 = Small, 1 = Default, 2 = Large, 3 = Extra large.
         public static int TextSizeIndex
         {
