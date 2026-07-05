@@ -51,7 +51,36 @@ Full looks — wallpaper plus a matching colour palette on every page — switch
 No accounts, no ads, no analytics, no data collection — everything runs and stays on-device. Full policy: [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ---
-> 📋 **[View the official project roadmap →](https://github.com/users/Karthikeya0923/projects/4)**
+
+## Roadmap
+
+Tracked in detail on the [project board →](https://github.com/users/Karthikeya0923/projects/4)
+
+**Shipped**
+- [x] Core encyclopedia — 33 prehistoric creatures + 23 space objects, hand-written and fact-checked
+- [x] Search, category filters, bookmarks, curated collections
+- [x] All-C# UI system — serif/sans editorial design, design tokens, zero XAML pages
+- [x] NovaSaur on-device AI — Gemma via LiteRT-LM, JNI bridge, retrieval-grounded answers
+- [x] 3 GB model delivery — Play Asset Delivery chunking + resumable fallback download
+- [x] Quizzes (slider from 5 to 100 questions), Dino Battles with stat-driven verdicts, streaks
+- [x] Sky Tonight — live moon phase, visible planets & constellations, NASA-verified math
+- [x] Learn the Sky — every moon phase and sky-watching basics, explained for kids
+- [x] Custom lists — build and mix your own dino/space collections
+- [x] Seven full themes with wallpapers + three layout presets, seamless switching
+- [x] True edge-to-edge UI, haptic strength control, adjustable text size
+- [x] Zero-warning build; AI answer pipeline covered by an automated test harness
+
+**In progress**
+- [ ] Final artwork for all encyclopedia entries
+- [ ] Play Store assets (icon, feature graphic, splash screen)
+- [ ] Google Play closed testing, then production release
+
+**Future ideas**
+- [ ] Point-at-the-sky AR mode built on the SkyScanner chart engine
+- [ ] Meteor-shower alerts ("the Perseids peak tonight!")
+- [ ] More creatures and deep-space objects, seasonal featured collections
+- [ ] Tablet layout
+
 ---
 
 ## About the developer
