@@ -141,7 +141,7 @@ namespace dinospace.Views
         public static View TopBar(bool saved, Action onBack, Action onSave, out Microsoft.Maui.Controls.Shapes.Path saveIcon)
         {
             var back = RoundIcon(Ui.IconBack, Colors.White);
-            Ui.OnTap(back, (_, _) => onBack(), haptic: false);
+            Ui.OnTap(back, (_, _) => onBack());
             Ui.Describe(back, "Go back");
 
             // Icons sit on a dark scrim circle, so white/gold always reads on

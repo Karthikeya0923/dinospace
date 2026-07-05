@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Maui;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
@@ -34,11 +35,16 @@ namespace dinospace.Views
         // window under it, then fades this away for a true Discord-style
         // cross-dissolve (no solid-colour flash). LastTab keeps the same tab.
         public static byte[]? CrossfadeSnapshot;
+        // The outgoing theme's background colour, painted behind the snapshot
+        // for the frame or two before its image decodes, so there is never a
+        // flash of the new background colour.
+        public static Color CrossfadeCoverColor = Colors.Transparent;
         // Set when a theme switch happens without a usable snapshot, so the new
         // UI fades in gently instead of hard-cutting.
         public static bool FadeInOnAppear;
         public static int LastTab;
         private Grid _rootGrid = null!;
+        private View? _cover;
         private bool _didCrossfade;
 
         public RootPage()
@@ -76,6 +82,27 @@ namespace dinospace.Views
             root.Add(nav, 0, 1);
             _rootGrid = root;
             Content = root;
+
+            // If a theme switch just happened, lay the frozen previous screen
+            // over everything from the very first frame, so the re-themed UI
+            // building underneath is never seen — no flash. It dissolves away in
+            // OnAppearing. A solid fallback colour (the old background) sits
+            // behind the snapshot in case its image takes a frame to decode.
+            if (CrossfadeSnapshot != null)
+            {
+                var bytes = CrossfadeSnapshot;
+                CrossfadeSnapshot = null;
+                var cover = new Grid { BackgroundColor = CrossfadeCoverColor, InputTransparent = true };
+                cover.Add(new Image
+                {
+                    Source = ImageSource.FromStream(() => new System.IO.MemoryStream(bytes)),
+                    Aspect = Aspect.Fill,
+                    InputTransparent = true
+                });
+                _rootGrid.Add(cover);
+                Grid.SetRowSpan(cover, 2);
+                _cover = cover;
+            }
         }
 
         // ----- tab bar: icons + labels, white bar, thin top rule -----
@@ -103,7 +130,7 @@ namespace dinospace.Views
                 var cell = new VerticalStackLayout { Spacing = 3, Padding = new Thickness(0, 4) };
                 cell.Add(icon);
                 cell.Add(label);
-                Ui.OnTap(cell, (_, _) => GoToTab(index), haptic: false);
+                Ui.OnTap(cell, (_, _) => GoToTab(index));
                 Ui.Describe(cell, _tabs[i].label);
                 grid.Add(cell, i, 0);
             }
@@ -258,17 +285,29 @@ namespace dinospace.Views
         protected override void OnAppearing()
         {
             base.OnAppearing();
-            // Tint the system status/navigation bars to the current theme so
-            // the bottom tab bar reads as one bar reaching the screen edge, and
-            // so a theme switch re-tints them too.
-            ThemeFx.ApplySystemBars();
 
-            if (CrossfadeSnapshot != null && !_didCrossfade)
+            // Re-theme the system chrome here — on THIS freshly built page —
+            // instead of in the toggle handler. During a theme switch this runs
+            // under the cross-fade cover, so the window background, status bar,
+            // and navigation bar never flash on the old screen before the swap.
+            ThemeFx.SetWindowBackground(Theme.Bg);
+            ThemeFx.ApplySystemBars();
+            if (Application.Current != null)
+                Application.Current.UserAppTheme = Theme.IsDark ? AppTheme.Dark : AppTheme.Light;
+
+            if (_cover != null && !_didCrossfade)
             {
                 _didCrossfade = true;
-                var bytes = CrossfadeSnapshot;
-                CrossfadeSnapshot = null;
-                RunCrossfade(bytes);
+                var cover = _cover; _cover = null;
+                Dispatcher.Dispatch(async () =>
+                {
+                    // Give the new UI a couple of frames to settle under the
+                    // cover, then dissolve the cover away — a clean, in-place
+                    // cross-dissolve from the old screen to the new one.
+                    await Task.Delay(48);
+                    await cover.FadeTo(0, 340, Easing.SinInOut);
+                    _rootGrid.Remove(cover);
+                });
             }
             else if (FadeInOnAppear && !_didCrossfade)
             {
@@ -279,32 +318,9 @@ namespace dinospace.Views
                 _rootGrid.Opacity = 0;
                 _rootGrid.FadeTo(1, 260, Easing.SinInOut);
             }
+
             if (_current >= 0)
                 (_tabs[_current].view as ITabView)?.OnSelected();
-        }
-
-        // Lay the frozen old screen over the freshly themed UI, then dissolve
-        // it away — the new theme is revealed underneath, in place, no flash.
-        private void RunCrossfade(byte[] bytes)
-        {
-            var cover = new Image
-            {
-                Source = ImageSource.FromStream(() => new System.IO.MemoryStream(bytes)),
-                Aspect = Aspect.Fill,
-                InputTransparent = true
-            };
-            _rootGrid.Add(cover);
-            Grid.SetRowSpan(cover, 2);
-
-            Dispatcher.Dispatch(async () =>
-            {
-                // Let the freshly themed UI lay out underneath the frozen
-                // snapshot for a couple of frames, then dissolve the snapshot
-                // away — a smooth, in-place cross-fade with no flash or jump.
-                await Task.Delay(32);
-                await cover.FadeTo(0, 380, Easing.SinInOut);
-                _rootGrid.Remove(cover);
-            });
         }
 
         protected override bool OnBackButtonPressed()

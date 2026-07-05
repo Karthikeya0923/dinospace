@@ -54,7 +54,7 @@ namespace dinospace.Views
         private void Build()
         {
             var back = new Label { Text = "‹", FontSize = 32, TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center, Padding = new Thickness(4, 0, 12, 0) };
-            Ui.OnTap(back, async (_, _) => await Close(), haptic: false);
+            Ui.OnTap(back, async (_, _) => await Close());
 
             _counter = new Label { FontFamily = Ui.Fonts, FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center };
             _scoreLabel = new Label { FontFamily = Ui.Fonts, FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = _accent, VerticalOptions = LayoutOptions.Center, HorizontalOptions = LayoutOptions.End };

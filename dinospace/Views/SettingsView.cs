@@ -121,16 +121,23 @@ namespace dinospace.Views
 
             // 2. Repaint everything to the new theme (window bg too, so any
             //    gap is the target colour, not white).
+            // Remember the outgoing background so the cross-fade cover can fall
+            // back to it for the frame or two before the snapshot image decodes.
+            var previousBg = Theme.Bg;
+
+            // Apply the new palette so the rebuilt UI uses it. Existing controls
+            // hold already-resolved colours, so this does NOT visibly change the
+            // current screen — nothing flashes before the switch.
             Theme.Apply(dark);
-            ThemeFx.SetWindowBackground(Theme.Bg);
-            ThemeFx.ApplySystemBars();
-            if (Application.Current != null)
-                Application.Current.UserAppTheme = dark ? AppTheme.Dark : AppTheme.Light;
             NovaPage.ResetShared();
 
-            // 3. Rebuild under the frozen snapshot; RootPage dissolves it away.
+            // 3. Rebuild under the frozen snapshot. The window background, status
+            //    bar, nav bar, and UserAppTheme are all re-applied on the new
+            //    page (RootPage.OnAppearing) — under the cover, never on the old
+            //    screen — so the switch is a clean cross-dissolve with no flash.
             RootPage.CrossfadeSnapshot = snap;
-            RootPage.FadeInOnAppear = true;
+            RootPage.CrossfadeCoverColor = previousBg;
+            RootPage.FadeInOnAppear = snap == null;
             if (window != null)
                 window.Page = new AppShell();
         }

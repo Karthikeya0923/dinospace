@@ -55,7 +55,7 @@ namespace dinospace.Views
             Ui.OnTap(back, async (_, _) =>
             {
                 try { if (Shell.Current.Navigation.NavigationStack.Count > 1) await Shell.Current.Navigation.PopAsync(); } catch { }
-            }, haptic: false);
+            });
             Ui.Describe(back, "Go back");
 
             var bar = new Grid { Padding = new Thickness(10, 6, 16, 6), ColumnSpacing = 2 };

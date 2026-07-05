@@ -45,7 +45,7 @@ namespace dinospace.Views
             // name no longer leaves a big gap above its meta line. The card
             // still has a fixed height so a two-line name never clips, just a
             // little shorter than before.
-            var info = new VerticalStackLayout { Padding = new Thickness(12, 8, 12, 9), Spacing = 2, VerticalOptions = LayoutOptions.Start };
+            var info = new VerticalStackLayout { Padding = new Thickness(12, 8, 12, 9), Spacing = 5, VerticalOptions = LayoutOptions.Start };
             info.Add(name);
             if (!string.IsNullOrEmpty(meta)) info.Add(sub);
 
@@ -61,7 +61,7 @@ namespace dinospace.Views
                 StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 },
                 Padding = 0,
-                HeightRequest = 190,
+                HeightRequest = 196,
                 Shadow = Theme.CardShadow()
             };
             Ui.OnTap(card, (_, _) => onTap());

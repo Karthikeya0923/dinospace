@@ -143,7 +143,7 @@ namespace dinospace.Views
                     if (nav != null && nav.NavigationStack.Count > 1) await nav.PopAsync();
                 }
                 catch { }
-            }, haptic: false);
+            });
             Ui.Describe(back, "Go back");
 
             var dot = new Border

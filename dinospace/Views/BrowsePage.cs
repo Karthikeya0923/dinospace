@@ -98,7 +98,7 @@ namespace dinospace.Views
                     Padding = new Thickness(14, 7)
                 };
                 var cc = c;
-                Ui.OnTap(chip, (_, _) => { _category = cc == "All" ? "" : cc; BuildChips(); Refresh(); }, haptic: false);
+                Ui.OnTap(chip, (_, _) => { _category = cc == "All" ? "" : cc; BuildChips(); Refresh(); });
                 _chips.Add(chip);
             }
         }
@@ -117,7 +117,7 @@ namespace dinospace.Views
 
             // Name and meta grouped under the image (no stretched gap), with a
             // fixed card height so two-line names never clip.
-            var info = new VerticalStackLayout { Padding = new Thickness(12, 8, 12, 9), Spacing = 2, VerticalOptions = LayoutOptions.Start };
+            var info = new VerticalStackLayout { Padding = new Thickness(12, 8, 12, 9), Spacing = 5, VerticalOptions = LayoutOptions.Start };
             info.Add(name); info.Add(meta);
 
             var colc = new VerticalStackLayout { Spacing = 0 };
@@ -126,7 +126,7 @@ namespace dinospace.Views
             return new Border
             {
                 Content = colc, BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 14 }, Padding = 0, HeightRequest = 190, Shadow = Theme.CardShadow()
+                StrokeShape = new RoundRectangle { CornerRadius = 14 }, Padding = 0, HeightRequest = 196, Shadow = Theme.CardShadow()
             };
         }
 

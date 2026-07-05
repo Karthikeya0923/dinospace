@@ -99,7 +99,7 @@ namespace dinospace.Views
             var underline = new BoxView { HeightRequest = 2.5, Color = Colors.Transparent, Margin = new Thickness(0, 5, 0, 0) };
             var col = new VerticalStackLayout { Spacing = 0, Children = { label, underline } };
             col.BindingContext = (label, underline, index);
-            Ui.OnTap(col, (_, _) => { _segment = index; SyncSegments(); Refresh(); }, haptic: false);
+            Ui.OnTap(col, (_, _) => { _segment = index; SyncSegments(); Refresh(); });
             return col;
         }
 
