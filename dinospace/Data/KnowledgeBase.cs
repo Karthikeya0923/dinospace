@@ -21,7 +21,7 @@ namespace dinospace.Data
                 Keywords = new[] { "extinct", "extinction", "die out", "died out", "wiped out", "asteroid", "why did the dinosaurs", "end of the dinosaurs", "how did the dinosaurs die", "meteor" },
                 Fact = "About 66 million years ago a huge asteroid, roughly 10km wide, hit Earth near what is now Mexico. It threw dust and soot into the sky that blocked sunlight for years, cooling the planet and killing off the plants many dinosaurs ate. This ended the age of the non-bird dinosaurs. Birds are the dinosaurs that survived." },
             new() { Topic = "Birds are dinosaurs",
-                Keywords = new[] { "birds dinosaurs", "are birds dinosaurs", "birds evolved", "living dinosaurs", "did dinosaurs turn into birds", "closest to dinosaurs" },
+                Keywords = new[] { "birds dinosaurs", "are birds dinosaurs", "birds evolved", "living dinosaurs", "did dinosaurs turn into birds", "closest to dinosaurs", "birds", "bird" },
                 Fact = "Birds evolved from small feathered theropod dinosaurs, so scientists say birds ARE dinosaurs. The chicken and the T. Rex are distant cousins. This is why we call birds 'living dinosaurs'." },
             new() { Topic = "How stars form",
                 Keywords = new[] { "how stars form", "how are stars made", "how do stars form", "star born", "stars are born", "star formation", "how is a star made" },

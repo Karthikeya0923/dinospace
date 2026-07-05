@@ -30,6 +30,15 @@ namespace dinospace.Services
             var g = new Grounding();
             var hits = FindEntities(normalizedQuestion);
 
+            // Superlatives ("biggest dinosaur") resolve before follow-up
+            // carryover: "fastest dino?" right after chatting about another
+            // creature is a new question, not a pronoun follow-up.
+            if (hits.Count == 0)
+            {
+                var champ = Superlative(normalizedQuestion);
+                if (champ != null) hits.Add(champ);
+            }
+
             // Follow-up with no name of its own -> reuse the previous entities.
             if (hits.Count == 0 && carryover is { Count: > 0 } && LooksLikeFollowUp(normalizedQuestion))
             {
@@ -40,13 +49,6 @@ namespace dinospace.Services
                     var s = SpaceData.ByName(name);
                     if (s != null) hits.Add(new Hit(s.Name, null, s, 1));
                 }
-            }
-
-            // Superlatives ("biggest dinosaur") with no name -> the winner.
-            if (hits.Count == 0)
-            {
-                var champ = Superlative(normalizedQuestion);
-                if (champ != null) hits.Add(champ);
             }
 
             bool comparison = HasAny(normalizedQuestion, "vs", "versus", "beat", "beats", "fight", "battle", "compare", "stronger", "bigger", "faster", "against", "win", "or");
@@ -221,7 +223,9 @@ namespace dinospace.Services
         {
             string p = " " + q + " ";
             if (!p.Contains(" dinosaur ") && !p.Contains(" dino ") && !p.Contains(" dinosaurs ") && !p.Contains(" dinos ")
-                && !p.Contains(" creature ") && !p.Contains(" animal "))
+                && !p.Contains(" creature ") && !p.Contains(" animal ")
+                && !p.Contains(" carnivore ") && !p.Contains(" herbivore ") && !p.Contains(" predator ")
+                && !p.Contains(" meat eater ") && !p.Contains(" plant eater "))
                 return null;
 
             Func<Dinosaur, string> stat; bool max;

@@ -173,7 +173,7 @@ namespace dinospace.Services
             if (Has(q, "when", "era", "period", "ago", "alive", "exist", "existed", "old"))
                 return Trim($"{d.Name} lived during the {d.Era}. {AgeSentence(d)}");
 
-            if (q.Contains("bite"))
+            if (q.Contains("bite") || Has(q, "strong", "stronger", "strongest", "powerful"))
             {
                 if (!string.IsNullOrEmpty(d.BiteForce))
                     return Trim($"{d.Name} had a bite force of about {Pretty(d.BiteForce)}. {BiteFlavor(d)}");
@@ -184,7 +184,7 @@ namespace dinospace.Services
             if (Has(q, "eat", "eats", "ate", "diet", "food", "meat", "plants", "plant", "carnivore", "herbivore", "omnivore", "hunt", "prey"))
                 return DietAnswer(d);
 
-            if (Has(q, "fast", "speed", "quick", "quickly", "run", "runs", "running", "swim", "sprint"))
+            if (Has(q, "fast", "fastest", "speed", "quick", "quickest", "quickly", "slow", "slowest", "run", "runs", "running", "swim", "sprint"))
             {
                 if (string.IsNullOrEmpty(d.Speed)) return null;
                 return Trim($"{d.Name} could move at around {Pretty(d.Speed)}. {SpeedFlavor(d)}");
@@ -204,11 +204,19 @@ namespace dinospace.Services
                 return Trim($"{d.Name} weighed around {Pretty(d.Weight)}. {fact}");
             }
 
-            if (Has(q, "big", "bigger", "biggest", "large", "larger", "largest", "long", "longer", "longest", "size", "huge"))
+            if (Has(q, "big", "bigger", "biggest", "large", "larger", "largest", "long", "longer", "longest",
+                       "size", "huge", "small", "smaller", "smallest", "tiny", "tiniest"))
                 return SizeAnswer(d);
 
             if (Has(q, "where", "habitat", "continent", "country", "live", "lived", "found", "region"))
-                return Trim($"{d.Name} lived in {FirstSentenceLower(d.LifeEnvironmentText)}");
+            {
+                // Entries usually open with "X lived in ..." already — don't
+                // say it twice ("Stegosaurus lived in stegosaurus lived in...").
+                string habitat = FirstSentence(d.LifeEnvironmentText);
+                if (habitat.StartsWith(d.Name, StringComparison.OrdinalIgnoreCase))
+                    return Trim(habitat);
+                return Trim($"{d.Name} lived in {LowerLead(habitat.Length > 0 ? habitat : "a variety of habitats.")}");
+            }
 
             return null;
         }

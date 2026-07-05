@@ -311,18 +311,16 @@ namespace dinospace.Views
                 return;
             }
 
-            // This question needs the language model. Load it on demand the
-            // first time it's actually required — but never wait on it forever.
+            // This question needs the language model. Hard rule: NEVER make the
+            // user wait for it to load. If it isn't ready yet, answer instantly
+            // with a redirect and keep warming it up in the background — the
+            // encyclopedia already covers everything askable by name.
             if (!NovaSaurService.IsReady)
             {
-                if (_thinkingLabel != null) _thinkingLabel.Text = "NovaSaur is waking up… first time takes a moment.";
-                bool ready = await NovaSaurService.InitWithTimeoutAsync(TimeSpan.FromSeconds(60));
-                if (myGen != _gen) return;
-                if (!ready)
-                {
-                    FinishAnswer(myGen, "I can answer loads of dinosaur and space questions on the spot, but that one needs my bigger brain — and it's still waking up. Ask me again in a minute, or try a question about a specific dinosaur or planet!");
-                    return;
-                }
+                _ = NovaSaurService.InitAsync();
+                await Task.Delay(250);
+                FinishAnswer(myGen, "Ooh, that's a big open question — my deep-thinking brain is still waking up, so ask me that one again in a couple of minutes. Meanwhile I can instantly answer anything about a specific creature or place: try \"how strong was T. Rex?\" or \"what's in the sky tonight?\"");
+                return;
             }
 
             string answer;
