@@ -678,14 +678,14 @@ namespace dinospace.Views
                     if (ModelManager.IsLocalInstall)
                     {
                         _overlayTitle.Text = "Getting NovaSaur ready";
-                        _overlayBody.Text = "One-time setup, about a minute. You can leave — it finishes in the background.";
+                        _overlayBody.Text = "One-time setup, about a minute. Keep DinoSpace open while it finishes.";
                         _overlayStatus.Text = ProgressText("Setting up");
                         _pauseRow.IsVisible = false;
                     }
                     else
                     {
                         _overlayTitle.Text = "Downloading NovaSaur";
-                        _overlayBody.Text = "Keep using the app — the download continues in the background, even if you close DinoSpace.";
+                        _overlayBody.Text = "Keep exploring the app while it downloads. If you leave, it picks up right where it left off next time.";
                         _overlayStatus.Text = ProgressText("Downloading");
                         _pauseRow.IsVisible = true;
                         _pauseLabel.Text = "Pause";
@@ -757,7 +757,6 @@ namespace dinospace.Views
                 bool go = await page.DisplayAlert("Not on wifi", "This is a large download (about 3 GB). Downloading over mobile data may use up your plan. Download anyway?", "Download", "Wait for wifi");
                 if (!go) return;
             }
-            try { await Permissions.RequestAsync<Permissions.PostNotifications>(); } catch { }
             ModelManager.Start();
             RefreshOverlay();
         }

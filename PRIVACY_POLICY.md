@@ -55,8 +55,10 @@ in *Settings → Clear Data*; uninstalling removes everything.
 
 - **Internet & network state** — only to fetch the AI model if it isn't already on the
   device. The encyclopedia, quizzes, and AI chat all work fully offline.
-- **Notifications** — only to show progress while the AI model is downloaded or set up.
-- **Foreground service** — keeps that one-time download/setup running if you switch apps.
+- **Approximate location (optional)** — only if you allow it, and only to point Sky
+  Tonight at your part of the sky (moon phase, visible constellations and planets). Your
+  location is used for the calculation on your device and is never stored or sent
+  anywhere. If you say no, Sky Tonight simply uses a general Northern-sky view instead.
 
 ## Children's privacy
 

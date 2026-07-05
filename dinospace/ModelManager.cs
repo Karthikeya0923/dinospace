@@ -213,7 +213,6 @@ namespace dinospace
                 Progress = 0;
                 _ = Task.Run(() => InstallFromChunksAsync(set));
             }
-            StartKeepAliveService();
             Notify();
             return true;
         }
@@ -289,7 +288,6 @@ namespace dinospace
                 var token = _cts.Token;
                 _ = Task.Run(() => DownloadLoopAsync(token));
             }
-            StartKeepAliveService();
             Notify();
         }
 
@@ -430,22 +428,6 @@ namespace dinospace
                     return;
                 }
             }
-        }
-
-        private static void StartKeepAliveService()
-        {
-#if ANDROID
-            try
-            {
-                var ctx = Android.App.Application.Context;
-                var intent = new Android.Content.Intent(ctx, typeof(ModelDownloadService));
-                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.O)
-                    ctx.StartForegroundService(intent);
-                else
-                    ctx.StartService(intent);
-            }
-            catch { }
-#endif
         }
 
         private static void Notify()
