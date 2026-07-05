@@ -18,11 +18,14 @@ DinoSpace blends the two things every kid (and plenty of adults) can't get enoug
 ### 🦖 The encyclopedia
 33 dinosaurs and prehistoric creatures, 23 space objects — every entry hand-written and fact-checked against sources like NASA and published paleontology research. Stats, fun facts, behaviour, habitat, era, and full-page write-ups, with search, category filters, bookmarks, and curated ranked collections.
 
+### 🔭 Sky View — point your phone at the sky
+Hold your phone up and move it around: stars, constellation stick-figures with names, planets, and the moon render live for exactly the direction you're facing, driven by the orientation sensor (with drag-to-explore as a fallback). Aim the crosshair at anything and it names what you're looking at. This is the Sky Guide experience, running on the SkyScanner chart engine — no internet, no camera permission.
+
 ### 🌙 Sky Tonight
 Open the app and it tells you what's above you *right now*: the moon's phase (drawn with the real terminator curve), which planets are visible and where to look, the constellations overhead, and sunset/sunrise times. All of it is computed on-device by [SkyScanner](https://github.com/Karthikeya0923/SkyScanner), an astronomy engine verified against NASA JPL's Horizons ephemeris to within a few hundredths of a degree. Location is optional — say no and you still get a general Northern-sky view. A built-in "Learn the sky" page explains every moon phase and how to tell a planet from a star.
 
 ### 🤖 Ask NovaSaur
-An AI guide powered by Google's Gemma running locally through [NovaSaur](https://github.com/Karthikeya0923/novasaur), the inference engine built for this app. Questions are grounded in the encyclopedia through retrieval, so common questions get instant, always-accurate answers without touching the model — and open-ended ones fall back to the LLM with strict timeouts so the chat never hangs. NovaSaur even answers live sky questions ("is the moon full tonight?") from the astronomy engine, something a frozen language model could never know.
+An AI guide powered by Google's Gemma running locally through [NovaSaur](https://github.com/Karthikeya0923/novasaur), the inference engine built for this app. Questions are grounded in the encyclopedia and a 55-topic knowledge base through retrieval, so real questions get instant, always-accurate answers without touching the model — verified by an in-repo harness that runs 108 typed-style questions through the production pipeline (`tools/AnswerHarness`). Open-ended questions stream from the LLM token by token, ChatGPT-style, with layered timeouts so the chat can never hang. NovaSaur even answers live sky questions ("is the moon full tonight?") from the astronomy engine, something a frozen language model could never know.
 
 ### 🎮 Play
 Quizzes (5 to 100 questions, dinosaurs / space / mixed), Dino Battles with stat-driven verdicts that argue each matchup like a sports column, daily featured creatures, and a streak to keep explorers coming back.
@@ -66,6 +69,8 @@ Tracked in detail on the [project board →](https://github.com/users/Karthikeya
 - [x] Sky Tonight — live moon phase, visible planets & constellations, NASA-verified math
 - [x] Learn the Sky — every moon phase and sky-watching basics, explained for kids
 - [x] Custom lists — build and mix your own dino/space collections
+- [x] Sky View — sensor-driven point-at-the-sky star finder with live constellation figures
+- [x] Streaming AI answers + 55-topic knowledge base, verified by a 108-question harness
 - [x] Seven full themes with wallpapers + three layout presets, seamless switching
 - [x] True edge-to-edge UI, haptic strength control, adjustable text size
 - [x] Zero-warning build; AI answer pipeline covered by an automated test harness
@@ -76,7 +81,6 @@ Tracked in detail on the [project board →](https://github.com/users/Karthikeya
 - [ ] Google Play closed testing, then production release
 
 **Future ideas**
-- [ ] Point-at-the-sky AR mode built on the SkyScanner chart engine
 - [ ] Meteor-shower alerts ("the Perseids peak tonight!")
 - [ ] More creatures and deep-space objects, seasonal featured collections
 - [ ] Tablet layout

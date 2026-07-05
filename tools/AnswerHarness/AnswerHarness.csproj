@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>AnswerHarness</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Links to the app's real sources — the harness always tests exactly what
+       ships, not a copy that can drift. -->
+  <ItemGroup>
+    <Compile Include="..\..\dinospace\Models\Dinosaur.cs" />
+    <Compile Include="..\..\dinospace\Models\SpaceObject.cs" />
+    <Compile Include="..\..\dinospace\Models\ChatMessage.cs" />
+    <Compile Include="..\..\dinospace\Data\DinoData.cs" />
+    <Compile Include="..\..\dinospace\Data\SpaceData.cs" />
+    <Compile Include="..\..\dinospace\Data\KnowledgeBase.cs" />
+    <Compile Include="..\..\dinospace\Data\SkyData.cs" />
+    <Compile Include="..\..\dinospace\Data\SuggestedQuestions.cs" />
+    <Compile Include="..\..\dinospace\Services\Retriever.cs" />
+    <Compile Include="..\..\dinospace\Services\LocalAnswer.cs" />
+    <Compile Include="..\..\dinospace\Services\PromptBuilder.cs" />
+    <Compile Include="..\..\dinospace\Services\NovaGuard.cs" />
+    <Compile Include="..\..\dinospace\Services\SkyCalc.cs" />
+  </ItemGroup>
+
+</Project>
