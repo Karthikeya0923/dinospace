@@ -33,9 +33,16 @@ namespace dinospace.Views
 
             stack.Add(Masthead());
 
+            // A different hello each day — tiny thing, but it makes the app
+            // feel alive instead of like a menu.
+            string[] hellos =
+            {
+                "Let's explore.", "Ready to roar?", "The sky is calling.",
+                "Time to dig for treasure.", "Big teeth. Bigger universe.", "Look up. Look back."
+            };
             var hello = new Label
             {
-                Text = "Let's explore.",
+                Text = hellos[DateTime.Now.DayOfYear % hellos.Length],
                 FontFamily = Ui.Display,
                 FontSize = Ui.S(28),
                 TextColor = Theme.TextSecondary

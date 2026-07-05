@@ -49,6 +49,7 @@ namespace dinospace.Views
 
             _stack.Add(MoonHero());
             _stack.Add(MoonDetailCard());
+            _stack.Add(LearnRow());
 
             _stack.Add(Ui.SectionHeader("Planets above you"));
             if (_report.Planets.Count == 0)
@@ -138,6 +139,32 @@ namespace dinospace.Views
             col.Add(InfoRow("Next full moon", $"{_report.Moon.NextFullUtc.ToLocalTime():dddd, MMMM d}"));
             col.Add(InfoRow("Next new moon", $"{_report.Moon.NextNewUtc.ToLocalTime():dddd, MMMM d}"));
             return Ui.Card(col, 16, new Thickness(16, 14));
+        }
+
+        // Compact link into the "what does all this mean?" page.
+        private static View LearnRow()
+        {
+            var info = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };
+            info.Add(new Label { Text = "Learn the sky", FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
+            info.Add(new Label
+            {
+                Text = "What the phases mean, why stars move, how to spot a planet",
+                FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), LineHeight = 1.3, TextColor = Theme.TextSecondary
+            });
+
+            var chevron = Ui.Icon(Ui.IconChevron, 24, Theme.TextHint);
+            chevron.VerticalOptions = LayoutOptions.Center;
+
+            var grid = new Grid { ColumnSpacing = 12 };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.Add(info, 0, 0);
+            grid.Add(chevron, 1, 0);
+
+            var card = Ui.Card(grid, 16, new Thickness(16, 13));
+            Ui.OnTap(card, async (_, _) => await Nav.Push(() => new SkyLearnPage()));
+            Ui.Describe(card, "Learn the sky: what moon phases mean, why stars move, how to spot a planet");
+            return card;
         }
 
         private static string MoonCountdown(SkyCalc.MoonInfo m)

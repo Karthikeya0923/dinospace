@@ -206,18 +206,102 @@ namespace dinospace.Views
             return score;
         }
 
+        // Writes an actual argument for this specific matchup: how close it is,
+        // which stats decide it (with the numbers), and what the underdog's
+        // best shot would be. Same pairing always reads the same, but every
+        // pairing reads differently.
         private static string Verdict(Dinosaur w, Dinosaur l)
         {
+            // stable "randomness" per matchup, so re-running the fight doesn't reshuffle the text
+            int seed = 0;
+            foreach (char c in w.Name + "|" + l.Name) seed = seed * 31 + c;
+            seed = Math.Abs(seed);
+
+            double pw = Power(w), pl = Power(l);
+            bool blowout = pl <= 0 || pw / Math.Max(pl, 0.01) > 1.6;
+            bool close = !blowout && pw / Math.Max(pl, 0.01) < 1.2;
+
             var sb = new StringBuilder();
-            sb.Append($"{w.Name} has the edge here. ");
-            if (Num(w.BiteForce) > Num(l.BiteForce) && !string.IsNullOrEmpty(w.BiteForce))
-                sb.Append($"Its bite force of {w.BiteForce} is a serious weapon. ");
-            else if (Num(w.Weight) > Num(l.Weight))
-                sb.Append($"At {w.Weight}, sheer size and power make the difference. ");
-            else if (Num(w.Speed) > Num(l.Speed))
-                sb.Append($"Its speed of {w.Speed} lets it control the fight. ");
-            sb.Append("In real life, the outcome would depend on terrain, surprise, and a good deal of luck!");
+            string[] openers = close
+                ? new[]
+                {
+                    $"This one could go either way, but {w.Name} takes it by a claw.",
+                    $"An incredibly even matchup — {w.Name} just barely comes out on top.",
+                    $"Almost a coin flip. {w.Name} wins it on the fine details.",
+                }
+                : blowout
+                ? new[]
+                {
+                    $"Not much of a contest — {w.Name} dominates this one.",
+                    $"{w.Name} wins this convincingly.",
+                    $"On paper this is one-sided: {w.Name} all the way.",
+                }
+                : new[]
+                {
+                    $"{w.Name} has the edge here.",
+                    $"Most rounds of this fight go to {w.Name}.",
+                    $"{w.Name} is the favourite in this matchup.",
+                };
+            sb.Append(openers[seed % openers.Length]).Append(' ');
+
+            // gather the real advantages, biggest weapons first
+            var reasons = new List<string>();
+            double wb = Num(w.BiteForce), lb = Num(l.BiteForce);
+            double ww = Num(w.Weight), lw = Num(l.Weight);
+            double ws = Num(w.Speed), ls = Num(l.Speed);
+            double wl = Num(w.Length), ll = Num(l.Length);
+
+            if (wb > 0 && wb > lb * 1.2)
+                reasons.Add(lb > 0
+                    ? $"its {w.BiteForce} bite hits far harder than {l.Name}'s {l.BiteForce}"
+                    : $"its {w.BiteForce} bite is a weapon {l.Name} simply doesn't have");
+            if (ww > 0 && lw > 0 && ww > lw * 1.5)
+                reasons.Add(ww / lw >= 3
+                    ? $"at {w.Weight} it's roughly {Math.Round(ww / lw)} times heavier"
+                    : $"it clearly outweighs {l.Name} — {w.Weight} against {l.Weight}");
+            if (ws > 0 && ws > ls * 1.25)
+                reasons.Add($"it's quicker too ({w.Speed} vs {l.Speed}), so it picks when the fight happens");
+            if (wl > 0 && ll > 0 && wl > ll * 1.3)
+                reasons.Add($"its {w.Length} frame gives it a big reach advantage");
+
+            if (reasons.Count > 0)
+            {
+                sb.Append(char.ToUpper(reasons[0][0])).Append(reasons[0][1..]);
+                if (reasons.Count > 1) sb.Append(", and ").Append(reasons[1]);
+                sb.Append(". ");
+            }
+
+            // give the underdog its due — makes the verdict feel fair, not scripted
+            string armour = ArmourWord(l);
+            if (armour.Length > 0)
+                sb.Append($"{l.Name} isn't helpless though: one good hit from those {armour} could change everything. ");
+            else if (ls > ws && ls > 0)
+                sb.Append($"{l.Name}'s best hope is its speed — staying out of reach and waiting for a mistake. ");
+            else if (lb > wb && lb > 0)
+                sb.Append($"If {l.Name} lands its {l.BiteForce} bite first, this ends very differently. ");
+
+            string[] closers =
+            {
+                "In a real Cretaceous showdown, terrain and surprise would matter as much as size.",
+                "Of course, real animals avoid fair fights — the smart ones walk away.",
+                "That's the paper verdict; nature loved an upset.",
+                "Luck, terrain, and who strikes first could still flip it.",
+            };
+            sb.Append(closers[seed / 7 % closers.Length]);
             return sb.ToString();
+        }
+
+        // What the underdog fights back with, if its entry mentions any classic
+        // defence. Keeps verdicts honest for armoured herbivores.
+        private static string ArmourWord(Dinosaur d)
+        {
+            string f = (d.KeyFeaturesText + " " + d.AboutText).ToLowerInvariant();
+            if (f.Contains("club")) return "tail clubs";
+            if (f.Contains("horn")) return "horns";
+            if (f.Contains("spike")) return "spikes";
+            if (f.Contains("armour") || f.Contains("armor")) return "armoured plates";
+            if (f.Contains("claw") && d.Diet.Contains("Herb", StringComparison.OrdinalIgnoreCase)) return "giant claws";
+            return "";
         }
 
         private static double Num(string s)
