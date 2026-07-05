@@ -13,18 +13,32 @@ namespace dinospace.Views
     {
         private static DateTime _lastPush = DateTime.MinValue;
 
-        // Forward navigation is instant (no slide) so it feels immediate; the
-        // page is virtualized so there's nothing heavy to wait on.
-        public static async Task Push(Page page, bool animated = false)
+        // Forward navigation is instant (no slide) so it feels immediate.
+        //
+        // The destination is built through a factory and we yield one frame
+        // first: that lets the tapped control's press animation paint before
+        // the (sometimes heavy) page is constructed, so opening "View all", a
+        // detail page, or the battle picker feels instant instead of stuttering
+        // while the page builds on the tap thread.
+        public static async Task Push(Func<Page> build, bool animated = false)
         {
-            if (page == null) return;
+            if (build == null) return;
             if ((DateTime.Now - _lastPush).TotalMilliseconds < 300) return; // debounce
             _lastPush = DateTime.Now;
+
+            await Task.Yield();
+            Page page;
+            try { page = build(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nav build: " + ex); return; }
+            if (page == null) return;
             try { await Shell.Current.Navigation.PushAsync(page, animated); } catch { }
         }
 
-        public static async Task OpenDino(Dinosaur d) => await Push(new DinoDetailPage(d));
-        public static async Task OpenSpace(SpaceObject s) => await Push(new SpaceDetailPage(s));
+        // Convenience overload for callers that already hold a page instance.
+        public static Task Push(Page page, bool animated = false) => Push(() => page, animated);
+
+        public static Task OpenDino(Dinosaur d) => Push(() => new DinoDetailPage(d));
+        public static Task OpenSpace(SpaceObject s) => Push(() => new SpaceDetailPage(s));
 
         // `content` under a slim top bar (back arrow + small serif title).
         // Used by every pushed utility page.

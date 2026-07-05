@@ -45,7 +45,7 @@ namespace dinospace.Views
 
                 var card = Ui.Card(grid, radius: 16, padding: new Thickness(16, 14));
                 var id = c.Id;
-                Ui.OnTap(card, async (_, _) => await Nav.Push(new CollectionPage(id)));
+                Ui.OnTap(card, async (_, _) => await Nav.Push(() => new CollectionPage(id)));
                 stack.Add(card);
             }
 

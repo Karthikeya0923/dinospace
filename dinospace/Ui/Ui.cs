@@ -244,14 +244,19 @@ namespace dinospace
         public static T OnTap<T>(T view, System.EventHandler<TappedEventArgs> handler, bool haptic = true) where T : View
         {
             var tap = new TapGestureRecognizer();
-            tap.Tapped += async (s, e) =>
+            tap.Tapped += (s, e) =>
             {
                 if (haptic) AppSettings.Tap();
                 var v = s as View ?? view;
-                v.Opacity = 0.6;
+                // Immediate, springy press feedback that never blocks the
+                // action. The old version dimmed the view and then held it for
+                // 120ms after the tap, which is what made every button feel
+                // laggy. Here the dim springs straight back while the handler
+                // runs, and navigation yields a frame (see Nav.Push) so the
+                // press paints before any heavy work.
+                v.Opacity = 0.55;
+                v.FadeTo(1, 160, Easing.CubicOut);
                 handler(s, e);
-                await Task.Delay(120);
-                v.Opacity = 1;
             };
             view.GestureRecognizers.Add(tap);
             return view;

@@ -29,8 +29,7 @@ namespace dinospace.Views
                 LineHeight = 1.1,
                 MaxLines = 2,
                 LineBreakMode = LineBreakMode.TailTruncation,
-                TextColor = Theme.TextPrimary,
-                VerticalOptions = LayoutOptions.Start
+                TextColor = Theme.TextPrimary
             };
             var sub = new Label
             {
@@ -39,16 +38,16 @@ namespace dinospace.Views
                 FontSize = Ui.S(12),
                 MaxLines = 1,
                 LineBreakMode = LineBreakMode.TailTruncation,
-                TextColor = Theme.TextSecondary,
-                VerticalOptions = LayoutOptions.End
+                TextColor = Theme.TextSecondary
             };
 
-            // Title (reserves 2 lines) on top, meta pinned to the bottom.
-            var info = new Grid { Padding = new Thickness(12, 10, 12, 12), RowSpacing = 4, HeightRequest = 82 };
-            info.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
-            info.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            info.Add(name, 0, 0);
-            if (!string.IsNullOrEmpty(meta)) info.Add(sub, 0, 1);
+            // Title and meta grouped together right under the image, so a short
+            // name no longer leaves a big gap above its meta line. The card
+            // still has a fixed height so a two-line name never clips, just a
+            // little shorter than before.
+            var info = new VerticalStackLayout { Padding = new Thickness(12, 8, 12, 9), Spacing = 2, VerticalOptions = LayoutOptions.Start };
+            info.Add(name);
+            if (!string.IsNullOrEmpty(meta)) info.Add(sub);
 
             var col = new VerticalStackLayout { Spacing = 0 };
             col.Add(imgWrap);
@@ -62,7 +61,7 @@ namespace dinospace.Views
                 StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 },
                 Padding = 0,
-                HeightRequest = 200,
+                HeightRequest = 190,
                 Shadow = Theme.CardShadow()
             };
             Ui.OnTap(card, (_, _) => onTap());

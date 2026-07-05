@@ -34,6 +34,9 @@ namespace dinospace.Views
         // window under it, then fades this away for a true Discord-style
         // cross-dissolve (no solid-colour flash). LastTab keeps the same tab.
         public static byte[]? CrossfadeSnapshot;
+        // Set when a theme switch happens without a usable snapshot, so the new
+        // UI fades in gently instead of hard-cutting.
+        public static bool FadeInOnAppear;
         public static int LastTab;
         private Grid _rootGrid = null!;
         private bool _didCrossfade;
@@ -78,7 +81,7 @@ namespace dinospace.Views
         // ----- tab bar: icons + labels, white bar, thin top rule -----
         private View BuildNav()
         {
-            var grid = new Grid { Padding = new Thickness(6, 8, 6, 10), ColumnSpacing = 0 };
+            var grid = new Grid { Padding = new Thickness(6, 8, 6, 6), ColumnSpacing = 0 };
             for (int i = 0; i < _tabs.Count; i++)
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
 
@@ -255,12 +258,26 @@ namespace dinospace.Views
         protected override void OnAppearing()
         {
             base.OnAppearing();
+            // Tint the system status/navigation bars to the current theme so
+            // the bottom tab bar reads as one bar reaching the screen edge, and
+            // so a theme switch re-tints them too.
+            ThemeFx.ApplySystemBars();
+
             if (CrossfadeSnapshot != null && !_didCrossfade)
             {
                 _didCrossfade = true;
                 var bytes = CrossfadeSnapshot;
                 CrossfadeSnapshot = null;
                 RunCrossfade(bytes);
+            }
+            else if (FadeInOnAppear && !_didCrossfade)
+            {
+                // Snapshot capture wasn't available — still avoid a hard cut by
+                // gently fading the freshly themed UI up from the new bg colour.
+                _didCrossfade = true;
+                FadeInOnAppear = false;
+                _rootGrid.Opacity = 0;
+                _rootGrid.FadeTo(1, 260, Easing.SinInOut);
             }
             if (_current >= 0)
                 (_tabs[_current].view as ITabView)?.OnSelected();
@@ -281,8 +298,11 @@ namespace dinospace.Views
 
             Dispatcher.Dispatch(async () =>
             {
-                await Task.Delay(16);
-                await cover.FadeTo(0, 320, Easing.SinInOut);
+                // Let the freshly themed UI lay out underneath the frozen
+                // snapshot for a couple of frames, then dissolve the snapshot
+                // away — a smooth, in-place cross-fade with no flash or jump.
+                await Task.Delay(32);
+                await cover.FadeTo(0, 380, Easing.SinInOut);
                 _rootGrid.Remove(cover);
             });
         }

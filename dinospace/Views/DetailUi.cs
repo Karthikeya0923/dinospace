@@ -175,7 +175,7 @@ namespace dinospace.Views
             => Ui.PrimaryButton($"ASK NOVASAUR ABOUT {name.ToUpperInvariant()}", async (_, _) =>
             {
                 NovaView.Ask($"Tell me an interesting fact about {name}.");
-                await Nav.Push(new NovaPage());
+                await Nav.Push(() => new NovaPage());
             });
 
         // Related entries strip.

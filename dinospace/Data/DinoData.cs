@@ -16,7 +16,7 @@ namespace dinospace.Data
         private static readonly Dictionary<string, string> BiteForcePsi = new()
         {
             ["Tyrannosaurus Rex"] = "12,800 PSI",
-            ["Spinosaurus"] = "2,000 PSI",
+            ["Spinosaurus"] = "4,200 PSI",
             ["Megalodon"] = "40,000 PSI",
             ["Velociraptor"] = "500 PSI",
             ["Triceratops"] = "1,000 PSI",
@@ -25,9 +25,9 @@ namespace dinospace.Data
             ["Stegosaurus"] = "150 PSI",
             ["Mosasaurus"] = "13,000 PSI",
             ["Liopleurodon"] = "15,000 PSI",
-            ["Giganotosaurus"] = "7,500 PSI",
-            ["Carnotaurus"] = "3,300 PSI",
-            ["Allosaurus"] = "3,500 PSI",
+            ["Giganotosaurus"] = "5,700 PSI",
+            ["Carnotaurus"] = "1,600 PSI",
+            ["Allosaurus"] = "2,000 PSI",
             ["Parasaurolophus"] = "300 PSI",
             ["Argentinosaurus"] = "250 PSI",
             ["Therizinosaurus"] = "120 PSI",
@@ -249,7 +249,7 @@ namespace dinospace.Data
                 KeyFeaturesText = "Liopleurodon had a huge skull filled with long, sharp, conical teeth. Its streamlined body had four strong flippers for speed and agility. Unlike long-necked marine reptiles, it had a short neck built for sudden bursts.",
                 LifeEnvironmentText = "Liopleurodon lived in warm, shallow seas over what is now England and Europe, home to fish, squid-like creatures, and other marine reptiles. As an apex predator it had no natural enemies.",
                 BehaviourText = "Liopleurodon was an ambush predator that relied on stealth and sudden acceleration. It used its strong sense of smell to detect prey, striking quickly with its powerful jaws.",
-                FunFactsText = "• Some fossils grouped as 'Liopleurodon' may be different animals.\n• Its bite force was around 17,000 pounds.\n• Its nostrils were used for smelling underwater.\n• Its sensory system likely relied on vibration.\n• Its exact size is often debated due to rare fossils."
+                FunFactsText = "• Some fossils grouped as 'Liopleurodon' may be different animals.\n• Its bite force was around 15,000 pounds.\n• Its nostrils were used for smelling underwater.\n• Its sensory system likely relied on vibration.\n• Its exact size is often debated due to rare fossils."
             },
             new Dinosaur
             {
@@ -681,7 +681,7 @@ namespace dinospace.Data
                 Diet = "Carnivore",
                 Category = "Land",
                 ShortDescription = "A speedy hunter the size of a chicken",
-                Length = "3.3 feet", Height = "1 feet", Weight = "3kg", Speed = "64km/h", Strength = 12,
+                Length = "3.3 feet", Height = "1 foot", Weight = "3kg", Speed = "64km/h", Strength = 12,
                 ImageFile = "compsognathus.png",
                 Aliases = new[] { "compy", "compies", "compsognathus" },
                 AboutText = "Compsognathus lived around 150 million years ago during the Late Jurassic in what is now Europe. For a long time it was thought to be the smallest dinosaur — about the size of a chicken — and it was a quick, sharp-eyed hunter of small lizards and insects.",

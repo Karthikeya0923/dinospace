@@ -38,6 +38,13 @@ namespace dinospace.Services
             var g = Retriever.Ground(q, carryover);
             turn.Entities = g.Entities;
 
+            // 3.5 Answer straight from the vetted encyclopedia whenever we can.
+            //     This is instant and always accurate, and it means the slow
+            //     on-device model is only used for genuinely open questions —
+            //     so NovaSaur stops getting stuck on "thinking…".
+            var direct = LocalAnswer.TryAnswer(question, q, g, carryover);
+            if (direct != null) { turn.InstantReply = direct; return turn; }
+
             // 4. topic gate (generous)
             bool hasCarryover = carryover is { Count: > 0 };
             if (!NovaGuard.OnTopic(q, g.HasEntity, g.HasKnowledge, hasCarryover))

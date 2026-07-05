@@ -233,7 +233,7 @@ namespace dinospace.Views
                 Content = new Label { Text = "Play again", FontFamily = Ui.Fonts, FontSize = 15, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center },
                 BackgroundColor = _accent, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(16, 14), Margin = new Thickness(0, 16, 0, 0)
             };
-            Ui.OnTap(retry, async (_, _) => { await Navigation.PopAsync(); await Nav.Push(new QuizPage(_mode, _questions.Count)); });
+            Ui.OnTap(retry, async (_, _) => { await Navigation.PopAsync(); await Nav.Push(() => new QuizPage(_mode, _questions.Count)); });
             _body.Add(retry);
 
             var done = new Border

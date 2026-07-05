@@ -120,7 +120,7 @@ namespace dinospace.Views
             };
             // Only empty slots are tappable; filled slots are just images.
             // No push animation - the picker should feel instant.
-            if (empty) Ui.OnTap(card, async (_, _) => await Nav.Push(new CreaturePickerPage(picked => Set(isA, picked)), animated: false));
+            if (empty) Ui.OnTap(card, async (_, _) => await Nav.Push(() => new CreaturePickerPage(picked => Set(isA, picked)), animated: false));
             return card;
         }
 

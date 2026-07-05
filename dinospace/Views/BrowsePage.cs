@@ -110,15 +110,15 @@ namespace dinospace.Views
             var imgWrap = new Grid { HeightRequest = 118, BackgroundColor = Theme.ImgPlaceholder };
             imgWrap.Add(img);
 
-            var name = new Label { FontFamily = Ui.Display, FontSize = Ui.S(16.5), LineHeight = 1.1, MaxLines = 2, LineBreakMode = LineBreakMode.TailTruncation, TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Start };
+            var name = new Label { FontFamily = Ui.Display, FontSize = Ui.S(16.5), LineHeight = 1.1, MaxLines = 2, LineBreakMode = LineBreakMode.TailTruncation, TextColor = Theme.TextPrimary };
             name.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Title)));
-            var meta = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(12), MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation, TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.End };
+            var meta = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(12), MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation, TextColor = Theme.TextSecondary };
             meta.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Meta)));
 
-            var info = new Grid { Padding = new Thickness(12, 10, 12, 12), RowSpacing = 4, HeightRequest = 82 };
-            info.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
-            info.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            info.Add(name, 0, 0); info.Add(meta, 0, 1);
+            // Name and meta grouped under the image (no stretched gap), with a
+            // fixed card height so two-line names never clip.
+            var info = new VerticalStackLayout { Padding = new Thickness(12, 8, 12, 9), Spacing = 2, VerticalOptions = LayoutOptions.Start };
+            info.Add(name); info.Add(meta);
 
             var colc = new VerticalStackLayout { Spacing = 0 };
             colc.Add(imgWrap); colc.Add(info);
@@ -126,7 +126,7 @@ namespace dinospace.Views
             return new Border
             {
                 Content = colc, BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 14 }, Padding = 0, HeightRequest = 200, Shadow = Theme.CardShadow()
+                StrokeShape = new RoundRectangle { CornerRadius = 14 }, Padding = 0, HeightRequest = 190, Shadow = Theme.CardShadow()
             };
         }
 

@@ -192,6 +192,11 @@ namespace dinospace.Services
 
         // ---------- knowledge nuggets ----------
 
+        // The single best curated fact for a question, if any — used by
+        // LocalAnswer to reply to general topics without the model.
+        public static KnowledgeNugget? BestNugget(string normalizedQuestion)
+            => MatchNuggets(normalizedQuestion).FirstOrDefault();
+
         private static List<KnowledgeNugget> MatchNuggets(string q)
         {
             string padded = " " + q + " ";

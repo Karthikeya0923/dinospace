@@ -46,7 +46,7 @@ namespace dinospace.Views
             stack.Add(DetailUi.Related(related, Accent));
 
             stack.Add(DetailUi.AskNovaButton(_d.Name));
-            stack.Add(Ui.GhostButton("Battle this creature", async (_, _) => await Nav.Push(new BattlePage(_d))));
+            stack.Add(Ui.GhostButton("Battle this creature", async (_, _) => await Nav.Push(() => new BattlePage(_d))));
 
             var scrollContent = new VerticalStackLayout { Spacing = 0 };
             scrollContent.Add(DetailUi.Hero(_d.ImageFile, _d.Name));

@@ -50,7 +50,7 @@ namespace dinospace.Views
             stack.Add(VisibleRightNowPlaceholder());
 
             // Dinosaurs
-            stack.Add(Ui.SectionHeader("Dinosaurs", "View all", async (_, _) => await Nav.Push(new BrowsePage("Dinosaurs"))));
+            stack.Add(Ui.SectionHeader("Dinosaurs", "View all", async (_, _) => await Nav.Push(() => new BrowsePage("Dinosaurs"))));
             stack.Add(EntryCards.TwoColumn(new (string, string, string, Action)[]
             {
                 (Item(DinoData.ByName("Tyrannosaurus Rex"))),
@@ -60,7 +60,7 @@ namespace dinospace.Views
             }));
 
             // Space
-            stack.Add(Ui.SectionHeader("Space", "View all", async (_, _) => await Nav.Push(new BrowsePage("Space"))));
+            stack.Add(Ui.SectionHeader("Space", "View all", async (_, _) => await Nav.Push(() => new BrowsePage("Space"))));
             stack.Add(EntryCards.TwoColumn(new (string, string, string, Action)[]
             {
                 (ItemS(SpaceData.ByName("Saturn"))),
@@ -76,8 +76,8 @@ namespace dinospace.Views
             // Play
             stack.Add(Ui.SectionHeader("Play"));
             stack.Add(PlayRow(Ui.IconQuiz, "Quizzes", "Test what you know", async () => await StartQuiz()));
-            stack.Add(PlayRow(Ui.IconBolt, "Dino Battle", "Two creatures face off", async () => await Nav.Push(new BattlePage(null))));
-            stack.Add(PlayRow(Ui.IconList, "Collections", "Curated ranked lists", async () => await Nav.Push(new CollectionsListPage())));
+            stack.Add(PlayRow(Ui.IconBolt, "Dino Battle", "Two creatures face off", async () => await Nav.Push(() => new BattlePage(null))));
+            stack.Add(PlayRow(Ui.IconList, "Collections", "Curated ranked lists", async () => await Nav.Push(() => new CollectionsListPage())));
 
             // Fact
             stack.Add(Ui.SectionHeader("Did you know?"));
@@ -245,7 +245,7 @@ namespace dinospace.Views
                 Text = "NovaSaur answers right on your phone — no internet needed.",
                 FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), LineHeight = 1.4, TextColor = Theme.TextSecondary
             });
-            col.Add(Ui.PrimaryButton("ASK A QUESTION", async (_, _) => await Nav.Push(new NovaPage())));
+            col.Add(Ui.PrimaryButton("ASK A QUESTION", async (_, _) => await Nav.Push(() => new NovaPage())));
             return Ui.Card(col, radius: 18, padding: new Thickness(18, 16));
         }
 
@@ -290,7 +290,7 @@ namespace dinospace.Views
             if (mode is not ("Dinosaurs" or "Space" or "Mixed")) return;
             string choice = await page.DisplayActionSheet("How many questions?", "Cancel", null, "5", "10", "25", "50", "100");
             if (!int.TryParse(choice, out int count)) return;
-            await Nav.Push(new QuizPage(mode, count));
+            await Nav.Push(() => new QuizPage(mode, count));
         }
 
         // ----- fact -----

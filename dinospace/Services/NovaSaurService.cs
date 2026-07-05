@@ -19,8 +19,10 @@ namespace dinospace.Services
         private static readonly SemaphoreSlim _lock = new(1, 1);
 
         // The UI-facing cap. The native call may run longer in the background;
-        // the lock protects the engine while it does.
-        private static readonly TimeSpan AnswerTimeout = TimeSpan.FromSeconds(45);
+        // the lock protects the engine while it does. Kept fairly short because
+        // the common questions are now answered instantly without the model, so
+        // this only bounds the rarer open-ended fallbacks.
+        private static readonly TimeSpan AnswerTimeout = TimeSpan.FromSeconds(30);
 
         public static bool SupportedPlatform =>
 #if ANDROID

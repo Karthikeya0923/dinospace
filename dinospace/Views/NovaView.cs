@@ -212,7 +212,7 @@ namespace dinospace.Views
             InitModel();
         }
 
-        private async void InitModel()
+        private void InitModel()
         {
             if (!NovaSaurService.SupportedPlatform)
             {
@@ -222,28 +222,26 @@ namespace dinospace.Views
                 return;
             }
 
-            if (!_modelInited && !NovaSaurService.IsReady)
-            {
-                SetSendEnabled(false);
-                var status = AddStatus("NovaSaur is waking up… first time takes a minute.");
-                try { await NovaSaurService.InitAsync(); }
-                catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova init: " + ex); }
-                Remove(status);
-            }
-            _modelInited = true;
-
-            if (!NovaSaurService.IsReady)
-            {
-                AddNova("I couldn't start up — your device may be low on free memory. Try closing other apps and reopening this tab.");
-                SetSendEnabled(false);
-                _suggestionScroll.IsVisible = false;
-                return;
-            }
-
+            // NovaSaur can answer most dinosaur and space questions instantly
+            // from its built-in knowledge, so the chat is usable right away —
+            // no waiting on the large model to load. The model is only needed
+            // for rarer open-ended questions, and it warms up in the background
+            // and loads on demand (see Answer()).
             _modelReady = true;
             SetSendEnabled(true);
             if (_messages.Count == 0) AddNova(Welcome);
             ShowSuggestions();
+
+            if (!_modelInited && !NovaSaurService.IsReady)
+            {
+                _modelInited = true;
+                _ = Task.Run(async () =>
+                {
+                    try { await NovaSaurService.InitAsync(); }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova init: " + ex); }
+                });
+            }
+
             MaybeRunPending();
         }
 
@@ -288,10 +286,26 @@ namespace dinospace.Views
 
             if (turn.InstantReply != null)
             {
-                await Task.Delay(300);
+                await Task.Delay(250);
                 if (myGen != _gen) return;
                 StopThinking();
-                Reveal(turn.InstantReply); // typewriter for canned replies
+                Reveal(turn.InstantReply); // typewriter for instant grounded replies
+                return;
+            }
+
+            // This question needs the language model. Load it on demand the
+            // first time it's actually required, so we never block the chat up
+            // front just to answer questions the encyclopedia already covers.
+            if (!NovaSaurService.IsReady)
+            {
+                if (_thinkingLabel != null) _thinkingLabel.Text = "NovaSaur is waking up… first time takes a moment.";
+                try { await NovaSaurService.InitAsync(); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova init: " + ex); }
+                if (myGen != _gen) return;
+            }
+            if (!NovaSaurService.IsReady)
+            {
+                FinishAnswer(myGen, "I can answer loads of dinosaur and space questions on the spot, but that one needs my bigger brain — and it couldn't wake up. Your device may be low on free memory, so try closing a few other apps.");
                 return;
             }
 

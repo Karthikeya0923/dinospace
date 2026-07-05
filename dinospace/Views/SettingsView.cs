@@ -123,12 +123,14 @@ namespace dinospace.Views
             //    gap is the target colour, not white).
             Theme.Apply(dark);
             ThemeFx.SetWindowBackground(Theme.Bg);
+            ThemeFx.ApplySystemBars();
             if (Application.Current != null)
                 Application.Current.UserAppTheme = dark ? AppTheme.Dark : AppTheme.Light;
             NovaPage.ResetShared();
 
             // 3. Rebuild under the frozen snapshot; RootPage dissolves it away.
             RootPage.CrossfadeSnapshot = snap;
+            RootPage.FadeInOnAppear = true;
             if (window != null)
                 window.Page = new AppShell();
         }
