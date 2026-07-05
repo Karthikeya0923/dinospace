@@ -66,7 +66,7 @@ namespace dinospace.Views
 
             _stack.Add(LocationRow());
 
-            var body = Nav.DetailScaffold("", new ScrollView { Content = _stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never }, Theme.Accent, out _);
+            var body = Nav.DetailScaffoldFixed("", new ScrollView { Content = _stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never });
             Content = Ui.PageRoot(body);
         }
 

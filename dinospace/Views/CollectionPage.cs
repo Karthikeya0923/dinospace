@@ -29,7 +29,7 @@ namespace dinospace.Views
             foreach (var e in entries)
                 stack.Add(Row(rank++, e, accent));
 
-            var content = Nav.DetailScaffold("", new ScrollView { Content = stack }, accent, out _);
+            var content = Nav.DetailScaffoldFixed("", new ScrollView { Content = stack });
             Content = Ui.PageRoot(content);
         }
 

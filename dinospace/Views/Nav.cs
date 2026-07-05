@@ -43,6 +43,16 @@ namespace dinospace.Views
         // `content` under a slim top bar (back arrow + small serif title).
         // Used by every pushed utility page.
         public static View DetailScaffold(string title, View content, Color accent, out ScrollView scroll)
+            => Scaffold(title, content, wrapInScroll: true, out scroll);
+
+        // Same top bar, but the content manages its own scrolling. Lists MUST
+        // use this one: a CollectionView inside a ScrollView loses its
+        // virtualization and builds every single card up front — that was the
+        // whole reason "View all" opened slowly.
+        public static View DetailScaffoldFixed(string title, View content)
+            => Scaffold(title, content, wrapInScroll: false, out _);
+
+        private static View Scaffold(string title, View content, bool wrapInScroll, out ScrollView scroll)
         {
             var backIcon = Ui.Icon(Ui.IconBack, 24, Theme.TextPrimary);
             var back = new Border
@@ -75,13 +85,13 @@ namespace dinospace.Views
                     LineBreakMode = LineBreakMode.TailTruncation
                 }, 1, 0);
 
-            scroll = new ScrollView { Content = content };
+            scroll = new ScrollView { Content = wrapInScroll ? content : null };
 
             var root = new Grid { RowSpacing = 0 };
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
             root.Add(bar, 0, 0);
-            root.Add(scroll, 0, 1);
+            root.Add(wrapInScroll ? scroll : content, 0, 1);
             return root;
         }
     }

@@ -38,22 +38,20 @@ namespace dinospace.Views
             stack.Add(_journey);
 
             // Preferences
-            stack.Add(Ui.SectionHeader("Preferences"));
-            stack.Add(SwitchRow("Dark mode", "Switch between the light and dark theme.", AppSettings.DarkMode, ToggleDarkMode));
+            // Visuals — themes, layout, and type size all live together.
+            stack.Add(Ui.SectionHeader("Visuals"));
+            stack.Add(LinkRow("Choose a theme", CurrentThemeName(), async () => await Nav.Push(() => new ThemesPage())));
             stack.Add(Rule());
-            stack.Add(HapticRow());
+            stack.Add(LayoutRow());
             stack.Add(Rule());
             stack.Add(TextSizeRow());
             stack.Add(Rule());
 
             // General
             stack.Add(Ui.SectionHeader("General"));
-            stack.Add(LinkRow("Contact us", "dinospace.app@gmail.com", OpenFeedback));
+            stack.Add(HapticRow());
             stack.Add(Rule());
-
-            // App themes — full looks with wallpapers, beyond plain light/dark.
-            stack.Add(Ui.SectionHeader("App themes"));
-            stack.Add(LinkRow("Choose a theme", CurrentThemeName(), async () => await Nav.Push(() => new ThemesPage())));
+            stack.Add(LinkRow("Contact us", "dinospace.app@gmail.com", OpenFeedback));
             stack.Add(Rule());
             stack.Add(DangerRow("Reset progress & bookmarks", ConfirmReset));
             stack.Add(Rule());
@@ -98,18 +96,56 @@ namespace dinospace.Views
             return grid;
         }
 
-        // Swap the palette and rebuild the UI with a Discord-style cross-fade.
-        // The trick that kills the "white flash + jump to Home":
-        //   1. Apply the new palette and paint the native window the new bg
-        //      FIRST, so the moment of the swap is already the target colour.
-        //   2. Dissolve the current UI out to that colour.
-        //   3. Rebuild on the SAME tab; the new UI fades up from the colour.
-        private async void ToggleDarkMode(bool dark)
-        {
-            AppSettings.DarkMode = dark;
-            var window = Application.Current?.Windows.FirstOrDefault();
+        // Layout presets change the app's whole geometry: card sizes, corner
+        // radii, section-header style. Same freeze-frame trick as themes, and
+        // the rebuild lands right back on this tab.
+        private HorizontalStackLayout _layoutPills = null!;
 
-            // 1. Freeze the current screen as an image.
+        private View LayoutRow()
+        {
+            _layoutPills = new HorizontalStackLayout { Spacing = 8 };
+            BuildLayoutPills();
+
+            var col = new VerticalStackLayout { Spacing = 10, Padding = new Thickness(0, 14) };
+            col.Add(RowTitle("Layout"));
+            col.Add(new Label { Text = "How roomy the app feels — cards, corners, and headers.", FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint });
+            col.Add(_layoutPills);
+            return col;
+        }
+
+        private void BuildLayoutPills()
+        {
+            _layoutPills.Children.Clear();
+            (string id, string label)[] options = { ("classic", "Classic"), ("compact", "Compact"), ("bold", "Bold") };
+            foreach (var (id, text) in options)
+            {
+                bool active = AppSettings.LayoutId == id;
+                var label = new Label
+                {
+                    Text = text,
+                    FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold,
+                    TextColor = active ? Theme.TextOnAccent : Theme.ChipText,
+                    HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
+                };
+                var pill = new Border
+                {
+                    Content = label, MinimumWidthRequest = 78, HeightRequest = 40,
+                    BackgroundColor = active ? Theme.Accent : Theme.ChipBg,
+                    Stroke = Colors.Transparent,
+                    StrokeShape = new RoundRectangle { CornerRadius = 12 },
+                    Padding = new Thickness(10, 0)
+                };
+                string picked = id;
+                Ui.OnTap(pill, (_, _) => ApplyLayout(picked));
+                _layoutPills.Add(pill);
+            }
+        }
+
+        private async void ApplyLayout(string id)
+        {
+            if (AppSettings.LayoutId == id) return;
+            AppSettings.LayoutId = id;
+
             byte[]? snap = null;
             try
             {
@@ -123,31 +159,19 @@ namespace dinospace.Views
                 }
             }
             catch { }
-
-            // 2. Repaint everything to the new theme (window bg too, so any
-            //    gap is the target colour, not white).
-            // 2. Lay that freeze-frame over EVERYTHING at the native level —
-            //    above even the system bars — so the whole app can be torn down
-            //    and rebuilt with the new theme completely hidden. This is what
-            //    kills the flash: there is no window-swap moment on screen.
             if (snap != null) ThemeFx.ShowThemeCover(snap);
 
-            // 3. Apply the new palette and rebuild. RootPage.OnAppearing re-tints
-            //    the window/system bars and dissolves the freeze-frame away once
-            //    the new UI is on screen. Flipping dark mode also returns to the
-            //    classic look if a wallpaper theme was active.
-            AppSettings.ThemeId = "classic";
-            Theme.ApplyCurrent();
             NovaPage.ResetShared();
-            if (window != null)
-                window.Page = new AppShell();
+            RootPage.LastTab = 3;   // rebuild straight back onto Settings
+            var window = Application.Current?.Windows.FirstOrDefault();
+            if (window != null) window.Page = new AppShell();
         }
 
         private static string CurrentThemeName()
         {
             foreach (var s in Theme.Wallpapers)
                 if (s.Id == Theme.CurrentId) return s.Name;
-            return "Classic";
+            return Theme.Wallpapers[0].Name;
         }
 
         // Off / Light / Medium / Strong — a toggle wasn't enough, people feel

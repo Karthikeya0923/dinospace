@@ -36,30 +36,6 @@ namespace dinospace
             internal Palette P = null!;    // set by the catalogue below
         }
 
-        private static readonly Palette LightP = new()
-        {
-            Bg = Color.FromArgb("#FBF9F5"),
-            BgRaised = Color.FromArgb("#FFFFFF"),
-            Surface = Color.FromArgb("#FFFFFF"),
-            SurfaceAlt = Color.FromArgb("#F3EFE8"),
-            SurfaceSunken = Color.FromArgb("#F3EFE8"),
-            Hairline = Color.FromArgb("#E7E0D2"),
-            HairlineSoft = Color.FromArgb("#EEE9DD"),
-            TextPrimary = Color.FromArgb("#1C1B1A"),
-            TextSecondary = Color.FromArgb("#6E6963"),
-            TextHint = Color.FromArgb("#A39D93"),
-            TextOnAccent = Colors.White,
-            Accent = Color.FromArgb("#D93025"),
-            AccentSoft = Color.FromArgb("#FBE9E7"),
-            Success = Color.FromArgb("#2E7D32"),
-            Danger = Color.FromArgb("#C62828"),
-            ChipBg = Color.FromArgb("#F3EFE8"),
-            ChipText = Color.FromArgb("#57524B"),
-            ImgPlaceholder = Color.FromArgb("#EFEAE0"),
-            CardStroke = Colors.Transparent,
-            ShadowAlpha = 0.14f
-        };
-
         // Black and gold. Rich, divine. Secondary text is a warm champagne
         // (not grey) so it stays readable and on-theme against near-black.
         private static readonly Palette DarkP = new()
@@ -161,27 +137,30 @@ namespace dinospace
             ShadowAlpha = 0f
         };
 
-        private static readonly Palette DuskP = new()
+        // theme7 — "DinoSpace": the hand-painted twilight artwork made for the
+        // app (purple mountains, ember forest, cream planet). Deep plum with a
+        // warm cream-gold accent pulled straight from the painting.
+        private static readonly Palette DinoP = new()
         {
-            Bg = Color.FromArgb("#1C0F1E"),
-            BgRaised = Color.FromArgb("#291731"),
-            Surface = Color.FromArgb("#2F1B36"),
-            SurfaceAlt = Color.FromArgb("#40254A"),
-            SurfaceSunken = Color.FromArgb("#140A16"),
-            Hairline = Color.FromArgb("#4E3159"),
-            HairlineSoft = Color.FromArgb("#3C2545"),
-            TextPrimary = Color.FromArgb("#FBEFE3"),
-            TextSecondary = Color.FromArgb("#E8C9C0"),
-            TextHint = Color.FromArgb("#BB93A4"),
-            TextOnAccent = Color.FromArgb("#2B0E04"),
-            Accent = Color.FromArgb("#FF9E6B"),
-            AccentSoft = Color.FromArgb("#47231A"),
+            Bg = Color.FromArgb("#221338"),
+            BgRaised = Color.FromArgb("#2C1B47"),
+            Surface = Color.FromArgb("#332052"),
+            SurfaceAlt = Color.FromArgb("#422B66"),
+            SurfaceSunken = Color.FromArgb("#1A0E2B"),
+            Hairline = Color.FromArgb("#4E3775"),
+            HairlineSoft = Color.FromArgb("#3F2A61"),
+            TextPrimary = Color.FromArgb("#F7F0E1"),
+            TextSecondary = Color.FromArgb("#D9CBEE"),
+            TextHint = Color.FromArgb("#AC97CE"),
+            TextOnAccent = Color.FromArgb("#33200A"),
+            Accent = Color.FromArgb("#EDC46B"),
+            AccentSoft = Color.FromArgb("#463217"),
             Success = Color.FromArgb("#8FCB7A"),
             Danger = Color.FromArgb("#FF6B5A"),
-            ChipBg = Color.FromArgb("#40254A"),
-            ChipText = Color.FromArgb("#F0D8E0"),
-            ImgPlaceholder = Color.FromArgb("#291731"),
-            CardStroke = Color.FromArgb("#4E3159"),
+            ChipBg = Color.FromArgb("#422B66"),
+            ChipText = Color.FromArgb("#E7DBF5"),
+            ImgPlaceholder = Color.FromArgb("#2C1B47"),
+            CardStroke = Color.FromArgb("#4E3775"),
             ShadowAlpha = 0f
         };
 
@@ -233,28 +212,32 @@ namespace dinospace
             ShadowAlpha = 0.14f
         };
 
-        // The wallpaper themes shown on the App themes page, in display order.
-        // theme6 leads: it's the app's own artwork.
+        // Every look the app offers, in display order. Fossil is the default;
+        // theme7 is the app's own painted artwork.
         public static readonly IReadOnlyList<Spec> Wallpapers = new List<Spec>
         {
-            new() { Id = "theme6", Name = "Ember Twilight", Blurb = "Dinosaurs under a painted evening sky", Wallpaper = "theme6.png", Dark = true, P = EmberP },
-            new() { Id = "theme1", Name = "Starry Midnight", Blurb = "A calm, star-filled deep blue", Wallpaper = "theme1.png", Dark = true, P = MidnightP },
-            new() { Id = "theme2", Name = "Aurora", Blurb = "Northern lights over a dark green night", Wallpaper = "theme2.png", Dark = true, P = AuroraP },
-            new() { Id = "theme3", Name = "Dusk", Blurb = "That last warm glow after sunset", Wallpaper = "theme3.png", Dark = true, P = DuskP },
-            new() { Id = "theme4", Name = "Nebula", Blurb = "Soft violet clouds where stars are born", Wallpaper = "theme4.png", Dark = true, P = NebulaP },
-            new() { Id = "theme5", Name = "Fossil", Blurb = "Warm parchment, light and easy to read", Wallpaper = "theme5.png", Dark = false, P = FossilP },
+            new() { Id = "theme1", Name = "Fossil", Blurb = "Warm parchment, light and easy to read", Wallpaper = "theme1.png", Dark = false, P = FossilP },
+            new() { Id = "theme2", Name = "Dark Mode", Blurb = "Black and gold, calm at night", Wallpaper = null, Dark = true, P = DarkP },
+            new() { Id = "theme3", Name = "Ember Twilight", Blurb = "Indigo night over a glowing pine forest", Wallpaper = "theme3.png", Dark = true, P = EmberP },
+            new() { Id = "theme4", Name = "Starry Midnight", Blurb = "A calm, star-filled deep blue", Wallpaper = "theme4.png", Dark = true, P = MidnightP },
+            new() { Id = "theme5", Name = "Aurora", Blurb = "Northern lights over a dark green night", Wallpaper = "theme5.png", Dark = true, P = AuroraP },
+            new() { Id = "theme6", Name = "Nebula", Blurb = "Soft violet clouds where stars are born", Wallpaper = "theme6.png", Dark = true, P = NebulaP },
+            new() { Id = "theme7", Name = "DinoSpace", Blurb = "The app's own painted twilight, dinosaurs and all", Wallpaper = "theme7.png", Dark = true, P = DinoP },
         };
 
-        private static Palette _p = LightP;
+        private static Palette _p = FossilP;
         public static bool IsDark { get; private set; }
-        public static string CurrentId { get; private set; } = "classic";
+        public static string CurrentId { get; private set; } = "theme1";
         public static string? Wallpaper { get; private set; }
 
-        // Applies whatever the user last chose: a wallpaper theme, or the
-        // classic look driven by the dark-mode switch.
+        // Applies whatever the user last chose. Old installs that still say
+        // "classic" get mapped onto Fossil or Dark Mode.
         public static void ApplyCurrent()
         {
             string id = Services.AppSettings.ThemeId;
+            if (id == "classic")
+                id = Services.AppSettings.DarkMode ? "theme2" : "theme1";
+
             foreach (var s in Wallpapers)
             {
                 if (s.Id == id)
@@ -265,10 +248,9 @@ namespace dinospace
                     return;
                 }
             }
-            CurrentId = "classic";
-            Wallpaper = null;
-            bool dark = Services.AppSettings.DarkMode;
-            SetPalette(dark ? DarkP : LightP, dark);
+            CurrentId = "theme1";
+            Wallpaper = Wallpapers[0].Wallpaper;
+            SetPalette(FossilP, dark: false);
         }
 
         // Mirror the palette into the XAML resource dictionary so Styles.xaml

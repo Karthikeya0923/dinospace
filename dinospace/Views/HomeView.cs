@@ -189,8 +189,9 @@ namespace dinospace.Views
         // ----- featured story -----
         private Border BuildFeatured()
         {
-            var img = new Image { Source = _dino.ImageFile, Aspect = Aspect.AspectFill, HeightRequest = 250 };
-            var imgWrap = new Grid { HeightRequest = 250 };
+            double heroH = Ui.D(250);
+            var img = new Image { Source = _dino.ImageFile, Aspect = Aspect.AspectFill, HeightRequest = heroH };
+            var imgWrap = new Grid { HeightRequest = heroH };
             var fallback = new Grid();
             fallback.Add(EntryCards.ArtFallback(_dino.Name, 44));
             imgWrap.Add(fallback);
@@ -328,16 +329,8 @@ namespace dinospace.Views
             return card;
         }
 
-        private async System.Threading.Tasks.Task StartQuiz()
-        {
-            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
-            if (page == null) return;
-            string mode = await page.DisplayActionSheetAsync("Pick a quiz", "Cancel", null, "Dinosaurs", "Space", "Mixed");
-            if (mode is not ("Dinosaurs" or "Space" or "Mixed")) return;
-            string choice = await page.DisplayActionSheetAsync("How many questions?", "Cancel", null, "5", "10", "25", "50", "100");
-            if (!int.TryParse(choice, out int count)) return;
-            await Nav.Push(() => new QuizPage(mode, count));
-        }
+        private static async System.Threading.Tasks.Task StartQuiz()
+            => await Nav.Push(() => new QuizSetupPage());
 
         // ----- fact -----
         private View FactCard()

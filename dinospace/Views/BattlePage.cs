@@ -61,7 +61,7 @@ namespace dinospace.Views
             _resultArea = new VerticalStackLayout { Spacing = 12 };
             stack.Add(_resultArea);
 
-            var content = Nav.DetailScaffold("", new ScrollView { Content = stack }, Theme.AccentDino, out _);
+            var content = Nav.DetailScaffoldFixed("", new ScrollView { Content = stack });
             Content = Ui.PageRoot(content);
             RefreshArena();
             SwipeBack.Attach(this);

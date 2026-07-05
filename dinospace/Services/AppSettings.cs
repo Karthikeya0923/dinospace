@@ -23,12 +23,19 @@ namespace dinospace.Services
             set => Preferences.Set("set_darkmode", value);
         }
 
-        // "classic" follows the dark-mode switch; otherwise a wallpaper theme
-        // id like "theme1".."theme6".
+        // Theme id ("theme1".."theme7"); old installs may still say "classic",
+        // which Theme.ApplyCurrent maps onto Fossil / Dark Mode.
         public static string ThemeId
         {
-            get => Preferences.Get("set_theme", "classic");
+            get => Preferences.Get("set_theme", "theme1");
             set => Preferences.Set("set_theme", value);
+        }
+
+        // Layout preset: "classic", "compact", or "bold".
+        public static string LayoutId
+        {
+            get => Preferences.Get("set_layout", "classic");
+            set => Preferences.Set("set_layout", value);
         }
 
         // 0 = Small, 1 = Default, 2 = Large, 3 = Extra large.

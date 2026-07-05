@@ -35,40 +35,16 @@ namespace dinospace.Views
             stack.Add(new Label { Text = "App themes", FontFamily = Ui.Display, FontSize = Ui.S(30), TextColor = Theme.TextPrimary });
             stack.Add(new Label
             {
-                Text = "Pick a look for every page of DinoSpace. Classic follows the dark-mode switch in Settings.",
+                Text = "Pick a look for every page of DinoSpace — wallpaper, colours, the lot.",
                 FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), LineHeight = 1.4, TextColor = Theme.TextSecondary,
                 Margin = new Thickness(0, 0, 0, 6)
             });
 
-            stack.Add(ClassicCard());
             foreach (var spec in Theme.Wallpapers)
                 stack.Add(WallpaperCard(spec));
 
             var body = Nav.DetailScaffold("", stack, Theme.Accent, out _);
             Content = Ui.PageRoot(body);
-        }
-
-        // The classic paper/gold look, driven by the dark-mode switch.
-        private View ClassicCard()
-        {
-            bool current = Theme.CurrentId == "classic";
-            string mood = AppSettings.DarkMode ? "black & gold" : "warm paper";
-
-            var preview = new Border
-            {
-                WidthRequest = 84, HeightRequest = 84,
-                BackgroundColor = AppSettings.DarkMode ? Color.FromArgb("#0A0908") : Color.FromArgb("#FBF9F5"),
-                Stroke = Theme.Hairline, StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 14 },
-                Content = new Label
-                {
-                    Text = "Aa",
-                    FontFamily = Ui.Display, FontSize = 26,
-                    TextColor = AppSettings.DarkMode ? Color.FromArgb("#E3BE55") : Color.FromArgb("#D93025"),
-                    HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
-                }
-            };
-            return ThemeCard(preview, "Classic", $"The original look — {mood}.", current, () => Apply("classic"));
         }
 
         private View WallpaperCard(Theme.Spec spec)
@@ -125,21 +101,23 @@ namespace dinospace.Views
 
         private static Color ThemePreviewBg(Theme.Spec spec) => spec.Id switch
         {
-            "theme6" => Color.FromArgb("#1B1233"),
-            "theme1" => Color.FromArgb("#070B14"),
-            "theme2" => Color.FromArgb("#05100E"),
-            "theme3" => Color.FromArgb("#1C0F1E"),
-            "theme4" => Color.FromArgb("#120826"),
+            "theme2" => Color.FromArgb("#0A0908"),
+            "theme3" => Color.FromArgb("#1B1233"),
+            "theme4" => Color.FromArgb("#070B14"),
+            "theme5" => Color.FromArgb("#05100E"),
+            "theme6" => Color.FromArgb("#120826"),
+            "theme7" => Color.FromArgb("#221338"),
             _ => Color.FromArgb("#F6EFE2"),
         };
 
         private static Color ThemePreviewAccent(Theme.Spec spec) => spec.Id switch
         {
-            "theme6" => Color.FromArgb("#F08A3C"),
-            "theme1" => Color.FromArgb("#7FB4FF"),
-            "theme2" => Color.FromArgb("#4FE0B0"),
-            "theme3" => Color.FromArgb("#FF9E6B"),
-            "theme4" => Color.FromArgb("#D98CFF"),
+            "theme2" => Color.FromArgb("#E3BE55"),
+            "theme3" => Color.FromArgb("#F08A3C"),
+            "theme4" => Color.FromArgb("#7FB4FF"),
+            "theme5" => Color.FromArgb("#4FE0B0"),
+            "theme6" => Color.FromArgb("#D98CFF"),
+            "theme7" => Color.FromArgb("#EDC46B"),
             _ => Color.FromArgb("#A5652A"),
         };
 
