@@ -30,8 +30,8 @@ An AI guide powered by Google's Gemma running locally through [NovaSaur](https:/
 ### 🎮 Play
 Quizzes (5 to 100 questions, dinosaurs / space / mixed), Dino Battles with stat-driven verdicts that argue each matchup like a sports column, daily featured creatures, and a streak to keep explorers coming back.
 
-### 🎨 Six app themes
-Full looks — wallpaper plus a matching colour palette on every page — switched with a seamless cross-fade: a hand-painted twilight, starry midnight, aurora, dusk, nebula, and a warm parchment light theme.
+### 🎨 Seven app themes
+Full looks — wallpaper plus a matching colour palette on every page — switched with a seamless cross-fade: warm parchment, black & gold, ember twilight, starry midnight, aurora, nebula, and the app's own hand-painted DinoSpace artwork.
 
 ---
 
@@ -71,7 +71,7 @@ Tracked in detail on the [project board →](https://github.com/users/Karthikeya
 - [x] Custom lists — build and mix your own dino/space collections
 - [x] Sky View — sensor-driven point-at-the-sky star finder with live constellation figures
 - [x] Streaming AI answers + 55-topic knowledge base, verified by a 108-question harness
-- [x] Seven full themes with wallpapers + three layout presets, seamless switching
+- [x] Seven full themes with wallpapers, switched with a seamless cross-fade
 - [x] True edge-to-edge UI, haptic strength control, adjustable text size
 - [x] Zero-warning build; AI answer pipeline covered by an automated test harness
 
