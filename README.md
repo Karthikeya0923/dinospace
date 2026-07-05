@@ -18,8 +18,8 @@ DinoSpace is a mobile encyclopedia app for all ages showcasing the prehistoric w
 - **Saved** — Save your favourite dinosaurs and space objects
 - **Explore** — Explore fun facts, quizzes, and the daily highlights
 - **Settings** — Customize your DinoSpace experience
-- **Ask AI** — Ask anything about dinosaurs or space
-- **Scan Sky** — Point your camera at the sky *(coming soon)*
+- **Ask AI** — Ask anything about dinosaurs or space, answered on-device
+- **Sky Tonight** — Live moon phase, plus the planets and constellations above you right now, computed on-device from NASA-verified astronomy (location optional)
 - **Fully Offline** — No internet connection needed
 
 ---
@@ -30,7 +30,6 @@ DinoSpace is a mobile encyclopedia app for all ages showcasing the prehistoric w
 - C# — Primary language
 - Visual Studio 2022
 - Android target
-- Apple c
 ---
 > 📋 **[View the official project roadmap →](https://github.com/users/Karthikeya0923/projects/4)**
 ---

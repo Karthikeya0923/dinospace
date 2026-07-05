@@ -166,14 +166,14 @@ namespace dinospace.Data
                 Stat1Label = "Diameter", Stat1Value = "116,460km",
                 Stat2Label = "Distance", Stat2Value = "1.4 billion km from Sun",
                 Stat3Label = "Day length", Stat3Value = "10.7 hours",
-                Stat4Label = "Moons", Stat4Value = "140+",
+                Stat4Label = "Moons", Stat4Value = "274",
                 ImageFile = "saturn.png",
                 Aliases = new[] { "ringed planet", "the ringed planet" },
                 AboutText = "Saturn is the second-largest planet and the most spectacular, circled by a dazzling system of rings made of billions of pieces of ice and rock. Like Jupiter it is a gas giant with no solid surface, and it is so light for its size that it would float in water.",
-                KeyFeaturesText = "Saturn's rings stretch hundreds of thousands of kilometres wide but are only about 10 metres thick in places. It has over 140 moons, including Titan, which is larger than the planet Mercury.",
+                KeyFeaturesText = "Saturn's rings stretch hundreds of thousands of kilometres wide but are only about 10 metres thick in places. It has 274 known moons — more than any other planet — including Titan, which is larger than the planet Mercury.",
                 OrbitMovementText = "Saturn takes about 29 Earth years to orbit the Sun and spins once every 10.7 hours. Its fast spin gives it a noticeably flattened shape.",
                 SurfaceCompositionText = "Saturn is mostly hydrogen and helium with no solid surface. Deep inside, the pressure may turn hydrogen into a metallic liquid around a small rocky core.",
-                FunFactsText = "• Saturn is light enough to float in water.\n• Its rings are made of billions of chunks of ice and rock.\n• Its rings are very wide but incredibly thin.\n• Its moon Titan is bigger than Mercury.\n• It has more than 140 known moons."
+                FunFactsText = "• Saturn is light enough to float in water.\n• Its rings are made of billions of chunks of ice and rock.\n• Its rings are very wide but incredibly thin.\n• Its moon Titan is bigger than Mercury.\n• It has 274 known moons, the most of any planet."
             },
             new SpaceObject
             {
