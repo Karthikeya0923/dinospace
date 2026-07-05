@@ -45,9 +45,8 @@ namespace dinospace.Views
             _featuredCard = BuildFeatured();
             stack.Add(_featuredCard);
 
-            // Reserved for the upcoming "Scan Sky" feature.
             stack.Add(Ui.SectionHeader("Your sky"));
-            stack.Add(VisibleRightNowPlaceholder());
+            stack.Add(SkyCard());
 
             // Dinosaurs
             stack.Add(Ui.SectionHeader("Dinosaurs", "View all", async (_, _) => await Nav.Push(() => new BrowsePage("Dinosaurs"))));
@@ -98,22 +97,56 @@ namespace dinospace.Views
             return (s.ImageFile, s.Name, s.TypeLabel, async () => await Nav.OpenSpace(s));
         }
 
-        // Teaser card for the upcoming Scan Sky feature.
-        private View VisibleRightNowPlaceholder()
+        // Live Sky Tonight teaser: tonight's moon, drawn correctly, no
+        // location or permissions needed. Tapping opens the full sky report.
+        private View SkyCard()
         {
-            var col = new VerticalStackLayout { Spacing = 8 };
-            col.Add(Ui.Icon(Ui.IconSearch, 30, Theme.Accent));
-            col.Add(new Label
+            var moon = SkyCalc.Moon(DateTime.UtcNow);
+
+            var moonView = new GraphicsView
             {
-                Text = "Coming soon",
-                FontFamily = Ui.Display, FontSize = Ui.S(19), TextColor = Theme.TextPrimary
-            });
-            col.Add(new Label
+                Drawable = new MoonPhaseDrawable { ElongationDeg = moon.ElongationDeg },
+                WidthRequest = 44, HeightRequest = 44,
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center,
+                InputTransparent = true
+            };
+            var moonWrap = new Border
             {
-                Text = "Point your phone at the night sky to spot the planets and stars above you.",
-                FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), LineHeight = 1.4, TextColor = Theme.TextSecondary
+                Content = moonView,
+                WidthRequest = 64, HeightRequest = 64,
+                BackgroundColor = Color.FromArgb("#111527"),   // a little window of night sky
+                Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 16 },
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            int lit = (int)Math.Round(moon.Illumination * 100);
+            var info = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };
+            info.Add(new Label { Text = moon.PhaseName, FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
+            info.Add(new Label { Text = $"{lit}% lit tonight", FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), TextColor = Theme.TextSecondary });
+            info.Add(new Label
+            {
+                Text = "See the planets and constellations above you",
+                FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), FontAttributes = FontAttributes.Bold,
+                TextColor = Theme.Accent, Margin = new Thickness(0, 3, 0, 0)
             });
-            return Ui.Card(col, radius: 18, padding: new Thickness(18, 16));
+
+            var chevron = Ui.Icon(Ui.IconChevron, 24, Theme.TextHint);
+            chevron.VerticalOptions = LayoutOptions.Center;
+
+            var grid = new Grid { ColumnSpacing = 14 };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.Add(moonWrap, 0, 0);
+            grid.Add(info, 1, 0);
+            grid.Add(chevron, 2, 0);
+
+            var card = Ui.Card(grid, radius: 18, padding: new Thickness(14, 12));
+            Ui.OnTap(card, async (_, _) => await Nav.Push(() => new SkyPage()));
+            Ui.Describe(card, $"Sky Tonight: {moon.PhaseName}, {lit} percent lit. Opens tonight's sky report.");
+            return card;
         }
 
         // ----- masthead: friend's logo, serif fallback -----
