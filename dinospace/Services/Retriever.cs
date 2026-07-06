@@ -51,7 +51,8 @@ namespace dinospace.Services
                 }
             }
 
-            bool comparison = HasAny(normalizedQuestion, "vs", "versus", "beat", "beats", "fight", "battle", "compare", "stronger", "bigger", "faster", "against", "win", "or");
+            bool comparison = HasAny(normalizedQuestion, "vs", "versus", "beat", "beats", "fight", "battle", "compare", "stronger", "bigger", "faster", "against", "win", "or",
+                                     "between", "apart", "from", "to");   // "how far is X from Y" needs both entities kept
             int keep = comparison ? 2 : 1;
             var top = hits.OrderByDescending(h => h.Score).ThenBy(h => h.Name)
                           .GroupBy(h => h.Name).Select(x => x.First())

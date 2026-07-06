@@ -75,6 +75,10 @@ string[] round2 =
     "when did dinosaurs live", "are sharks older than dinosaurs", "what killed the megalodon",
     "what was the smartest dinosaur", "what is a galaxy", "how fast is light", "what is a wormhole",
     "Could we bring dinosaurs back?", "How long did a T. Rex live?",
+    // live-computed distances between bodies (the neptune-from-venus bug)
+    "how far is neptune from venus", "how far is mars from earth",
+    "distance between jupiter and saturn", "how far is the sun from earth",
+    "how far is the andromeda galaxy from the milky way",
 };
 int i2 = 0, m2 = 0;
 foreach (var q in round2)

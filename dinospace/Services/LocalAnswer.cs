@@ -41,6 +41,15 @@ namespace dinospace.Services
             if (dinos.Count >= 2 && IsComparison(q))
                 return Compare(dinos[0], dinos[1], q);
 
+            // 1.5) Distance between two space objects ("how far is Neptune from
+            //      Venus?") — computed live from their orbits, not misread as
+            //      one object's distance from the sun.
+            if (spaces.Count >= 2 && Has(q, "far", "distance", "away", "apart", "close", "closer"))
+            {
+                var d = SpaceDistance(spaces[0], spaces[1]);
+                if (d != null) return d;
+            }
+
             // 2) A specific measurable stat about one entity ("how fast was it?").
             if (dinos.Count == 1)
             {
@@ -69,6 +78,41 @@ namespace dinospace.Services
             // 5) A last-chance curated fact even without a conceptual cue.
             if (nugget != null) return nugget.Fact;
 
+            return null;
+        }
+
+        // ---------- distance between two space objects ----------
+
+        private static string? SpaceDistance(SpaceObject a, SpaceObject b)
+        {
+            if (a.Name == b.Name) return null;
+
+            double jd = SkyCalc.JulianDay(DateTime.UtcNow);
+            double? au = SkyCalc.DistanceBetweenAu(a.Name, b.Name, jd);
+            if (au != null)
+            {
+                double km = au.Value * 149_597_870.7;
+                string dist = km >= 1e9 ? $"{km / 1e9:0.#} billion km" : $"{km / 1e6:0} million km";
+                return $"Right now, {a.Name} and {b.Name} are about {dist} apart ({au:0.#} times the Earth–Sun distance). " +
+                       "Both are always moving along their orbits, so this gap changes through the year.";
+            }
+
+            // not both computable (a galaxy, a star, the moon...) — fall back
+            // to each one's own distance stat so the answer is still honest
+            string? da = FirstStat(a, "distance", "orbit", "location", "altitude");
+            string? db = FirstStat(b, "distance", "orbit", "location", "altitude");
+            if (da != null && db != null)
+                return $"{a.Name} is {LowerLead(da)}, while {b.Name} is {LowerLead(db)}. They're not a fixed distance from each other — everything out there is moving.";
+            return null;
+        }
+
+        private static string? FirstStat(SpaceObject s, params string[] keys)
+        {
+            foreach (var (label, value) in SpaceStats(s))
+            {
+                string l = label.ToLowerInvariant();
+                if (keys.Any(k => l.Contains(k)) && !string.IsNullOrWhiteSpace(value)) return value;
+            }
             return null;
         }
 

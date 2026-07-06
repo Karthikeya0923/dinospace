@@ -102,22 +102,18 @@ namespace dinospace.Views
         private static Color ThemePreviewBg(Theme.Spec spec) => spec.Id switch
         {
             "theme2" => Color.FromArgb("#0A0908"),
-            "theme3" => Color.FromArgb("#1B1233"),
-            "theme4" => Color.FromArgb("#070B14"),
-            "theme5" => Color.FromArgb("#05100E"),
-            "theme6" => Color.FromArgb("#120826"),
-            "theme7" => Color.FromArgb("#221338"),
+            "theme3" => Color.FromArgb("#070B14"),
+            "theme4" => Color.FromArgb("#120826"),
+            "theme5" => Color.FromArgb("#221338"),
             _ => Color.FromArgb("#F6EFE2"),
         };
 
         private static Color ThemePreviewAccent(Theme.Spec spec) => spec.Id switch
         {
             "theme2" => Color.FromArgb("#E3BE55"),
-            "theme3" => Color.FromArgb("#F08A3C"),
-            "theme4" => Color.FromArgb("#7FB4FF"),
-            "theme5" => Color.FromArgb("#4FE0B0"),
-            "theme6" => Color.FromArgb("#D98CFF"),
-            "theme7" => Color.FromArgb("#EDC46B"),
+            "theme3" => Color.FromArgb("#7FB4FF"),
+            "theme4" => Color.FromArgb("#D98CFF"),
+            "theme5" => Color.FromArgb("#EDC46B"),
             _ => Color.FromArgb("#A5652A"),
         };
 

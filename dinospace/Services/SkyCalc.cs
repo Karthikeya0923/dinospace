@@ -241,6 +241,14 @@ namespace dinospace
         private static readonly double[] EarthElements =
             { 1.00000261, 0.00000562, 0.01671123, -0.00004392, -0.00001531, -0.01294668, 100.46457166, 35999.37244981, 102.93768193, 0.32327364, 0.0, 0.0 };
 
+        // Uranus and Neptune (same JPL table). Not in the Body enum — you
+        // can't spot them without a telescope, so the "planets above you"
+        // features skip them — but distance questions still deserve real math.
+        private static readonly double[] UranusElements =
+            { 19.18916464, -0.00196176, 0.04725744, -0.00004397, 0.77263783, -0.00242939, 313.23810451, 428.48202785, 170.95427630, 0.40805281, 74.01692503, 0.04240589 };
+        private static readonly double[] NeptuneElements =
+            { 30.06992276, 0.00026291, 0.00859048, 0.00005105, 1.77004347, 0.00035372, -55.12002969, 218.45945325, 44.96476227, -0.32241464, 131.78422574, -0.00508664 };
+
         // Heliocentric ecliptic position (au) from mean elements at time t.
         private static (double x, double y, double z) Heliocentric(double[] el, double t)
         {
@@ -289,6 +297,37 @@ namespace dinospace
             lon = Wrap360(lon + 1.39697 * t);
             var (ra, dec) = EclipticToEquatorial(lon, lat, t);
             return (ra, dec, dist);
+        }
+
+        // Live distance between two solar-system bodies in au, or null when a
+        // name isn't a body we can compute (galaxies, stars, the moon).
+        // "how far is Neptune from Venus" deserves the real, current answer —
+        // not Neptune's distance from the sun.
+        public static double? DistanceBetweenAu(string nameA, string nameB, double jd)
+        {
+            var a = BodyVector(nameA, jd);
+            var b = BodyVector(nameB, jd);
+            if (a == null || b == null) return null;
+            double dx = a.Value.x - b.Value.x, dy = a.Value.y - b.Value.y, dz = a.Value.z - b.Value.z;
+            return Math.Sqrt(dx * dx + dy * dy + dz * dz);
+        }
+
+        private static (double x, double y, double z)? BodyVector(string name, double jd)
+        {
+            double t = Centuries(jd);
+            switch (name.Trim().ToLowerInvariant())
+            {
+                case "sun": return (0, 0, 0);
+                case "earth": return Heliocentric(EarthElements, t);
+                case "mercury": return Heliocentric(Elements[(int)Body.Mercury], t);
+                case "venus": return Heliocentric(Elements[(int)Body.Venus], t);
+                case "mars": return Heliocentric(Elements[(int)Body.Mars], t);
+                case "jupiter": return Heliocentric(Elements[(int)Body.Jupiter], t);
+                case "saturn": return Heliocentric(Elements[(int)Body.Saturn], t);
+                case "uranus": return Heliocentric(UranusElements, t);
+                case "neptune": return Heliocentric(NeptuneElements, t);
+                default: return null;
+            }
         }
 
         // ---------- coordinate conversions ----------
