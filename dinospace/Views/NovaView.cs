@@ -31,6 +31,14 @@ namespace dinospace.Views
         private static string? _pending;
         public static void Ask(string question) => _pending = question;
 
+        // Settings' full reset wipes the saved conversation too; the shared
+        // chat instance is dropped so it can't re-save from memory.
+        public static void DeleteSavedChat()
+        {
+            Preferences.Remove(HistoryKey);
+            NovaPage.ResetShared();
+        }
+
         private List<ChatMessage> _messages = new();
         private List<string> _lastEntities = new();
 
@@ -532,8 +540,26 @@ namespace dinospace.Views
             if (string.IsNullOrWhiteSpace(text)) return;
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null) return;
-            string choice = await page.DisplayActionSheetAsync(null, "Cancel", null, "Copy");
+            string choice = await page.DisplayActionSheetAsync(null, "Cancel", null, "Copy", "Report this answer");
             if (choice == "Copy") { try { await Clipboard.Default.SetTextAsync(text); } catch { } }
+            else if (choice == "Report this answer") await ReportAnswer(page, text);
+        }
+
+        // Opens the user's own email app with the answer pre-filled — nothing
+        // is sent unless they hit send themselves, keeping the app's
+        // zero-data-collection promise intact.
+        private static async Task ReportAnswer(Page page, string text)
+        {
+            string body = Uri.EscapeDataString("This answer looked wrong or strange:\n\n" + text);
+            try
+            {
+                await Launcher.OpenAsync($"mailto:dinospace.app@gmail.com?subject=DinoSpace%3A%20report%20an%20AI%20answer&body={body}");
+            }
+            catch
+            {
+                try { await Clipboard.Default.SetTextAsync(text); } catch { }
+                try { await page.DisplayAlertAsync("Thanks for flagging it", "No email app was found, so the answer was copied instead — paste it in a message to dinospace.app@gmail.com.", "OK"); } catch { }
+            }
         }
 
         // ---------- suggestions ----------

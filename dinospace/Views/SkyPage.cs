@@ -50,8 +50,10 @@ namespace dinospace.Views
             _stack.Add(MoonHero());
             _stack.Add(Ui.PrimaryButton("✦  POINT AT THE SKY", async (_, _) => await Nav.Push(() => new SkyViewPage())));
             _stack.Add(MoonDetailCard());
+            _stack.Add(AskNovaCard());
             _stack.Add(LearnRow());
             _stack.Add(TelescopeCard());
+            _stack.Add(ShowerCard());
 
             _stack.Add(Ui.SectionHeader("Planets above you"));
             if (_report.Planets.Count == 0)
@@ -138,6 +140,11 @@ namespace dinospace.Views
             else
                 col.Add(Ui.Body($"The moon is below the horizon {(_report.IsNight ? "right now" : "this evening")} — day {_report.Moon.AgeDays:0} of its 29½-day cycle.", size: 14));
 
+            var rs = RiseSet.MoonRiseSet(_report.Where.Lat, _report.Where.Lon, DateTime.UtcNow.Date);
+            if (rs.RiseUtc is DateTime mr)
+                col.Add(InfoRow("Moonrise", SkyService.FormatTime(mr.ToLocalTime())));
+            if (rs.SetUtc is DateTime ms)
+                col.Add(InfoRow("Moonset", SkyService.FormatTime(ms.ToLocalTime())));
             col.Add(InfoRow("Next full moon", $"{_report.Moon.NextFullUtc.ToLocalTime():dddd, MMMM d}"));
             col.Add(InfoRow("Next new moon", $"{_report.Moon.NextNewUtc.ToLocalTime():dddd, MMMM d}"));
             return Ui.Card(col, 16, new Thickness(16, 14));
@@ -168,6 +175,67 @@ namespace dinospace.Views
             });
             foreach (var (d, alt, az) in up)
                 col.Add(Ui.Muted($"• {d.Name} — {d.Blurb}. Look {SkyService.Describe(alt, az)}.", 12.5));
+            return Ui.Card(col, 16, new Thickness(16, 14));
+        }
+
+        // One tap drops into the NovaSaur chat with tonight's sky already
+        // asked — the AI reads the same live report this page is built from.
+        private static View AskNovaCard()
+        {
+            var info = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };
+            info.Add(new Label { Text = "Ask NovaSaur about tonight", FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
+            info.Add(new Label
+            {
+                Text = "Your AI guide reads tonight's sky and tells you where to look",
+                FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), LineHeight = 1.3, TextColor = Theme.TextSecondary
+            });
+
+            var dot = new Border
+            {
+                WidthRequest = 38, HeightRequest = 38,
+                BackgroundColor = Ui.MultiplyAlpha(Theme.AccentNova, 0.18f),
+                Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 19 },
+                VerticalOptions = LayoutOptions.Center,
+                Content = new Label { Text = "✦", FontSize = 18, TextColor = Theme.AccentNova, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
+            };
+
+            var grid = new Grid { ColumnSpacing = 12 };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            grid.Add(dot, 0, 0);
+            grid.Add(info, 1, 0);
+
+            var card = Ui.Card(grid, 16, new Thickness(16, 13));
+            Ui.OnTap(card, async (_, _) =>
+            {
+                NovaView.Ask("What's in the sky tonight?");
+                await Nav.Push(() => new NovaPage());
+            });
+            Ui.Describe(card, "Ask NovaSaur what's in the sky tonight");
+            return card;
+        }
+
+        // The next meteor shower (and any active one) with a moonlight verdict.
+        private View ShowerCard()
+        {
+            var now = DateTime.UtcNow;
+            var col = new VerticalStackLayout { Spacing = 10 };
+            col.Add(new Label { Text = "Meteor showers", FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
+
+            var active = MeteorShowers.ActiveOn(now).OrderByDescending(s => s.Zhr).ToList();
+            if (active.Count > 0)
+            {
+                var s = active[0];
+                var (alt, az) = SkyCalc.AltAz(s.RadiantRaHours * 15.0, s.RadiantDecDeg, _report.Where.Lat, _report.Where.Lon, now);
+                string from = alt > 10 ? $"They streak away from the {SkyCalc.Compass(az)} — but can appear anywhere overhead."
+                                       : "Best after midnight, once the radiant climbs higher.";
+                col.Add(Ui.Muted($"The {s.Name} are active now — {char.ToLower(s.Blurb[0]) + s.Blurb[1..]}. {from}", 12.5));
+            }
+
+            var (next, peak) = MeteorShowers.Next(now);
+            string verdict = MeteorShowers.MoonVerdict(MeteorShowers.MoonInterference(next, peak.Year));
+            col.Add(InfoRow("Next peak", $"{next.Name} · {peak:MMMM d}"));
+            col.Add(Ui.Muted($"Up to {next.Zhr} meteors an hour under perfect skies — {verdict}.", 12.5));
             return Ui.Card(col, 16, new Thickness(16, 14));
         }
 
@@ -271,7 +339,11 @@ namespace dinospace.Views
                 col.Add(InfoRow("Sunset", SkyService.FormatTime(set)));
             if (_report.NextSunriseLocal is DateTime rise)
                 col.Add(InfoRow("Sunrise", SkyService.FormatTime(rise)));
-            if (_report.NextSunsetLocal is DateTime s2)
+            // The real end of twilight — sun 18° down — not a rule of thumb.
+            var (dusk, _) = RiseSet.Twilights(_report.Where.Lat, _report.Where.Lon, DateTime.UtcNow.Date);
+            if (dusk is DateTime dk)
+                col.Add(Ui.Muted($"Fully dark from {SkyService.FormatTime(dk.ToLocalTime())} — that's when the faintest stars come out.", 12.5));
+            else if (_report.NextSunsetLocal is DateTime s2)
                 col.Add(Ui.Muted($"Best stargazing starts around {SkyService.FormatTime(s2.AddMinutes(90))}, once the sky is properly dark.", 12.5));
 
             var card = Ui.Card(col, 16, new Thickness(16, 14));

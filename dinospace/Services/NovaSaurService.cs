@@ -7,13 +7,19 @@ namespace dinospace.Services
     // Thin, safe wrapper around the on-device NovaSaur engine (the bound
     // novasaur.aar).
     //
-    // Reliability model (learned the hard way): the engine supports exactly
-    // ONE inference at a time, and starting a new conversation while an old
-    // one is still generating wedges it permanently. So we use the blocking
-    // Ask() call, and the lock is held INSIDE the worker task — if a call
-    // times out for the UI, the abandoned task keeps holding the lock until
-    // the native engine actually finishes, so two inferences can never
-    // overlap. The UI gets a friendly timeout; the engine stays healthy.
+    // Reliability model (learned the hard way):
+    //
+    //  1. ONE inference at a time. Starting a new conversation while an old
+    //     one is still generating wedges the engine permanently, so the lock
+    //     is held INSIDE the worker task — if a call times out for the UI,
+    //     the abandoned task keeps holding the lock until the native engine
+    //     actually finishes, and two inferences can never overlap.
+    //
+    //  2. FRESH ENGINE per answer. All conversations share one native token
+    //     budget, so a long-lived engine goes quiet after a few questions.
+    //     After every model answer (or timeout) the engine is reloaded in the
+    //     background; each question is fully independent — no chat history,
+    //     no leftover state, question 50 behaves like question 1.
     public static class NovaSaurService
     {
         private static readonly SemaphoreSlim _lock = new(1, 1);
@@ -52,7 +58,11 @@ namespace dinospace.Services
 #if ANDROID
             lock (_initGate)
             {
-                if (_initTask == null || _initTask.IsFaulted)
+                // Re-init when the last attempt faulted, or when it "succeeded"
+                // but the engine has since died (e.g. a failed between-question
+                // reload) — otherwise a completed task would block recovery.
+                bool stale = _initTask != null && _initTask.IsCompleted && !IsReady;
+                if (_initTask == null || _initTask.IsFaulted || stale)
                     _initTask = Task.Run(() =>
                     {
                         if (Com.Novasaur.NovaSaurModule.IsReady) return;
@@ -65,6 +75,26 @@ namespace dinospace.Services
             return Task.CompletedTask;
 #endif
         }
+
+#if ANDROID
+        // Every question runs against a freshly loaded engine. LiteRT-LM draws
+        // all conversations from one shared token budget, so an engine that
+        // isn't reloaded stops answering after a handful of questions — this
+        // was the "NovaSaur only answers 3 questions" bug. The reload happens
+        // in the background right after an answer (or a timeout/failure, which
+        // also un-wedges a stuck engine); it queues on the same lock as
+        // inference so the two can never overlap.
+        private static void ScheduleReset()
+        {
+            _ = Task.Run(async () =>
+            {
+                await _lock.WaitAsync(CancellationToken.None);
+                try { Com.Novasaur.NovaSaurModule.Reset(); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova reset: " + ex); }
+                finally { _lock.Release(); }
+            });
+        }
+#endif
 
         // Waits for the model to load, but never past `cap` — the chat must
         // always come back with something.
@@ -102,6 +132,11 @@ namespace dinospace.Services
             }, CancellationToken.None);
 
             var finished = await Task.WhenAny(work, Task.Delay(AnswerTimeout, ct));
+
+            // Whatever happened, the engine gets reloaded before the next
+            // question — fresh answers every time, and a hung call recovers.
+            ScheduleReset();
+
             if (finished != work)
             {
                 // Swallow the abandoned task's eventual result/exception.
@@ -174,8 +209,14 @@ namespace dinospace.Services
                 long idleMs = Environment.TickCount64 - lastActivity;
                 bool started; lock (sb) started = sb.Length > 0;
                 if ((!started && idleMs > 30_000) || (started && idleMs > 20_000))
+                {
+                    ScheduleReset();   // recover the engine behind the scenes
                     return TimeoutMessage;
+                }
             }
+
+            // Reload before the next question — every answer starts fresh.
+            ScheduleReset();
 
             string raw;
             try { raw = await work; }

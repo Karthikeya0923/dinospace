@@ -243,11 +243,12 @@ namespace dinospace.Views
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null) return;
             bool sure = await page.DisplayAlertAsync("Reset everything?",
-                "This clears your streak, quiz scores, viewed history, and bookmarks. The encyclopedia and NovaSaur stay. This can't be undone.",
+                "This clears your streak, quiz scores, viewed history, bookmarks, and your NovaSaur chat. The encyclopedia and the AI itself stay. This can't be undone.",
                 "Reset", "Cancel");
             if (!sure) return;
             StatsStore.ClearProgress();
             SavedStore.ClearAll();
+            NovaView.DeleteSavedChat();
             RefreshJourney();
         }
     }

@@ -29,7 +29,7 @@ namespace dinospace.Views
 
         // chrome
         private Label _targetName = null!, _targetKind = null!, _targetBlurb = null!;
-        private Border _targetCard = null!, _learnBtn = null!;
+        private Border _targetCard = null!, _learnBtn = null!, _askBtn = null!;
         private Label _hint = null!;
         private GraphicsView _compass = null!;
         private readonly CompassRoseDrawable _rose = new();
@@ -38,6 +38,7 @@ namespace dinospace.Views
         private double _az = 180, _alt = 30;
         private bool _sensorMode, _cameraOn, _night;
         private bool _dirty = true;
+        private bool _starting;
         private IDispatcherTimer? _timer;
         private CancellationTokenSource? _camCts;
 
@@ -121,7 +122,32 @@ namespace dinospace.Views
             };
             Ui.OnTap(_learnBtn, async (_, _) => { if (_learnTarget != null) await Nav.OpenSpace(_learnTarget); });
 
-            var targetCol = new VerticalStackLayout { Spacing = 3, Children = { _targetName, _targetKind, _targetBlurb, _learnBtn } };
+            // Whatever's under the crosshair, NovaSaur can talk about it —
+            // stars and constellations included, not just encyclopedia entries.
+            var askLabel = new Label
+            {
+                Text = "Ask NovaSaur", FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), FontAttributes = FontAttributes.Bold,
+                TextColor = Color.FromArgb("#C9B8F0"), HorizontalTextAlignment = TextAlignment.Center
+            };
+            _askBtn = new Border
+            {
+                Content = askLabel,
+                BackgroundColor = Color.FromArgb("#33FFFFFF"), Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 12 }, Padding = new Thickness(12, 7),
+                Margin = new Thickness(0, 6, 0, 0), IsVisible = false
+            };
+            Ui.OnTap(_askBtn, async (_, _) =>
+            {
+                string name = _targetName.Text;
+                if (string.IsNullOrWhiteSpace(name)) return;
+                string what = _targetKind.Text.StartsWith("Constellation") ? $"the constellation {name}" : name;
+                NovaView.Ask($"Tell me about {what}.");
+                await Nav.Push(() => new NovaPage());
+            });
+            Ui.Describe(_askBtn, "Ask NovaSaur about this object");
+
+            var targetBtns = new HorizontalStackLayout { Spacing = 8, Children = { _learnBtn, _askBtn } };
+            var targetCol = new VerticalStackLayout { Spacing = 3, Children = { _targetName, _targetKind, _targetBlurb, targetBtns } };
             _targetCard = new Border
             {
                 Content = targetCol,
@@ -201,7 +227,32 @@ namespace dinospace.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
+            SetLandscape(true);
             StartSensor();
+
+            // The timer gets exactly one Tick handler for the page's lifetime.
+            // OnAppearing runs again every time a pushed page (Learn More) pops
+            // back to us — resubscribing here is what used to pile up handlers
+            // until the overlay ground to a halt.
+            if (_timer == null)
+            {
+                _timer = Dispatcher.CreateTimer();
+                _timer.Interval = TimeSpan.FromMilliseconds(50);
+                _timer.Tick += (_, _) =>
+                {
+                    if (!_dirty) return;
+                    _dirty = false;
+                    _drawable.CenterAz = _az;
+                    _drawable.CenterAlt = _alt;
+                    _rose.HeadingDeg = _az;
+                    _view.Invalidate();
+                    _compass.Invalidate();
+                    UpdateTarget();
+                };
+            }
+            _timer.Start();
+            _dirty = true;
+
             await StartCameraAsync();
             _hint.Text = (_cameraOn, _sensorMode) switch
             {
@@ -209,22 +260,6 @@ namespace dinospace.Views
                 (false, true) => "Move your phone to explore (camera off — overlay only)",
                 _ => "Drag to look around the sky",
             };
-
-            _timer ??= Dispatcher.CreateTimer();
-            _timer.Interval = TimeSpan.FromMilliseconds(50);
-            _timer.Tick += (_, _) =>
-            {
-                if (!_dirty) return;
-                _dirty = false;
-                _drawable.CenterAz = _az;
-                _drawable.CenterAlt = _alt;
-                _rose.HeadingDeg = _az;
-                _view.Invalidate();
-                _compass.Invalidate();
-                UpdateTarget();
-            };
-            _timer.Start();
-            _dirty = true;
         }
 
         protected override void OnDisappearing()
@@ -233,12 +268,32 @@ namespace dinospace.Views
             _timer?.Stop();
             StopSensor();
             StopCamera();
+            SetLandscape(false);
+        }
+
+        // Scanning the sky is a two-hands, phone-up activity — landscape gives
+        // the widest view and matches how people naturally hold the phone up.
+        // Restored to the system default the moment the page goes away.
+        private static void SetLandscape(bool on)
+        {
+#if ANDROID
+            try
+            {
+                if (Platform.CurrentActivity is Android.App.Activity a)
+                    a.RequestedOrientation = on
+                        ? Android.Content.PM.ScreenOrientation.SensorLandscape
+                        : Android.Content.PM.ScreenOrientation.Unspecified;
+            }
+            catch { }
+#endif
         }
 
         // ----- camera passthrough -----
 
         private async System.Threading.Tasks.Task StartCameraAsync()
         {
+            if (_camera != null || _starting) return;   // already running or mid-start
+            _starting = true;
             try
             {
                 var status = await Permissions.CheckStatusAsync<Permissions.Camera>();
@@ -259,20 +314,22 @@ namespace dinospace.Views
                 // any camera trouble -> quietly fall back to the rendered sky
                 StopCamera();
             }
+            finally { _starting = false; }
         }
 
         private void StopCamera()
         {
-            try
+            try { _camCts?.Cancel(); } catch { }
+            if (_camera != null)
             {
-                _camCts?.Cancel();
-                if (_camera != null)
-                {
-                    _camera.StopCameraPreview();
-                    _root.Remove(_camera);
-                }
+                try { _camera.StopCameraPreview(); } catch { }
+                try { _root.Remove(_camera); } catch { }
+                // Without this the native camera stays claimed by the dead
+                // preview, and the next visit gets a frozen black frame.
+                try { _camera.Handler?.DisconnectHandler(); } catch { }
             }
-            catch { }
+            try { _camCts?.Dispose(); } catch { }
+            _camCts = null;
             _camera = null;
             _cameraOn = false;
             _drawable.CameraBehind = false;
@@ -286,10 +343,13 @@ namespace dinospace.Views
             {
                 if (!OrientationSensor.Default.IsSupported) return;
                 OrientationSensor.Default.ReadingChanged += OnReading;
-                OrientationSensor.Default.Start(SensorSpeed.Game);
+                // A leftover session (the sensor is a process-wide singleton)
+                // would make Start() throw and silently kill pointing mode.
+                if (!OrientationSensor.Default.IsMonitoring)
+                    OrientationSensor.Default.Start(SensorSpeed.Game);
                 _sensorMode = true;
             }
-            catch { _sensorMode = false; }
+            catch { OrientationSensor.Default.ReadingChanged -= OnReading; _sensorMode = false; }
         }
 
         private void StopSensor()
@@ -390,6 +450,7 @@ namespace dinospace.Views
             _targetKind.Text = kind ?? "";
             _targetBlurb.Text = blurb ?? "";
             _learnBtn.IsVisible = entry != null;
+            _askBtn.IsVisible = true;
             _targetCard.IsVisible = true;
         }
     }

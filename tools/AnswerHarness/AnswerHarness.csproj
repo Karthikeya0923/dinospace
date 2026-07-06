@@ -24,6 +24,7 @@
     <Compile Include="..\..\dinospace\Services\PromptBuilder.cs" />
     <Compile Include="..\..\dinospace\Services\NovaGuard.cs" />
     <Compile Include="..\..\dinospace\Services\SkyCalc.cs" />
+    <Compile Include="..\..\dinospace\Services\MeteorShowers.cs" />
   </ItemGroup>
 
 </Project>

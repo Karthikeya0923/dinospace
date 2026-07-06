@@ -38,7 +38,9 @@ namespace dinospace.Views
             string[] hellos =
             {
                 "Let's explore.", "Ready to roar?", "The sky is calling.",
-                "Time to dig for treasure.", "Big teeth. Bigger universe.", "Look up. Look back."
+                "Time to dig for treasure.", "Big teeth. Bigger universe.", "Look up. Look back.",
+                "Adventure awaits, explorer.", "What will you discover today?", "Stomp. Zoom. Wonder.",
+                "65 million years in your pocket.", "Somewhere, a star is being born.", "Dig in!"
             };
             var hello = new Label
             {
@@ -48,6 +50,9 @@ namespace dinospace.Views
                 TextColor = Theme.TextSecondary
             };
             stack.Add(hello);
+
+            if (ExplorerRow() is View explorer)
+                stack.Add(explorer);
 
             _featuredCard = BuildFeatured();
             stack.Add(_featuredCard);
@@ -84,6 +89,7 @@ namespace dinospace.Views
             stack.Add(PlayRow(Ui.IconQuiz, "Quizzes", "Test what you know", async () => await StartQuiz()));
             stack.Add(PlayRow(Ui.IconBolt, "Dino Battle", "Two creatures face off", async () => await Nav.Push(() => new BattlePage(null))));
             stack.Add(PlayRow(Ui.IconList, "Collections", "Curated ranked lists", async () => await Nav.Push(() => new CollectionsListPage())));
+            stack.Add(PlayRow(Ui.IconStar, "Surprise Me", "Spin the wheel — meet someone new", async () => await OpenSurprise()));
 
             // Fact
             stack.Add(Ui.SectionHeader("Did you know?"));
@@ -331,6 +337,44 @@ namespace dinospace.Views
 
         private static async System.Threading.Tasks.Task StartQuiz()
             => await Nav.Push(() => new QuizSetupPage());
+
+        // Surprise Me — a random creature or space object, weighted toward
+        // ones the explorer hasn't met yet so it keeps feeling fresh.
+        private static readonly Random _surprise = new();
+        private static async System.Threading.Tasks.Task OpenSurprise()
+        {
+            bool dino = _surprise.Next(2) == 0;
+            if (dino)
+            {
+                var unseen = DinoData.All.Where(d => StatsStore.Views(d.Name) == 0).ToList();
+                var pool = unseen.Count > 0 ? unseen : DinoData.All.ToList();
+                await Nav.OpenDino(pool[_surprise.Next(pool.Count)]);
+            }
+            else
+            {
+                var unseen = SpaceData.All.Where(s => StatsStore.Views(s.Name) == 0).ToList();
+                var pool = unseen.Count > 0 ? unseen : SpaceData.All.ToList();
+                await Nav.OpenSpace(pool[_surprise.Next(pool.Count)]);
+            }
+        }
+
+        // A one-line "you, the explorer" strip: the daily streak and how much
+        // of the encyclopedia has been discovered so far. Collection progress
+        // is half the fun at this age — and it quietly rewards coming back.
+        private View? ExplorerRow()
+        {
+            int streak = StatsStore.Streak();
+            int seen = StatsStore.DinosSeen() + StatsStore.SpaceSeen();
+            int total = DinoData.All.Count + SpaceData.All.Count;
+            if (streak <= 1 && seen == 0) return null;   // brand-new explorer, nothing to brag about yet
+
+            var row = new HorizontalStackLayout { Spacing = 8 };
+            if (streak > 1)
+                row.Add(Ui.Chip($"🔥 {streak}-day streak", Theme.AccentSoft, Theme.Accent));
+            if (seen > 0)
+                row.Add(Ui.Chip($"✦ {seen} of {total} discovered", Theme.AccentSoft, Theme.Accent));
+            return row;
+        }
 
         // ----- fact -----
         private View FactCard()

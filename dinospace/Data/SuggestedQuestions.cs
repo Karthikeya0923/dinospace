@@ -40,6 +40,18 @@ namespace dinospace.Data
             "What planets can I see tonight?",
             "When is the next full moon?",
             "What time is sunset today?",
+            "Where is Jupiter right now?",
+            "When is the next meteor shower?",
+            "What's in the sky tonight?",
+
+            // Sky knowledge
+            "What is a supermoon?",
+            "What is a blue moon?",
+            "Why does the moon turn red in an eclipse?",
+            "How do I find the North Star?",
+            "What are the northern lights?",
+            "What is the International Space Station?",
+            "Why do planets go retrograde?",
 
             // Space
             "What is a black hole?",

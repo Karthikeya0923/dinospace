@@ -43,16 +43,7 @@ namespace dinospace.Services
 
             // 1.5) "How far is Neptune from Venus?" — computed live from the
             //      same orbital math as Sky Tonight, not looked up wrong.
-            if (spaces.Count >= 2 && Has(q, "far", "distance", "away", "apart", "close", "between"))
-            {
-                var d = SpaceDistance(spaces[0], spaces[1]);
-                if (d != null) return d;
-            }
-
-            // 1.5) Distance between two space objects ("how far is Neptune from
-            //      Venus?") — computed live from their orbits, not misread as
-            //      one object's distance from the sun.
-            if (spaces.Count >= 2 && Has(q, "far", "distance", "away", "apart", "close", "closer"))
+            if (spaces.Count >= 2 && Has(q, "far", "distance", "away", "apart", "close", "closer", "between"))
             {
                 var d = SpaceDistance(spaces[0], spaces[1]);
                 if (d != null) return d;
@@ -167,7 +158,85 @@ namespace dinospace.Services
                 return null;
             }
 
+            // "Where is Jupiter?" — a live pointing answer, not a paragraph.
+            var point = PointAtAnswer(q);
+            if (point != null) return point;
+
+            // "When is the next meteor shower?", "can I see shooting stars tonight?"
+            if ((q.Contains("meteor") || q.Contains("shooting star")) &&
+                Has(q, "next", "when", "tonight", "soon", "peak", "peaks", "see", "watch", "active", "coming"))
+                return ShowerAnswer();
+
             return null;
+        }
+
+        // Live direction for "where is X" style questions about the moon and
+        // the naked-eye planets. Kept to explicit finding phrases so "where
+        // did Jupiter get its name" still reads the encyclopedia.
+        private static string? PointAtAnswer(string q)
+        {
+            bool asking = q.StartsWith("where is") || q.StartsWith("where s") ||
+                          Has(q, "which direction", "which way", "where can i see", "where do i look",
+                                 "how do i find", "how can i find", "how do i spot", "point me");
+            if (!asking) return null;
+
+            var where = SkyService.Cached;
+            var utc = DateTime.UtcNow;
+            double jd = SkyCalc.JulianDay(utc);
+
+            if (q.Contains("moon"))
+            {
+                var (ra, dec) = SkyCalc.MoonRaDec(jd);
+                var (alt, az) = SkyCalc.AltAz(ra, dec, where.Lat, where.Lon, utc);
+                var m = SkyCalc.Moon(utc);
+                if (alt > 3)
+                    return $"The moon is {SkyService.Describe(alt, az)} right now — a {m.PhaseName}, about {m.Illumination * 100:0}% lit. Try Scan Sky and point your phone at it!";
+                return $"The moon is below the horizon right now (it's a {m.PhaseName} at the moment). Check Sky Tonight later — it rises and sets at different times every day.";
+            }
+
+            foreach (var b in Enum.GetValues<SkyCalc.Body>())
+            {
+                if (!q.Contains(b.ToString().ToLowerInvariant())) continue;
+                var (ra, dec, _) = SkyCalc.PlanetRaDec(b, jd);
+                var (alt, az) = SkyCalc.AltAz(ra, dec, where.Lat, where.Lon, utc);
+                bool dark = SkyCalc.SunAltitude(where.Lat, where.Lon, utc) < -6;
+                if (alt > 5 && dark)
+                    return $"{b} is {SkyService.Describe(alt, az)} right now. Open Scan Sky and point your phone that way to see it labelled live!";
+                if (alt > 5)
+                    return $"{b} is {SkyService.Describe(alt, az)} right now, but the sky is still too bright to spot it. Look again about an hour after sunset.";
+                return $"{b} is below the horizon right now, so you can't see it tonight from where you are. Check Sky Tonight — the planets shift a little every night.";
+            }
+
+            return null;
+        }
+
+        // Live meteor-shower report: what's active now, or the next peak.
+        private static string ShowerAnswer()
+        {
+            var now = DateTime.UtcNow;
+            var active = MeteorShowers.ActiveOn(now).OrderByDescending(s => s.Zhr).ToList();
+
+            if (active.Count > 0)
+            {
+                var s = active[0];
+                // The peak for THIS activity run: this year's date if it's
+                // still ahead, or January's date for showers (Quadrantids)
+                // whose run straddles New Year.
+                DateTime? peak = null;
+                if (s.PeakOn(now.Year) >= now.Date) peak = s.PeakOn(now.Year);
+                else if (now.Month == 12 && s.StartMonth == 12 && s.PeakMonth == 1) peak = s.PeakOn(now.Year + 1);
+
+                if (peak is DateTime p)
+                {
+                    string verdict = MeteorShowers.MoonVerdict(MeteorShowers.MoonInterference(s, p.Year));
+                    return $"The {s.Name} are active right now — {LowerLead(s.Blurb)}. They peak around {p:MMMM d} with up to {s.Zhr} meteors an hour under perfect skies ({verdict}). Find a dark spot after midnight and give your eyes twenty minutes to adjust.";
+                }
+                return $"The {s.Name} are still active — {LowerLead(s.Blurb)}. The peak night has passed this year, but you can still catch stragglers on any clear, dark night.";
+            }
+
+            var (next, peakUtc) = MeteorShowers.Next(now);
+            string moon = MeteorShowers.MoonVerdict(MeteorShowers.MoonInterference(next, peakUtc.Year));
+            return $"The next meteor shower is the {next.Name}, peaking around {peakUtc:MMMM d} — {LowerLead(next.Blurb)}. Expect up to {next.Zhr} meteors an hour under perfect dark skies ({moon}).";
         }
 
         private static string SkySummary()

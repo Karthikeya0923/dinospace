@@ -220,10 +220,20 @@ namespace dinospace.Services
 
         // ---------- superlatives ----------
 
+        // Groups in DinoData that are true dinosaurs. The encyclopedia also
+        // holds pterosaurs, marine reptiles, mammals and sharks — great
+        // entries, but "fastest dinosaur" must not answer with a pterosaur.
+        private static readonly HashSet<string> DinosaurGroups = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Theropod", "Sauropod", "Raptor", "Ankylosaur", "Ceratopsian",
+            "Hadrosaur", "Ornithomimid", "Ornithopod", "Pachycephalosaur", "Stegosaur"
+        };
+
         private static Hit? Superlative(string q)
         {
             string p = " " + q + " ";
-            if (!p.Contains(" dinosaur ") && !p.Contains(" dino ") && !p.Contains(" dinosaurs ") && !p.Contains(" dinos ")
+            bool dinoOnly = p.Contains(" dinosaur ") || p.Contains(" dino ") || p.Contains(" dinosaurs ") || p.Contains(" dinos ");
+            if (!dinoOnly
                 && !p.Contains(" creature ") && !p.Contains(" animal ")
                 && !p.Contains(" carnivore ") && !p.Contains(" herbivore ") && !p.Contains(" predator ")
                 && !p.Contains(" meat eater ") && !p.Contains(" plant eater "))
@@ -250,6 +260,7 @@ namespace dinospace.Services
             double bestVal = max ? double.MinValue : double.MaxValue;
             foreach (var d in DinoData.All)
             {
+                if (dinoOnly && !DinosaurGroups.Contains(d.Group)) continue;
                 if (!diet(d)) continue;
                 var v = LeadingNumber(stat(d));
                 if (v == null) continue;

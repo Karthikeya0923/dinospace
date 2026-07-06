@@ -26,11 +26,13 @@ by Google's Gemma model running **locally on your device** (using LiteRT-LM):
 
 - Questions you type and the answers you get are processed entirely on your device.
   They are never sent to us or to any server.
-- Your chat history is stored only on your device. Delete it any time in
-  *Settings → Clear Data → AI chat history*, or by uninstalling the app.
+- Your chat history is stored only on your device. Delete it any time with the
+  *Clear* button at the top of the chat, with *Settings → Reset progress & bookmarks*,
+  or by uninstalling the app.
 - NovaSaur is designed to only discuss dinosaurs, prehistoric creatures, and space, and
   never asks for personal information. AI answers are generated automatically and can
-  sometimes be wrong — tap any answer and choose *Report this answer* to tell us.
+  sometimes be wrong — tap any answer and choose *Report this answer*, which opens an
+  email draft in your own email app; nothing is sent unless you send it.
 
 ## How the AI model gets onto your device
 
@@ -48,8 +50,8 @@ nothing about you is sent by the app, and we receive nothing.
 ## Information stored on your device
 
 Saved (bookmarked) entries, quiz scores, your daily streak, which entries you have
-viewed, and your NovaSaur chat history — all stored only on your device. Erase any of it
-in *Settings → Clear Data*; uninstalling removes everything.
+viewed, and your NovaSaur chat history — all stored only on your device. Erase all of it
+with *Settings → Reset progress & bookmarks*; uninstalling removes everything.
 
 ## Permissions the app uses
 
