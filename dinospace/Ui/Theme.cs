@@ -98,9 +98,9 @@ namespace dinospace
             SurfaceSunken = Color.FromArgb("#1A0E2B"),
             Hairline = Color.FromArgb("#4E3775"),
             HairlineSoft = Color.FromArgb("#3F2A61"),
-            TextPrimary = Color.FromArgb("#F7F0E1"),
-            TextSecondary = Color.FromArgb("#D9CBEE"),
-            TextHint = Color.FromArgb("#AC97CE"),
+            TextPrimary = Color.FromArgb("#FBF6EB"),
+            TextSecondary = Color.FromArgb("#E7DDF7"),
+            TextHint = Color.FromArgb("#C3B0E2"),
             TextOnAccent = Color.FromArgb("#33200A"),
             Accent = Color.FromArgb("#EDC46B"),
             AccentSoft = Color.FromArgb("#463217"),
@@ -234,6 +234,17 @@ namespace dinospace
             res["ChipText"] = _p.ChipText;
             res["ImgPlaceholder"] = _p.ImgPlaceholder;
         }
+
+        // A wash drawn between the wallpaper and the content so text stays
+        // readable no matter how busy the art is. The painted DinoSpace theme
+        // needs a much heavier hand than the quiet generated skies.
+        public static Color WallpaperDim => CurrentId switch
+        {
+            "theme5" => Bg.WithAlpha(0.72f),   // hand-painted art: calm it right down
+            "theme4" => Bg.WithAlpha(0.45f),
+            "theme3" => Bg.WithAlpha(0.38f),
+            _ => Bg.WithAlpha(0.30f),
+        };
 
         // ---- tokens (live views of the current palette) ----
         public static Color Bg => _p.Bg;

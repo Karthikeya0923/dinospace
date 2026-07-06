@@ -119,8 +119,14 @@ namespace dinospace.Views
                 StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(12), HeightRequest = 210
             };
             // Only empty slots are tappable; filled slots are just images.
-            // No push animation - the picker should feel instant.
-            if (empty) Ui.OnTap(card, async (_, _) => await Nav.Push(() => new CreaturePickerPage(picked => Set(isA, picked)), animated: false));
+            // No push animation - the picker should feel instant. Once one
+            // fighter is chosen, the other must come from the same arena —
+            // land fights land, sea fights sea, flyers fight flyers.
+            if (empty)
+            {
+                string? arena = (isA ? _b : _a)?.Category;
+                Ui.OnTap(card, async (_, _) => await Nav.Push(() => new CreaturePickerPage(picked => Set(isA, picked), arena), animated: false));
+            }
             return card;
         }
 
@@ -172,11 +178,91 @@ namespace dinospace.Views
                 }
             }));
 
+            var loser = winner == _a ? _b : _a;
+
+            // The bookmakers' line: how many of 100 match-ups the winner takes.
+            int odds = Odds(winner, loser);
             _resultArea.Add(new Label
             {
-                Text = Verdict(winner, winner == _a ? _b : _a),
+                Text = $"{winner.Name} wins {odds} of 100 match-ups",
+                FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary,
+                HorizontalTextAlignment = TextAlignment.Center
+            });
+            _resultArea.Add(new Label
+            {
+                Text = $"({odds}–{100 - odds} — {(odds >= 90 ? "a mismatch" : odds >= 70 ? "a clear favourite" : "anyone's fight on the right day")})",
+                FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), TextColor = Theme.TextHint,
+                HorizontalTextAlignment = TextAlignment.Center
+            });
+
+            // How the fight actually plays out.
+            _resultArea.Add(Ui.Card(new Label
+            {
+                Text = Scenario(winner, loser),
+                FontFamily = Ui.Fonts, FontSize = Ui.S(14), LineHeight = 1.5, TextColor = Theme.TextPrimary
+            }, 16, new Thickness(16, 14)));
+
+            _resultArea.Add(new Label
+            {
+                Text = Verdict(winner, loser),
                 FontFamily = Ui.Fonts, FontSize = Ui.S(14), LineHeight = 1.45, TextColor = Theme.TextSecondary
             });
+        }
+
+        // Win probability out of 100, from the power gap — amplified so a real
+        // advantage reads like one, but never a guaranteed 100 (nature loves
+        // an upset) and never below 52 (they did win this simulation).
+        private static int Odds(Dinosaur w, Dinosaur l)
+        {
+            double pw = Power(w), pl = Power(l);
+            double share = pw + pl > 0 ? pw / (pw + pl) : 0.5;
+            return Math.Clamp((int)Math.Round(50 + (share - 0.5) * 220), 52, 97);
+        }
+
+        // A short blow-by-blow, seeded per pairing: same fight reads the same,
+        // different fights read differently. Built from their real stats.
+        private static string Scenario(Dinosaur w, Dinosaur l)
+        {
+            int seed = 0;
+            foreach (char c in w.Name + "#" + l.Name) seed = seed * 31 + c;
+            seed = Math.Abs(seed);
+
+            string arena = w.Category switch
+            {
+                "Sea" => new[] { "open water, nowhere to hide", "a shallow coastal hunting ground", "deep water at dusk" }[seed % 3],
+                "Flying" => new[] { "high thermals over the cliffs", "a windswept shoreline", "the air above a river delta" }[seed % 3],
+                _ => new[] { "a dusty floodplain", "a fern-choked forest clearing", "the muddy edge of a river" }[seed % 3],
+            };
+
+            string wWeapon = WeaponPhrase(w);
+            string lMove = Num(l.Speed) > Num(w.Speed) && Num(l.Speed) > 0
+                ? $"{l.Name} is quicker and lands the first strike"
+                : $"{l.Name} charges first, trying to end it early";
+
+            string[] middles =
+            {
+                $"{w.Name} takes the hit, turns, and answers with {wWeapon}.",
+                $"But {w.Name} was waiting for exactly that, countering with {wWeapon}.",
+                $"{w.Name} shrugs it off — then {wWeapon} changes the fight in one move.",
+            };
+            string[] enders =
+            {
+                $"One clean connection is all it takes; {l.Name} backs off, beaten.",
+                $"After that, {l.Name} wants no part of round two.",
+                $"The fight is over in minutes — {w.Name} stands over the field.",
+            };
+
+            return $"The setting: {arena}. {lMove}. {middles[seed / 3 % middles.Length]} {enders[seed / 9 % enders.Length]}";
+        }
+
+        // The winner's signature weapon, with its real number where we have one.
+        private static string WeaponPhrase(Dinosaur d)
+        {
+            string armour = ArmourWord(d);
+            if (Num(d.BiteForce) > 0) return $"a bone-rattling bite of about {d.BiteForce}";
+            if (armour.Length > 0) return $"those {armour}";
+            if (Num(d.Weight) > 0) return $"the full {d.Weight} of its body";
+            return "raw speed and aggression";
         }
 
         private View CompareRow(string label, string a, string b)

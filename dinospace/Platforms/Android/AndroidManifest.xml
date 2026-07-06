@@ -8,4 +8,8 @@
 	     for a low-accuracy fix; "approximate" is all it needs. -->
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+	<!-- Scan Sky's live view. Optional: deny it and the star overlay draws on
+	     a rendered night sky instead. Nothing is ever recorded or saved. -->
+	<uses-permission android:name="android.permission.CAMERA" />
+	<uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

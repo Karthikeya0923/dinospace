@@ -334,7 +334,11 @@ namespace dinospace
         {
             var root = new Grid { BackgroundColor = Theme.Bg };
             if (Theme.Wallpaper is string wp)
+            {
                 root.Add(new Image { Source = wp, Aspect = Aspect.AspectFill, InputTransparent = true });
+                // readability wash — art stays visible, text stays legible
+                root.Add(new BoxView { Color = Theme.WallpaperDim, InputTransparent = true });
+            }
             root.Add(body);
             return root;
         }

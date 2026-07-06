@@ -88,12 +88,16 @@ namespace dinospace.Views
             var root = new Grid { BackgroundColor = Theme.Bg, RowSpacing = 0 };
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            // Wallpaper themes draw their art behind the tabs too.
+            // Wallpaper themes draw their art behind the tabs too, under the
+            // same readability wash every page uses.
             if (Theme.Wallpaper is string wp)
             {
                 var art = new Image { Source = wp, Aspect = Aspect.AspectFill, InputTransparent = true };
                 root.Add(art, 0, 0);
                 Grid.SetRowSpan(art, 2);
+                var dim = new BoxView { Color = Theme.WallpaperDim, InputTransparent = true };
+                root.Add(dim, 0, 0);
+                Grid.SetRowSpan(dim, 2);
             }
             root.Add(_content, 0, 0);
             root.Add(nav, 0, 1);

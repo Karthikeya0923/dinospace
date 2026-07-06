@@ -12,12 +12,14 @@ namespace dinospace.Views
     public class CreaturePickerPage : ContentPage
     {
         private readonly Action<Dinosaur> _onPick;
+        private readonly string? _arena;    // lock picks to one arena: Land / Sea / Flying
         private readonly ObservableCollection<Dinosaur> _items = new();
         private CollectionView _list = null!;
 
-        public CreaturePickerPage(Action<Dinosaur> onPick)
+        public CreaturePickerPage(Action<Dinosaur> onPick, string? arena = null)
         {
             _onPick = onPick;
+            _arena = arena;
             Build();
             Filter("");
             SwipeBack.Attach(this);
@@ -91,6 +93,7 @@ namespace dinospace.Views
         {
             string q = Retriever.Normalize(query);
             var results = DinoData.All
+                .Where(d => _arena == null || d.Category == _arena)   // fair fights only
                 .Where(d => q.Length == 0 || Retriever.Normalize($"{d.Name} {string.Join(' ', d.Aliases)}").Contains(q))
                 .OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase);
             _items.Clear();

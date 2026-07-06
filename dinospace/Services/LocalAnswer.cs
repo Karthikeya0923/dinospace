@@ -41,6 +41,14 @@ namespace dinospace.Services
             if (dinos.Count >= 2 && IsComparison(q))
                 return Compare(dinos[0], dinos[1], q);
 
+            // 1.5) "How far is Neptune from Venus?" — computed live from the
+            //      same orbital math as Sky Tonight, not looked up wrong.
+            if (spaces.Count >= 2 && Has(q, "far", "distance", "away", "apart", "close", "between"))
+            {
+                var d = SpaceDistance(spaces[0], spaces[1]);
+                if (d != null) return d;
+            }
+
             // 1.5) Distance between two space objects ("how far is Neptune from
             //      Venus?") — computed live from their orbits, not misread as
             //      one object's distance from the sun.
