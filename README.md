@@ -30,9 +30,6 @@ An AI guide powered by Google's Gemma running locally through [NovaSaur](https:/
 ### 🎮 Play
 Quizzes (5 to 100 questions, dinosaurs / space / mixed), Dino Battles with stat-driven verdicts that argue each matchup like a sports column, daily featured creatures, a **Surprise Me** button that pulls a creature or world you haven't met yet, and streak + discovery counters to keep explorers coming back.
 
-### 🎨 Seven app themes
-Full looks — wallpaper plus a matching colour palette on every page — switched with a seamless cross-fade: warm parchment, black & gold, ember twilight, starry midnight, aurora, nebula, and the app's own hand-painted DinoSpace artwork.
-
 ---
 
 ## Engineering notes
