@@ -131,7 +131,8 @@ namespace dinospace.Views
                 var card = Ui.Card(row, 14, new Thickness(12, 10));
                 Ui.OnTap(card, async (_, _) =>
                 {
-                    if (data is Dinosaur d) await Nav.OpenDino(d);
+                    if (k.StartsWith("c:")) await Nav.Push(() => new CreationDetailPage(k[2..]));
+                    else if (data is Dinosaur d) await Nav.OpenDino(d);
                     else if (data is SpaceObject s) await Nav.OpenSpace(s);
                 });
                 _entriesArea.Add(card);

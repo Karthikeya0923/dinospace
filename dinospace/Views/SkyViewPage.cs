@@ -14,11 +14,11 @@ using Microsoft.Maui.Graphics;
 namespace dinospace.Views
 {
     // Scan Sky — hold your phone up and the live camera view fills the screen
-    // with stars, constellation figures, planets and the moon drawn over it,
-    // exactly where they really are. A target card names whatever's under the
-    // crosshair (with a Learn More link into the encyclopedia), a compass rose
-    // shows your heading, and a red night-vision mode protects dark-adapted
-    // eyes. No camera? No problem — a rendered night sky stands in.
+    // with stars, constellation figures, planets and the moon drawn over it in
+    // white, exactly where they really are. A target card names whatever's
+    // under the crosshair (with Learn More and Ask NovaSaur), and a compass
+    // rose shows your heading. No camera? No problem — a rendered night sky
+    // stands in.
     public class SkyViewPage : ContentPage
     {
         private readonly double _lat, _lon;
@@ -36,7 +36,7 @@ namespace dinospace.Views
         private SpaceObject? _learnTarget;
 
         private double _az = 180, _alt = 30;
-        private bool _sensorMode, _cameraOn, _night;
+        private bool _sensorMode, _cameraOn;
         private bool _dirty = true;
         private bool _starting;
         private IDispatcherTimer? _timer;
@@ -70,7 +70,7 @@ namespace dinospace.Views
             };
             _view.GestureRecognizers.Add(pan);
 
-            // ----- top bar: close · title · night toggle -----
+            // ----- top bar: close · title -----
             var close = ChromeButton(Ui.Icon(Ui.IconClose, 22, Colors.White));
             Ui.OnTap(close, async (_, _) =>
             {
@@ -82,27 +82,14 @@ namespace dinospace.Views
             {
                 Text = "Scan Sky",
                 FontFamily = Ui.Display, FontSize = 22, TextColor = Colors.White,
-                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
+                HorizontalOptions = LayoutOptions.Start, VerticalOptions = LayoutOptions.Center
             };
 
-            var night = ChromeButton(new Label { Text = "☾", FontSize = 20, TextColor = Colors.White, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center });
-            Ui.OnTap(night, (_, _) =>
-            {
-                _night = !_night;
-                _drawable.NightMode = _night;
-                _rose.NightMode = _night;
-                _hint.TextColor = _night ? Color.FromArgb("#C2503C") : Color.FromArgb("#B9BDD1");
-                _dirty = true;
-            });
-            Ui.Describe(night, "Toggle red night-vision mode");
-
-            var topBar = new Grid { Padding = new Thickness(14, 14, 14, 0), ColumnSpacing = 8, VerticalOptions = LayoutOptions.Start };
+            var topBar = new Grid { Padding = new Thickness(14, 14, 14, 0), ColumnSpacing = 10, VerticalOptions = LayoutOptions.Start };
             topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             topBar.Add(close, 0, 0);
             topBar.Add(title, 1, 0);
-            topBar.Add(night, 2, 0);
 
             // ----- target card (top-right, under the bar) -----
             _targetName = new Label { FontFamily = Ui.Display, FontSize = Ui.S(19), TextColor = Colors.White };
@@ -157,7 +144,9 @@ namespace dinospace.Views
                 Padding = new Thickness(14, 12),
                 MaximumWidthRequest = 250,
                 HorizontalOptions = LayoutOptions.End, VerticalOptions = LayoutOptions.Start,
-                Margin = new Thickness(0, 74, 14, 0),
+                // Sits up in the top-right, filling the space the old
+                // night-vision toggle used to occupy.
+                Margin = new Thickness(0, 16, 14, 0),
                 IsVisible = false
             };
 
@@ -304,10 +293,33 @@ namespace dinospace.Views
                 _camera = new CameraView { InputTransparent = true };
                 _root.Insert(0, _camera);
                 _camCts = new CancellationTokenSource();
-                await _camera.StartCameraPreview(_camCts.Token);
-                _cameraOn = true;
-                _drawable.CameraBehind = true;   // overlay goes transparent, no painted sky
-                _dirty = true;
+
+                // The flaky part: StartCameraPreview only works once the native
+                // view exists, and the landscape rotation recreates it a beat
+                // later. Calling too early silently no-ops into a blank frame —
+                // that was the "navy background instead of the camera" bug. So
+                // we wait for the handler to attach, then start, and retry a
+                // few times because the first call right after a rotation can
+                // still miss. Simple loop, but it makes the camera reliable.
+                for (int attempt = 0; attempt < 6 && !_cameraOn; attempt++)
+                {
+                    for (int i = 0; i < 20 && _camera?.Handler == null; i++)
+                        await System.Threading.Tasks.Task.Delay(50);
+                    if (_camera == null) return;               // page left mid-start
+                    try
+                    {
+                        await _camera.StartCameraPreview(_camCts.Token);
+                        _cameraOn = true;
+                        _drawable.CameraBehind = true;         // overlay goes transparent, no painted sky
+                        _dirty = true;
+                    }
+                    catch
+                    {
+                        await System.Threading.Tasks.Task.Delay(250);   // let rotation/layout settle, then retry
+                    }
+                }
+
+                if (!_cameraOn) StopCamera();                  // give up gracefully -> painted sky
             }
             catch
             {
@@ -421,7 +433,7 @@ namespace dinospace.Views
                 }
             }
 
-            // fall back to the constellation region (all 35, not just figures)
+            // fall back to the constellation region (all 88, not just figures)
             if (name == null)
             {
                 Constellation? nearest = null; double bestSep = 26;
@@ -464,7 +476,6 @@ namespace dinospace.Views
         public double CenterAz = 180, CenterAlt = 30;
         public double FovDeg = 95;
         public bool CameraBehind;
-        public bool NightMode;
 
         public void Draw(ICanvas canvas, RectF rect)
         {
@@ -472,19 +483,21 @@ namespace dinospace.Views
             var v = new SkyMap.View(Lat, Lon, utc, CenterAz, CenterAlt, FovDeg, Math.Max(rect.Width, rect.Height));
             canvas.Antialias = true;
 
-            Color lineC = NightMode ? Color.FromArgb("#8A2A1E") : Color.FromArgb("#7A93CF");
-            Color labelC = NightMode ? Color.FromArgb("#C2503C") : Color.FromArgb("#A9B7DB");
-            Color starC = NightMode ? Color.FromArgb("#FF6B52") : Colors.White;
-            Color bodyC = NightMode ? Color.FromArgb("#FF7A5C") : Color.FromArgb("#FFD98C");
-            Color dsoC = NightMode ? Color.FromArgb("#D45540") : Color.FromArgb("#9AE8C8");
+            // White lines and labels read clearly against the real dark sky
+            // behind the camera — far easier to see than the old blue.
+            Color lineC = Colors.White;
+            Color labelC = Color.FromArgb("#EEF1F8");
+            Color starC = Colors.White;
+            Color bodyC = Color.FromArgb("#FFD98C");
+            Color dsoC = Color.FromArgb("#9AE8C8");
 
             // painted sky only when there's no camera behind us
             if (!CameraBehind)
             {
                 var paint = new LinearGradientPaint
                 {
-                    StartColor = NightMode ? Color.FromArgb("#120303") : Color.FromArgb("#05070F"),
-                    EndColor = NightMode ? Color.FromArgb("#2A0A06") : Color.FromArgb("#16203C"),
+                    StartColor = Color.FromArgb("#05070F"),
+                    EndColor = Color.FromArgb("#16203C"),
                     StartPoint = new Point(0, 0),
                     EndPoint = new Point(0, 1)
                 };
@@ -550,7 +563,7 @@ namespace dinospace.Views
                 var (x, y, vis) = SkyMap.Project(alt, az, v);
                 if (!vis) continue;
                 float r = (float)Math.Max(1.8, 6.5 - s.Mag * 2.0);
-                Color core = NightMode ? starC : s.Colour switch
+                Color core = s.Colour switch
                 {
                     "red" or "red-orange" => Color.FromArgb("#FFAA80"),
                     "orange" => Color.FromArgb("#FFC888"),
@@ -594,11 +607,11 @@ namespace dinospace.Views
                 DrawBody(canvas, v, ra, dec, b.ToString(), 5.5f, bodyC, labelC, utc);
             }
             var (mra2, mdec2) = SkyCalc.MoonRaDec(jd);
-            DrawBody(canvas, v, mra2, mdec2, "Moon", 11, NightMode ? Color.FromArgb("#FF8A70") : Color.FromArgb("#F2ECD8"), labelC, utc);
+            DrawBody(canvas, v, mra2, mdec2, "Moon", 11, Color.FromArgb("#F2ECD8"), labelC, utc);
 
             // compass letters along the horizon
             (string t, double az)[] cardinals = { ("N", 0), ("NE", 45), ("E", 90), ("SE", 135), ("S", 180), ("SW", 225), ("W", 270), ("NW", 315) };
-            canvas.FontColor = NightMode ? Color.FromArgb("#E0604A") : Color.FromArgb("#7FB4FF");
+            canvas.FontColor = Color.FromArgb("#BFD2FF");
             canvas.FontSize = 17;
             foreach (var (t, az) in cardinals)
             {
@@ -646,7 +659,6 @@ namespace dinospace.Views
     public class CompassRoseDrawable : IDrawable
     {
         public double HeadingDeg;
-        public bool NightMode;
 
         public void Draw(ICanvas canvas, RectF rect)
         {
@@ -654,8 +666,8 @@ namespace dinospace.Views
             float r = Math.Min(cx, cy) - 3;
             canvas.Antialias = true;
 
-            Color ring = NightMode ? Color.FromArgb("#8A2A1E") : Color.FromArgb("#6C7FA8");
-            Color text = NightMode ? Color.FromArgb("#E0604A") : Color.FromArgb("#C9D3EA");
+            Color ring = Color.FromArgb("#C9D3EA");
+            Color text = Colors.White;
 
             canvas.FillColor = Color.FromArgb("#8A0E1526");
             canvas.FillCircle(cx, cy, r);
@@ -677,7 +689,7 @@ namespace dinospace.Views
             float nx = cx + (float)(Math.Sin(n) * (r - 14)), ny = cy - (float)(Math.Cos(n) * (r - 14));
             float sx = cx - (float)(Math.Sin(n) * (r - 18)), sy = cy + (float)(Math.Cos(n) * (r - 18));
             canvas.StrokeSize = 3f;
-            canvas.StrokeColor = NightMode ? Color.FromArgb("#FF5A40") : Color.FromArgb("#E5484D");
+            canvas.StrokeColor = Color.FromArgb("#E5484D");
             canvas.DrawLine(cx, cy, nx, ny);
             canvas.StrokeColor = text.WithAlpha(0.6f);
             canvas.DrawLine(cx, cy, sx, sy);

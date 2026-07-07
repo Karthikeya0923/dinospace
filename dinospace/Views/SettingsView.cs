@@ -38,8 +38,10 @@ namespace dinospace.Views
             stack.Add(_journey);
 
             // Preferences
-            // Visuals — themes and type size.
+            // Visuals — layout, themes and type size.
             stack.Add(Ui.SectionHeader("Visuals"));
+            stack.Add(LinkRow("Choose a layout", CurrentLayoutName(), async () => await Nav.Push(() => new LayoutsPage())));
+            stack.Add(Rule());
             stack.Add(LinkRow("Choose a theme", CurrentThemeName(), async () => await Nav.Push(() => new ThemesPage())));
             stack.Add(Rule());
             stack.Add(TextSizeRow());
@@ -100,6 +102,8 @@ namespace dinospace.Views
                 if (s.Id == Theme.CurrentId) return s.Name;
             return Theme.Wallpapers[0].Name;
         }
+
+        private static string CurrentLayoutName() => AppLayout.Playful ? "Playful" : "Native";
 
         // Off / Light / Medium / Strong — a toggle wasn't enough, people feel
         // vibration very differently phone to phone.

@@ -60,7 +60,7 @@ namespace dinospace.Services
         }
 
         // "d:Spinosaurus" -> the entry's display bits, or null if it was
-        // removed from the encyclopedia.
+        // removed from the encyclopedia. "c:<id>" resolves a user creation.
         public static (string image, string title, string meta, object data)? Resolve(string entry)
         {
             if (entry.StartsWith("d:"))
@@ -73,11 +73,19 @@ namespace dinospace.Services
                 var s = SpaceData.ByName(entry[2..]);
                 return s == null ? null : (s.ImageFile, s.Name, s.TypeLabel, s);
             }
+            if (entry.StartsWith("c:"))
+            {
+                var c = CreationStore.Get(entry[2..]);
+                if (c == null) return null;
+                object data = c.Kind == Models.CreationKind.Dinosaur ? c.ToDinosaur() : (object)c.ToSpaceObject();
+                return (c.ImagePath, c.Name, c.MetaLine, data);
+            }
             return null;
         }
 
         public static string KeyFor(object data) => data switch
         {
+            Models.UserCreation c => "c:" + c.Id,
             Models.Dinosaur d => "d:" + d.Name,
             Models.SpaceObject s => "s:" + s.Name,
             _ => ""

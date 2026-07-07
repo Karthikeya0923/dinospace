@@ -34,13 +34,14 @@ namespace dinospace.Services
             var screened = NovaGuard.Screen(q);
             if (screened != null) { turn.InstantReply = screened; return turn; }
 
-            // 3. grounding
+            // 3. grounding (used only to spot an encyclopedia entry we can
+            //    answer instantly and to carry "it"/"they" across follow-ups —
+            //    NOT to build the model prompt).
             var g = Retriever.Ground(q, carryover);
             turn.Entities = g.Entities;
 
             // 3.4 Creative asks ("tell me a story about a T. Rex astronaut")
-            //     go straight to the model — that's what it's FOR. Any matched
-            //     facts ride along so the story stays anchored in reality.
+            //     go straight to the model — that's what it's FOR.
             bool creative = IsCreative(q);
 
             // 3.5 Otherwise answer straight from the vetted encyclopedia
@@ -52,19 +53,11 @@ namespace dinospace.Services
                 if (direct != null) { turn.InstantReply = direct; return turn; }
             }
 
-            // 4. topic gate (generous — a creative ask with any dino or space
-            //    flavour is welcome)
-            bool hasCarryover = carryover is { Count: > 0 };
-            bool flavoured = g.HasEntity || g.HasKnowledge ||
-                             new[] { "dino", "dinosaur", "space", "planet", "star", "moon", "astronaut", "rocket", "galaxy", "comet", "asteroid", "alien", "fossil" }
-                                 .Any(w => (" " + q + " ").Contains(w));
-            if (!(creative && flavoured) && !NovaGuard.OnTopic(q, g.HasEntity, g.HasKnowledge, hasCarryover))
-            {
-                turn.InstantReply = NovaGuard.OffTopic;
-                return turn;
-            }
-
-            // 5. compose
+            // 4. Everything the encyclopedia didn't answer goes to the model.
+            //    There is NO hard topic gate any more — that was what made Nova
+            //    "only answer the chip questions" and reject anything typed. The
+            //    model's own instructions keep it kindly on-topic; a canned
+            //    refusal in front of it just made the app feel broken.
             turn.Prompt = Compose(question, creative);
             return turn;
         }

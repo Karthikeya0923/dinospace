@@ -10,25 +10,39 @@ namespace dinospace.Services
     // Reliability model (learned the hard way):
     //
     //  1. ONE inference at a time. Starting a new conversation while an old
-    //     one is still generating wedges the engine permanently, so the lock
-    //     is held INSIDE the worker task — if a call times out for the UI,
-    //     the abandoned task keeps holding the lock until the native engine
-    //     actually finishes, and two inferences can never overlap.
+    //     one is still generating wedges the engine, so the lock is held
+    //     INSIDE the worker task. Every question queues on that lock — a new
+    //     question simply waits its turn instead of racing or being rejected.
     //
-    //  2. FRESH ENGINE per answer. All conversations share one native token
-    //     budget, so a long-lived engine goes quiet after a few questions.
-    //     After every model answer (or timeout) the engine is reloaded in the
-    //     background; each question is fully independent — no chat history,
-    //     no leftover state, question 50 behaves like question 1.
+    //  2. PERIODIC RELOAD. LiteRT-LM's conversations share one native token
+    //     budget, so a long-lived engine goes quiet after a handful of
+    //     questions (the old "only 3 answers" bug). So before an inference,
+    //     if the engine has already answered a couple of times (or a previous
+    //     call errored), it is reloaded first — inside the same lock, so it
+    //     can never overlap an inference. Bounded budget use, self-healing,
+    //     and the reload cost is only paid every few questions, not every one.
+    //
+    //  3. THE IDLE CLOCK STARTS AT INFERENCE. Time spent queued behind another
+    //     answer or a reload does NOT count against the "is it stuck?" timeout,
+    //     so a question that waited its turn still gets its full chance to
+    //     answer instead of being cut off as a false timeout.
     public static class NovaSaurService
     {
         private static readonly SemaphoreSlim _lock = new(1, 1);
 
-        // The UI-facing cap. The native call may run longer in the background;
-        // the lock protects the engine while it does. Kept fairly short because
-        // the common questions are now answered instantly without the model, so
-        // this only bounds the rarer open-ended fallbacks.
-        private static readonly TimeSpan AnswerTimeout = TimeSpan.FromSeconds(30);
+        // How many model answers to allow before the engine is reloaded. Set
+        // to 1 so every question after the first runs on a completely fresh
+        // engine: the small model can't carry state between questions, so we
+        // give each one a clean slate. Reloads happen inside the lock, so an
+        // inference and a reload can never overlap.
+        private const int AnswersPerReload = 1;
+
+        // The UI-facing cap for the blocking Ask() path.
+        private static readonly TimeSpan AnswerTimeout = TimeSpan.FromSeconds(45);
+
+        // Engine health, guarded by _lock (only touched while it's held).
+        private static int _answersSinceReload;
+        private static bool _forceReloadNext;
 
         public static bool SupportedPlatform =>
 #if ANDROID
@@ -77,22 +91,13 @@ namespace dinospace.Services
         }
 
 #if ANDROID
-        // Every question runs against a freshly loaded engine. LiteRT-LM draws
-        // all conversations from one shared token budget, so an engine that
-        // isn't reloaded stops answering after a handful of questions — this
-        // was the "NovaSaur only answers 3 questions" bug. The reload happens
-        // in the background right after an answer (or a timeout/failure, which
-        // also un-wedges a stuck engine); it queues on the same lock as
-        // inference so the two can never overlap.
-        private static void ScheduleReset()
+        // Reload the engine when its budget may be low or a previous call left
+        // it in a bad state. Must be called with _lock held.
+        private static void ReloadIfNeeded()
         {
-            _ = Task.Run(async () =>
-            {
-                await _lock.WaitAsync(CancellationToken.None);
-                try { Com.Novasaur.NovaSaurModule.Reset(); }
-                catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova reset: " + ex); }
-                finally { _lock.Release(); }
-            });
+            if (!_forceReloadNext && _answersSinceReload < AnswersPerReload) return;
+            try { Com.Novasaur.NovaSaurModule.Reset(); _answersSinceReload = 0; _forceReloadNext = false; }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova reload: " + ex); }
         }
 #endif
 
@@ -110,38 +115,36 @@ namespace dinospace.Services
         }
 
         // Runs one prompt to completion and returns the cleaned answer, or a
-        // friendly message on timeout/failure. Never hangs the UI: the caller
-        // always gets a reply within AnswerTimeout.
+        // friendly message on timeout/failure. Never hangs the UI.
         public static async Task<string> AskAsync(string prompt, CancellationToken ct)
         {
 #if ANDROID
-            // If a previous (possibly abandoned/slow) inference still holds the
-            // engine, don't queue behind it for 45s -- tell the user instantly.
-            // Two inferences can never run at once, which keeps the engine safe.
-            if (_lock.CurrentCount == 0)
-                return BusyMessage;
-
+            long inferenceStart = 0;
             var work = Task.Run(async () =>
             {
-                // Lock acquired inside the task: an abandoned (timed-out) call
-                // keeps holding it until the engine really finishes, so the
-                // next question can't start a second overlapping inference.
                 await _lock.WaitAsync(CancellationToken.None);
-                try { return Com.Novasaur.NovaSaurModule.Ask(prompt); }
+                try
+                {
+                    ReloadIfNeeded();
+                    inferenceStart = Environment.TickCount64;
+                    string? r = Com.Novasaur.NovaSaurModule.Ask(prompt);
+                    _answersSinceReload++;
+                    return r;
+                }
                 finally { _lock.Release(); }
             }, CancellationToken.None);
 
-            var finished = await Task.WhenAny(work, Task.Delay(AnswerTimeout, ct));
-
-            // Whatever happened, the engine gets reloaded before the next
-            // question — fresh answers every time, and a hung call recovers.
-            ScheduleReset();
-
-            if (finished != work)
+            // Only start counting the timeout once inference actually begins;
+            // queue/reload time doesn't count against it.
+            while (!work.IsCompleted)
             {
-                // Swallow the abandoned task's eventual result/exception.
-                _ = work.ContinueWith(t => { _ = t.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
-                return TimeoutMessage;
+                await Task.Delay(300, CancellationToken.None);
+                if (inferenceStart != 0 && Environment.TickCount64 - inferenceStart > AnswerTimeout.TotalMilliseconds)
+                {
+                    _forceReloadNext = true;   // the abandoned call may leave the engine unhealthy
+                    _ = work.ContinueWith(t => { _ = t.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
+                    return TimeoutMessage;
+                }
             }
 
             string? raw;
@@ -149,13 +152,15 @@ namespace dinospace.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("NovaSaur ask: " + ex);
+                _forceReloadNext = true;
                 return ErrorMessage;
             }
 
-            if (raw == null) return ErrorMessage;
+            if (raw == null) { _forceReloadNext = true; return ErrorMessage; }
             if (raw.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase))
             {
                 System.Diagnostics.Debug.WriteLine("NovaSaur bridge: " + raw);
+                _forceReloadNext = true;
                 return ErrorMessage;
             }
 
@@ -168,26 +173,31 @@ namespace dinospace.Services
 #endif
         }
 
-        // Streams the answer token by token, ChatGPT-style — the first words
-        // appear in about the time the old blocking call took to *start*.
-        // Same one-at-a-time locking as AskAsync; a sliding inactivity window
-        // replaces the flat timeout, so long answers aren't cut off while
-        // they're still visibly typing.
+        // Streams the answer token by token, ChatGPT-style. Same one-at-a-time
+        // locking as AskAsync; a sliding inactivity window (that only starts
+        // once inference begins) replaces a flat timeout, so long answers
+        // aren't cut off while they're still visibly typing, and a question
+        // that waited in the queue isn't punished for the wait.
         public static async Task<string> AskStreamAsync(string prompt, Action<string> onToken, CancellationToken ct)
         {
 #if ANDROID
-            if (_lock.CurrentCount == 0)
-                return BusyMessage;
-
             var sb = new System.Text.StringBuilder();
             var done = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-            long lastActivity = Environment.TickCount64;
+            long lastActivity = 0;
+            bool inferenceStarted = false;
 
             var work = Task.Run(async () =>
             {
                 await _lock.WaitAsync(CancellationToken.None);
                 try
                 {
+                    ReloadIfNeeded();
+
+                    // Inference is starting NOW — start the idle clock here so
+                    // the queue/reload wait isn't counted as "stuck".
+                    lastActivity = Environment.TickCount64;
+                    inferenceStarted = true;
+
                     var relay = new StreamRelay(
                         token => { lock (sb) sb.Append(token); lastActivity = Environment.TickCount64; onToken(token); },
                         () => { string full; lock (sb) full = sb.ToString(); done.TrySetResult(full); },
@@ -196,38 +206,41 @@ namespace dinospace.Services
                     // hold the lock until the native side reports done (or a
                     // hard cap, so a silent native failure can't wedge us)
                     var finished = await Task.WhenAny(done.Task, Task.Delay(TimeSpan.FromMinutes(3)));
-                    return finished == done.Task ? await done.Task : "ERROR:stream never completed";
+                    string result = finished == done.Task ? await done.Task : "ERROR:stream never completed";
+                    if (!result.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase)) _answersSinceReload++;
+                    return result;
                 }
                 finally { _lock.Release(); }
             }, CancellationToken.None);
 
-            // watch from the outside: generous while tokens are flowing,
-            // impatient when nothing is happening
+            // Watch from the outside: patient while queued, generous while
+            // tokens flow, impatient only when inference has started and then
+            // gone silent.
             while (!work.IsCompleted)
             {
                 await Task.Delay(400, CancellationToken.None);
+                if (!inferenceStarted) continue;          // still queued or reloading — keep waiting
                 long idleMs = Environment.TickCount64 - lastActivity;
                 bool started; lock (sb) started = sb.Length > 0;
-                if ((!started && idleMs > 30_000) || (started && idleMs > 20_000))
+                if ((!started && idleMs > 45_000) || (started && idleMs > 25_000))
                 {
-                    ScheduleReset();   // recover the engine behind the scenes
+                    _forceReloadNext = true;              // recover the engine before the next question
                     return TimeoutMessage;
                 }
             }
-
-            // Reload before the next question — every answer starts fresh.
-            ScheduleReset();
 
             string raw;
             try { raw = await work; }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("NovaSaur stream: " + ex);
+                _forceReloadNext = true;
                 return ErrorMessage;
             }
             if (raw.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase))
             {
                 System.Diagnostics.Debug.WriteLine("NovaSaur stream: " + raw);
+                _forceReloadNext = true;
                 return ErrorMessage;
             }
             string cleaned = PromptBuilder.Clean(raw);
@@ -257,7 +270,7 @@ namespace dinospace.Services
 #endif
 
         public const string TimeoutMessage =
-            "That one's taking me a while to think through. Give me a few seconds to catch my breath, then try asking it a shorter way!";
+            "Phew, that one's a real brain-bender! Give me a few seconds to catch my breath, then try asking it a shorter way.";
         public const string ErrorMessage =
             "Something went sideways answering that. Give it another try in a moment.";
         public const string BusyMessage =

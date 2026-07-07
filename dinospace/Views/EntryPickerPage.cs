@@ -94,6 +94,13 @@ namespace dinospace.Views
         {
             string q = Retriever.Normalize(query);
             _items.Clear();
+
+            // Your own creations come first — they're the reason you opened
+            // this, and they mix into any list right alongside the built-ins.
+            foreach (var c in CreationStore.All())
+                if (q.Length == 0 || Retriever.Normalize(c.Name).Contains(q))
+                    _items.Add(new EntryRow { Image = c.ImagePath, Title = c.Name, Meta = "★ " + c.MetaLine, Data = c });
+
             foreach (var d in DinoData.All.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
                 if (q.Length == 0 || Retriever.Normalize(d.Name).Contains(q))
                     _items.Add(new EntryRow { Image = d.ImageFile, Title = d.Name, Meta = "Dinosaur · " + d.Era, Data = d });

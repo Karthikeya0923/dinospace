@@ -9,7 +9,7 @@ DinoSpace blends the two things every kid (and plenty of adults) can't get enoug
 ![Framework](https://img.shields.io/badge/framework-.NET%20MAUI-purple)
 ![Status](https://img.shields.io/badge/status-Play%20Store%20prep-orange)
 
-(add screenshot of home screen) (add screenshot of Sky Tonight) (add screenshot of Scan Sky in landscape with the camera + star overlay) (add screenshot of NovaSaur chat) (add screenshot of a dino detail page) (add screenshot of Dino Battle) (add screenshot of a quiz) (add screenshot of the themes picker)
+(add screenshot of home screen — Native layout) (add screenshot of home screen — Playful layout) (add screenshot of Sky Tonight) (add screenshot of Scan Sky in landscape with the camera + white star overlay) (add screenshot of NovaSaur chat) (add screenshot of a dino detail page) (add screenshot of Your Creations — the drawing studio) (add screenshot of Dino Battle with "Include my creatures" on) (add screenshot of a quiz) (add screenshot of the layout picker) (add screenshot of the themes picker)
 
 ---
 
@@ -19,23 +19,30 @@ DinoSpace blends the two things every kid (and plenty of adults) can't get enoug
 33 dinosaurs and prehistoric creatures, 23 space objects — every entry hand-written and fact-checked against sources like NASA and published paleontology research. Stats, fun facts, behaviour, habitat, era, and full-page write-ups, with search, category filters, bookmarks, and curated ranked collections.
 
 ### 🔭 Scan Sky — point your phone at the sky
-Hold your phone up and the live camera fills the screen, with stars, constellation stick-figures, planets and the moon drawn over the real sky exactly where they are — the page flips into landscape automatically for a natural two-hands grip. Aim the crosshair at anything and a card names it, links into the encyclopedia, and offers **Ask NovaSaur** for whatever's under the crosshair. Night-vision red mode protects dark-adapted eyes; no camera (or no permission) falls back to a rendered sky, and drag-to-explore works with no sensors at all.
+Hold your phone up and the live camera fills the screen, with stars, constellation stick-figures, planets and the moon drawn over the real sky in clean white lines exactly where they are — the page flips into landscape automatically for a natural two-hands grip. Aim the crosshair at anything and a card names it, links into the encyclopedia, and offers **Ask NovaSaur** for whatever's under the crosshair. No camera (or no permission) falls back to a rendered sky, and drag-to-explore works with no sensors at all.
 
 ### 🌙 Sky Tonight
 Open the app and it tells you what's above you *right now*: the moon's phase (drawn with the real terminator curve), moonrise and moonset, which planets are visible and where to look, the constellations overhead, sunset/sunrise, the moment the sky gets *properly* dark, and the next meteor shower with a moonlight forecast. All of it is computed on-device by [SkyScanner](https://github.com/Karthikeya0923/SkyScanner), an astronomy engine verified against NASA JPL's Horizons ephemeris to within a few hundredths of a degree. Location is optional — say no and you still get a general Northern-sky view. A built-in "Learn the sky" page explains every moon phase and how to tell a planet from a star.
 
 ### 🤖 Ask NovaSaur
-An AI guide powered by Google's Gemma running locally through [NovaSaur](https://github.com/Karthikeya0923/novasaur), the inference engine built for this app. Anything askable by name answers **instantly** from the hand-checked encyclopedia and a 64-topic knowledge base — verified by an in-repo harness that runs 124 typed-style questions through the production pipeline (`tools/AnswerHarness`). Live sky questions ("where is Jupiter right now?", "when is the next meteor shower?") are answered by the astronomy engine with tonight's real answer — something a frozen language model could never know. Open-ended and creative questions stream from the LLM token by token, ChatGPT-style; every question is answered fresh, and the engine reloads itself between answers, so the hundredth question is as sharp as the first and the chat can never hang.
+An AI guide powered by Google's Gemma running locally through [NovaSaur](https://github.com/Karthikeya0923/novasaur), the inference engine built for this app. Anything askable by name answers **instantly** from the hand-checked encyclopedia and a 70-topic knowledge base — verified by an in-repo harness that runs 124 typed-style questions through the production pipeline (`tools/AnswerHarness`). Live sky questions ("where is Jupiter right now?", "when is the next meteor shower?") are answered by the astronomy engine with tonight's real answer — something a frozen language model could never know. Everything else goes straight to the model — there is no topic wall that bounces typed questions. Open-ended answers stream token by token, ChatGPT-style; the engine handles exactly one question at a time and reloads itself before each new one, so every answer starts on a completely clean slate and the chat can never hang or clog up.
+
+### 🎨 Your Creations — draw your own
+A simple, fun paint studio: draw a dinosaur or a space object with real finger-strokes (colours, brush sizes, eraser, undo), then fill in its stats — name, pronunciation, name meaning, era, diet, size, weight, speed, bite force, an about section and fun facts, exactly like a real encyclopedia entry. Your creations get their own gallery, drop into your custom lists, and the dinosaurs you draw can march straight into **Dino Battle** with an "Include my creatures" toggle — your drawing and all. (They're yours, so there's no Ask-NovaSaur button, and they stay out of Surprise Me.)
 
 ### 🎮 Play
 Quizzes (5 to 100 questions, dinosaurs / space / mixed), Dino Battles with stat-driven verdicts that argue each matchup like a sports column, daily featured creatures, a **Surprise Me** button that pulls a creature or world you haven't met yet, and streak + discovery counters to keep explorers coming back.
+
+### 🪄 Two layouts, one app
+A whole second look you can switch to instantly, with the same seamless cross-fade the themes use. **Native** is the grown-up editorial style — elegant serif headlines, a flat tab bar. **Playful** is built for 5-to-10-year-olds: big rounded Baloo headlines, a "Hi there, explorer!" home screen, chunky buttons, and a bubbly tab bar. Same features, completely different feel. Choose it under Settings → Choose a layout. Five full themes (including the cheerful new **Stickers** sheet of cute green dinos) sit alongside, under Choose a theme.
 
 ---
 
 ## Engineering notes
 
-- **All-C# UI** — every screen is built in code (no XAML pages), on a small component kit with a serif/sans editorial design system and design tokens for theming.
-- **Instant-first answering** — a typo-tolerant matcher (aliases, edit distance, kid abbreviations) routes questions to the encyclopedia, the knowledge base, or the live astronomy engine before the model is ever considered; follow-up pronouns ("how fast was *it*?") resolve against the last-mentioned entities. The model handles only the genuinely open-ended remainder, one clean question at a time, with a full engine reload between answers.
+- **All-C# UI** — every screen is built in code (no XAML pages), on a small component kit with design tokens. Both the **theme** (palette + wallpaper) and the **layout** (fonts, shapes, tab bar, home screen) are switchable at runtime and re-skin the whole app with a freeze-frame cross-fade.
+- **Instant-first answering** — a typo-tolerant matcher (aliases, edit distance, kid abbreviations) routes questions to the encyclopedia, the knowledge base, or the live astronomy engine before the model is ever considered; follow-up pronouns ("how fast was *it*?") resolve against the last-mentioned entities. Everything else goes straight to the model — one question at a time, with a full engine reload before each new question so the small model always starts clean.
+- **On-device drawing** — the Your Creations studio captures finger-strokes via pointer events, renders them live through `Microsoft.Maui.Graphics`, and rasterises to a PNG with a native Android canvas; creations convert into the same models the built-in encyclopedia uses, so they battle and list like any other entry.
 - **3 GB model delivery** — the AI model ships via Google Play Asset Delivery in 1 GB chunks and assembles on first run; a resumable in-app download is the fallback. No notification or foreground-service permissions needed.
 - **True edge-to-edge** — window insets are intercepted natively so the tab bar and chat input reach the physical bottom edge of the screen on every Android version.
 - **Zero-warning build** — the project compiles with 0 errors and 0 warnings.
@@ -65,15 +72,17 @@ Tracked in detail on the [project board →](https://github.com/users/Karthikeya
 - [x] Quizzes (slider from 5 to 100 questions), Dino Battles with stat-driven verdicts, streaks
 - [x] Sky Tonight — live moon phase, visible planets & constellations, NASA-verified math
 - [x] Learn the Sky — every moon phase and sky-watching basics, explained for kids
-- [x] Custom lists — build and mix your own dino/space collections
-- [x] Scan Sky — camera passthrough with a live star overlay, landscape mode, night-vision mode, target card with Learn More & Ask NovaSaur
-- [x] Streaming AI answers + 64-topic knowledge base, verified by a 124-question harness
-- [x] Fresh-engine-per-answer AI: every question independent, automatic recovery, no long-session decay
+- [x] Custom lists — build and mix your own dino/space collections (your creations included)
+- [x] Scan Sky — camera passthrough with a live white star overlay, automatic landscape, all 88 constellations, target card with Learn More & Ask NovaSaur
+- [x] Streaming AI answers + 70-topic knowledge base, verified by a 124-question harness
+- [x] Reset-per-question AI: one question at a time, a clean engine before every answer, no long-session decay, and no topic wall
+- [x] Your Creations — a drawing studio with full stats, its own gallery, custom-list support, and a Dino Battle "Include my creatures" toggle
+- [x] Two switchable layouts — grown-up **Native** and kid-first **Playful** — with a seamless cross-fade
 - [x] Live sky answers in chat — "where is Jupiter right now?", "when is the next meteor shower?"
 - [x] Meteor showers on Sky Tonight — active shower, next peak, moonlight forecast
 - [x] Moonrise/moonset and true astronomical-dark times
 - [x] Surprise Me discovery, daily streak & discovery counters
-- [x] Seven full themes with wallpapers, switched with a seamless cross-fade
+- [x] Five full themes with wallpapers — including the new **Stickers** theme — switched with a seamless cross-fade
 - [x] True edge-to-edge UI, haptic strength control, adjustable text size
 - [x] Zero-warning build; AI answer pipeline covered by an automated test harness
 

@@ -24,11 +24,20 @@ namespace dinospace.Services
         }
 
         // Theme id ("theme1".."theme7"); old installs may still say "classic",
-        // which Theme.ApplyCurrent maps onto Fossil / Dark Mode.
+        // which Theme.ApplyCurrent maps onto Fossil / Stickers.
         public static string ThemeId
         {
             get => Preferences.Get("set_theme", "theme1");
             set => Preferences.Set("set_theme", value);
+        }
+
+        // Layout id: "native" (the editorial default) or "playful" (the big,
+        // rounded, kid-first layout). Drives fonts, shapes, the tab bar and
+        // the home screen through AppLayout.
+        public static string LayoutId
+        {
+            get => Preferences.Get("set_layout", "native");
+            set => Preferences.Set("set_layout", value);
         }
 
         // 0 = Small, 1 = Default, 2 = Large, 3 = Extra large.

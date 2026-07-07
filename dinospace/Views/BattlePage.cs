@@ -19,10 +19,14 @@ namespace dinospace.Views
         private Border _fightBtn = null!;
         private View _resetBtn = null!;
         private VerticalStackLayout _resultArea = null!;
+        private bool _includeMine;
 
         public BattlePage(Dinosaur? preselect)
         {
             _a = preselect;
+            // If you launched the battle from one of your own creations, that
+            // side is already picked — so let the other slot pick yours too.
+            if (preselect != null && preselect.Group == "Your creation") _includeMine = true;
             Build();
         }
 
@@ -37,6 +41,10 @@ namespace dinospace.Views
             _arena.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             _arena.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             stack.Add(_arena);
+
+            // Let players throw their own drawn creatures into the ring.
+            if (CreationStore.Dinos().Count > 0)
+                stack.Add(MyCreaturesToggle());
 
             var fightLabel = new Label { Text = "⚔  Battle!", FontFamily = Ui.Fonts, FontSize = Ui.S(16), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center };
             _fightBtn = new Border
@@ -65,6 +73,37 @@ namespace dinospace.Views
             Content = Ui.PageRoot(content);
             RefreshArena();
             SwipeBack.Attach(this);
+        }
+
+        // A tappable checkbox row: "Include my creatures". When on, the picker
+        // adds the dinosaurs you drew yourself alongside the built-in ones.
+        private View MyCreaturesToggle()
+        {
+            var box = new Border
+            {
+                WidthRequest = 26, HeightRequest = 26,
+                BackgroundColor = _includeMine ? Theme.AccentDino : Colors.Transparent,
+                Stroke = _includeMine ? Colors.Transparent : Theme.Hairline, StrokeThickness = 1.5,
+                StrokeShape = new RoundRectangle { CornerRadius = 8 },
+                VerticalOptions = LayoutOptions.Center,
+                Content = _includeMine
+                    ? new Label { Text = "✓", FontSize = 16, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
+                    : null
+            };
+
+            var label = new VerticalStackLayout { Spacing = 1, VerticalOptions = LayoutOptions.Center };
+            label.Add(new Label { Text = "Include my creatures", FontFamily = Ui.Display, FontSize = Ui.S(15.5), TextColor = Theme.TextPrimary });
+            label.Add(new Label { Text = "Add the dinosaurs you drew yourself", FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), TextColor = Theme.TextSecondary });
+
+            var row = new Grid { ColumnSpacing = 12 };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            row.Add(box, 0, 0);
+            row.Add(label, 1, 0);
+
+            var card = Ui.Card(row, 14, new Thickness(12, 10));
+            Ui.OnTap(card, (_, _) => { _includeMine = !_includeMine; AppSettings.Tap(); Build(); });
+            return card;
         }
 
         private void RefreshArena()
@@ -125,7 +164,7 @@ namespace dinospace.Views
             if (empty)
             {
                 string? arena = (isA ? _b : _a)?.Category;
-                Ui.OnTap(card, async (_, _) => await Nav.Push(() => new CreaturePickerPage(picked => Set(isA, picked), arena), animated: false));
+                Ui.OnTap(card, async (_, _) => await Nav.Push(() => new CreaturePickerPage(picked => Set(isA, picked), arena, _includeMine), animated: false));
             }
             return card;
         }

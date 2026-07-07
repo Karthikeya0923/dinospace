@@ -29,7 +29,7 @@ namespace dinospace.Views
 
         private void Build()
         {
-            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(18, 10, 18, 28) };
+            var stack = new VerticalStackLayout { Spacing = AppLayout.Playful ? 20 : 18, Padding = new Thickness(18, AppLayout.Playful ? 14 : 10, 18, 28) };
 
             stack.Add(Masthead());
 
@@ -42,14 +42,26 @@ namespace dinospace.Views
                 "Adventure awaits, explorer.", "What will you discover today?", "Stomp. Zoom. Wonder.",
                 "65 million years in your pocket.", "Somewhere, a star is being born.", "Dig in!"
             };
-            var hello = new Label
+            string helloText = hellos[DateTime.Now.DayOfYear % hellos.Length];
+
+            if (AppLayout.Playful)
             {
-                Text = hellos[DateTime.Now.DayOfYear % hellos.Length],
-                FontFamily = Ui.Display,
-                FontSize = Ui.S(28),
-                TextColor = Theme.TextSecondary
-            };
-            stack.Add(hello);
+                // A big, warm welcome that reads like a friend saying hi.
+                var greet = new VerticalStackLayout { Spacing = 2 };
+                greet.Add(new Label { Text = "Hi there, explorer! 👋", FontFamily = Ui.Display, FontSize = Ui.S(26), TextColor = Theme.TextPrimary });
+                greet.Add(new Label { Text = helloText, FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold, TextColor = Theme.Accent });
+                stack.Add(greet);
+            }
+            else
+            {
+                stack.Add(new Label
+                {
+                    Text = helloText,
+                    FontFamily = Ui.Display,
+                    FontSize = Ui.S(28),
+                    TextColor = Theme.TextSecondary
+                });
+            }
 
             if (ExplorerRow() is View explorer)
                 stack.Add(explorer);
@@ -89,6 +101,7 @@ namespace dinospace.Views
             stack.Add(PlayRow(Ui.IconQuiz, "Quizzes", "Test what you know", async () => await StartQuiz()));
             stack.Add(PlayRow(Ui.IconBolt, "Dino Battle", "Two creatures face off", async () => await Nav.Push(() => new BattlePage(null))));
             stack.Add(PlayRow(Ui.IconList, "Collections", "Curated ranked lists", async () => await Nav.Push(() => new CollectionsListPage())));
+            stack.Add(PlayRow(Ui.IconBrush, "Your Creations", "Draw your own dino or planet", async () => await Nav.Push(() => new CreationsPage())));
             stack.Add(PlayRow(Ui.IconStar, "Surprise Me", "Spin the wheel — meet someone new", async () => await OpenSurprise()));
 
             // Fact

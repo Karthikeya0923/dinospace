@@ -70,6 +70,9 @@
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
+		<!-- The Stickers-theme wallpaper is a vector; rasterise it large so it
+		     stays crisp when drawn full-screen behind every page. -->
+		<MauiImage Update="Resources\Images\stickers.svg" BaseSize="720,1280" Resize="false" />
 
 		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />

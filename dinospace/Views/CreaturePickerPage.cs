@@ -13,13 +13,15 @@ namespace dinospace.Views
     {
         private readonly Action<Dinosaur> _onPick;
         private readonly string? _arena;    // lock picks to one arena: Land / Sea / Flying
+        private readonly bool _includeCreations;
         private readonly ObservableCollection<Dinosaur> _items = new();
         private CollectionView _list = null!;
 
-        public CreaturePickerPage(Action<Dinosaur> onPick, string? arena = null)
+        public CreaturePickerPage(Action<Dinosaur> onPick, string? arena = null, bool includeCreations = false)
         {
             _onPick = onPick;
             _arena = arena;
+            _includeCreations = includeCreations;
             Build();
             Filter("");
             SwipeBack.Attach(this);
@@ -92,7 +94,13 @@ namespace dinospace.Views
         private void Filter(string query)
         {
             string q = Retriever.Normalize(query);
-            var results = DinoData.All
+            var pool = DinoData.All.AsEnumerable();
+
+            // Fold in the user's own drawn dinosaurs when the battle asked for them.
+            if (_includeCreations)
+                pool = pool.Concat(CreationStore.Dinos().Select(c => c.ToDinosaur()));
+
+            var results = pool
                 .Where(d => _arena == null || d.Category == _arena)   // fair fights only
                 .Where(d => q.Length == 0 || Retriever.Normalize($"{d.Name} {string.Join(' ', d.Aliases)}").Contains(q))
                 .OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase);

@@ -11,9 +11,11 @@ namespace dinospace
     // white cards with soft shadows.
     public static class Ui
     {
-        public const string Fonts = "Nunito";        // body sans
-        public const string Display = "Serif";       // DM Serif Display
-        public const string DisplayItalic = "SerifItalic";
+        // Font families are layout-aware: the Playful layout swaps the serif
+        // display for rounded Baloo. Body stays Nunito in both.
+        public static string Fonts => AppLayout.BodyFont;          // body sans
+        public static string Display => AppLayout.DisplayFont;     // DM Serif / Baloo
+        public static string DisplayItalic => AppLayout.DisplayItalicFont;
         // Icon names -> vector geometry (see IconData). Drawn as Paths, not a
         // font, because icon fonts render as tofu boxes on some Android builds.
         public const string IconHome = "home";
@@ -31,6 +33,7 @@ namespace dinospace
         public const string IconQuiz = "quiz";
         public const string IconList = "list";
         public const string IconChat = "chat";
+        public const string IconBrush = "brush";
         public const string IconSend = "send";
         public const string IconStop = "stop";
 
@@ -112,15 +115,20 @@ namespace dinospace
             "list" => "M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z",
             "quiz" => "M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z",
             "chat" => "M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z",
+            "brush" => "M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z",
             "send" => "M2.01 21L23 12 2.01 3 2 10l15 2-15 2z",
             "stop" => "M6 6h12v12H6z",
             _ => "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z",
         };
 
-        // ALL-CAPS letterspaced section header with a thin rule underneath —
-        // the magazine look from the reference.
+        // Section header. Native: tight ALL-CAPS + hairline rule (magazine
+        // look). Playful: a big rounded Baloo title with a short chunky accent
+        // underline — friendlier and easier for young readers to scan.
         public static View SectionHeader(string title, string? action = null, System.EventHandler<TappedEventArgs>? onAction = null)
         {
+            if (AppLayout.FriendlyHeaders)
+                return FriendlySectionHeader(title, action, onAction);
+
             var caps = new Label
             {
                 Text = title.ToUpperInvariant(),
@@ -155,16 +163,51 @@ namespace dinospace
             return new VerticalStackLayout { Spacing = 0, Margin = new Thickness(0, 10, 0, 2), Children = { grid, rule } };
         }
 
+        private static View FriendlySectionHeader(string title, string? action, System.EventHandler<TappedEventArgs>? onAction)
+        {
+            var head = new Label
+            {
+                Text = title,
+                FontFamily = Display,
+                FontSize = S(20),
+                TextColor = Theme.TextPrimary,
+                VerticalOptions = LayoutOptions.End
+            };
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.Add(head, 0, 0);
+            if (!string.IsNullOrEmpty(action))
+            {
+                var link = new Label
+                {
+                    Text = action, FontFamily = Fonts, FontSize = S(13.5), FontAttributes = FontAttributes.Bold,
+                    TextColor = Theme.Accent, VerticalOptions = LayoutOptions.Center
+                };
+                if (onAction != null) OnTap(link, onAction);
+                grid.Add(link, 1, 0);
+            }
+            var underline = new Border
+            {
+                WidthRequest = 42, HeightRequest = 5, HorizontalOptions = LayoutOptions.Start,
+                BackgroundColor = Theme.Accent, Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 3 }, Margin = new Thickness(2, 5, 0, 0)
+            };
+            return new VerticalStackLayout { Spacing = 0, Margin = new Thickness(0, 12, 0, 4), Children = { grid, underline } };
+        }
+
         // ---------- cards ----------
 
-        // White card, rounded, soft shadow. No border strokes.
-        public static Border Card(View content, double radius = 16, Thickness? padding = null) => new()
+        // White card, rounded, soft shadow. No border strokes. The default
+        // radius follows the layout (rounder in Playful); callers that pass an
+        // explicit radius still win.
+        public static Border Card(View content, double radius = -1, Thickness? padding = null) => new()
         {
             Content = content,
             BackgroundColor = Theme.Surface,
             Stroke = Theme.CardStroke,
             StrokeThickness = 1,
-            StrokeShape = new RoundRectangle { CornerRadius = radius },
+            StrokeShape = new RoundRectangle { CornerRadius = radius < 0 ? AppLayout.CardRadius : radius },
             Padding = padding ?? new Thickness(16),
             Shadow = Theme.CardShadow()
         };
@@ -208,8 +251,8 @@ namespace dinospace
                 Content = label,
                 BackgroundColor = Theme.Accent,
                 Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 14 },
-                Padding = new Thickness(16, 15),
+                StrokeShape = new RoundRectangle { CornerRadius = AppLayout.ButtonRadius },
+                Padding = new Thickness(16, AppLayout.Playful ? 17 : 15),
                 Shadow = Theme.CardShadow()
             };
             return OnTap(btn, onTap);
@@ -233,7 +276,7 @@ namespace dinospace
                 BackgroundColor = Theme.Surface,
                 Stroke = Theme.Hairline,
                 StrokeThickness = 1.2,
-                StrokeShape = new RoundRectangle { CornerRadius = 14 },
+                StrokeShape = new RoundRectangle { CornerRadius = AppLayout.ButtonRadius },
                 Padding = new Thickness(16, 14)
             };
             return OnTap(btn, onTap);

@@ -65,7 +65,9 @@ namespace dinospace.Views
 
         // answering
         private bool _busy;
+        private bool _streaming;
         private int _gen;
+        private DateTime _lastSend = DateTime.MinValue;
         private bool _chatStarted;
         private bool _modelInited;
         private bool _modelReady;
@@ -284,12 +286,26 @@ namespace dinospace.Views
             Answer(q);
         }
 
+        // A suggestion chip was tapped. Debounced so spam-tapping can't stack
+        // up, and it cleanly interrupts an answer in progress before starting
+        // the new one — switching questions mid-response is safe now that the
+        // engine serialises every request and never overlaps.
+        private void SendFromChip(string q)
+        {
+            if ((DateTime.Now - _lastSend).TotalMilliseconds < 500) return;   // ignore a flurry
+            if (!_modelReady) return;
+            if (_busy) StopGeneration();
+            _entry.Text = q;
+            OnSend();
+        }
+
         private void OnSend()
         {
             if (_busy) { StopGeneration(); return; }
             if (!_modelReady) return;
             string q = (_entry.Text ?? "").Trim();
             if (q.Length == 0) return;
+            _lastSend = DateTime.Now;
             _entry.Text = "";
             AddUser(q);
             Answer(q);
@@ -319,24 +335,29 @@ namespace dinospace.Views
                 return;
             }
 
-            // This question needs the language model. Hard rule: NEVER make the
-            // user wait for it to load. If it isn't ready yet, answer instantly
-            // with a redirect and keep warming it up in the background — the
-            // encyclopedia already covers everything askable by name.
+            // This question needs the language model. It usually warmed up in
+            // the background when the chat opened; if the user got here first,
+            // wait for it (with a reassuring status) instead of bouncing them —
+            // they'd much rather wait a moment than be told to come back later.
             if (!NovaSaurService.IsReady)
             {
-                _ = NovaSaurService.InitAsync();
-                await Task.Delay(250);
-                FinishAnswer(myGen, "Ooh, that's a big open question — my deep-thinking brain is still waking up, so ask me that one again in a couple of minutes. Meanwhile I can instantly answer anything about a specific creature or place: try \"how strong was T. Rex?\" or \"what's in the sky tonight?\"");
-                return;
+                if (_thinkingLabel != null)
+                    _thinkingLabel.Text = "Waking up my deep-thinking brain — first big question takes a moment…";
+                bool ready = await NovaSaurService.InitWithTimeoutAsync(TimeSpan.FromSeconds(75));
+                if (myGen != _gen) return;
+                if (!ready)
+                {
+                    FinishAnswer(myGen, "That's a big one, and my deep-thinking brain is having trouble waking up on this device. I can still instantly answer anything about a specific dinosaur, planet, or tonight's sky — give one of those a try!");
+                    return;
+                }
             }
 
             // Stream the model's answer straight into a live bubble — words
             // appear as they're generated instead of after a long silence.
             StopThinking();
+            _streaming = true;
             var live = StartNovaBubble();
             var liveSb = new StringBuilder();
-            bool gotTokens = false;
 
             string answer;
             try
@@ -346,7 +367,6 @@ namespace dinospace.Views
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
                         if (myGen != _gen) return;
-                        gotTokens = true;
                         liveSb.Append(token);
                         live.Text = liveSb.ToString();
                         try { _ = _chatScroll.ScrollToAsync(0, _chatStack.Height, false); } catch { }
@@ -359,6 +379,7 @@ namespace dinospace.Views
                 answer = NovaSaurService.ErrorMessage;
             }
 
+            _streaming = false;
             if (myGen != _gen) return;
 
             // final text is the cleaned version (or a friendly failure line)
@@ -368,7 +389,6 @@ namespace dinospace.Views
             Ui.SetIcon(_sendIcon, Ui.IconSend, Theme.TextOnAccent);
             ShowSuggestions();
             _ = ScrollToEnd();
-            _ = gotTokens;   // (kept for future "was it streamed" telemetry-free logic)
         }
 
         private void FinishAnswer(int myGen, string finalAnswer)
@@ -379,12 +399,14 @@ namespace dinospace.Views
         }
 
         // Backstop for anything unforeseen (a wedged native call, a swallowed
-        // exception): if this turn is somehow still "thinking" after 100
-        // seconds, end it with a friendly timeout instead of hanging the chat.
+        // exception): if this turn is somehow still "thinking" — not streaming
+        // tokens, not revealing text — after the watchdog window, end it with a
+        // friendly timeout instead of hanging the chat. The service's own
+        // timeouts normally finish the turn long before this fires.
         private async Task FailsafeAsync(int myGen)
         {
-            await Task.Delay(TimeSpan.FromSeconds(100));
-            if (myGen == _gen && _busy && !_revealActive)
+            await Task.Delay(TimeSpan.FromSeconds(150));
+            if (myGen == _gen && _busy && !_revealActive && !_streaming)
                 FinishAnswer(myGen, NovaSaurService.TimeoutMessage);
         }
 
@@ -576,7 +598,7 @@ namespace dinospace.Views
                     StrokeShape = new RoundRectangle { CornerRadius = 16 },
                     Padding = new Thickness(14, 8)
                 };
-                Ui.OnTap(chip, (_, _) => { if (_busy) return; _entry.Text = q; OnSend(); });
+                Ui.OnTap(chip, (_, _) => SendFromChip(q));
                 _suggestions.Add(chip);
             }
             _suggestionScroll.IsVisible = true;

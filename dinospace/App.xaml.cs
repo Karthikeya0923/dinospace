@@ -5,8 +5,9 @@ namespace dinospace
         public App()
         {
             InitializeComponent();
-            // Whatever look the user last picked: classic light/dark or one of
-            // the wallpaper themes.
+            // Whatever look the user last picked: the theme (colours + wallpaper)
+            // and the layout (fonts, shapes, tab bar, home screen).
+            AppLayout.ApplyCurrent();
             Theme.ApplyCurrent();
             UserAppTheme = Theme.IsDark ? AppTheme.Dark : AppTheme.Light;
         }

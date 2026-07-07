@@ -36,30 +36,31 @@ namespace dinospace
             internal Palette P = null!;    // set by the catalogue below
         }
 
-        // Black and gold. Rich, divine. Secondary text is a warm champagne
-        // (not grey) so it stays readable and on-theme against near-black.
-        private static readonly Palette DarkP = new()
+        // Stickers — bright, cute and cheerful: a white sticker-sheet wallpaper
+        // of little green dinos, deep forest-green text, and a fresh leaf-green
+        // accent. Built to feel like a kids' sticker book.
+        private static readonly Palette StickersP = new()
         {
-            Bg = Color.FromArgb("#0A0908"),
-            BgRaised = Color.FromArgb("#131110"),
-            Surface = Color.FromArgb("#18150F"),
-            SurfaceAlt = Color.FromArgb("#2A2419"),
-            SurfaceSunken = Color.FromArgb("#0E0D0A"),
-            Hairline = Color.FromArgb("#3D3524"),
-            HairlineSoft = Color.FromArgb("#2A2418"),
-            TextPrimary = Color.FromArgb("#F8F4EA"),
-            TextSecondary = Color.FromArgb("#E7DCC2"),
-            TextHint = Color.FromArgb("#C4B896"),
-            TextOnAccent = Color.FromArgb("#1A1305"),
-            Accent = Color.FromArgb("#E3BE55"),
-            AccentSoft = Color.FromArgb("#302711"),
-            Success = Color.FromArgb("#8FCB7A"),
-            Danger = Color.FromArgb("#FF5A4D"),
-            ChipBg = Color.FromArgb("#2A2419"),
-            ChipText = Color.FromArgb("#E3D8BC"),
-            ImgPlaceholder = Color.FromArgb("#1E1A12"),
-            CardStroke = Color.FromArgb("#332C1C"),
-            ShadowAlpha = 0f
+            Bg = Color.FromArgb("#FFFFFF"),
+            BgRaised = Color.FromArgb("#FFFFFF"),
+            Surface = Color.FromArgb("#F3FAEF"),
+            SurfaceAlt = Color.FromArgb("#E4F4DC"),
+            SurfaceSunken = Color.FromArgb("#EEF7E9"),
+            Hairline = Color.FromArgb("#CDE8C0"),
+            HairlineSoft = Color.FromArgb("#DDF0D4"),
+            TextPrimary = Color.FromArgb("#234020"),   // forest green
+            TextSecondary = Color.FromArgb("#4F7A46"),
+            TextHint = Color.FromArgb("#8FB585"),
+            TextOnAccent = Color.FromArgb("#FFFFFF"),
+            Accent = Color.FromArgb("#4CAF50"),
+            AccentSoft = Color.FromArgb("#DCF1D3"),
+            Success = Color.FromArgb("#2E9E4B"),
+            Danger = Color.FromArgb("#E5544B"),
+            ChipBg = Color.FromArgb("#E4F4DC"),
+            ChipText = Color.FromArgb("#356B2E"),
+            ImgPlaceholder = Color.FromArgb("#EAF6E4"),
+            CardStroke = Colors.Transparent,
+            ShadowAlpha = 0.12f
         };
 
         private static readonly Palette MidnightP = new()
@@ -166,7 +167,7 @@ namespace dinospace
         public static readonly IReadOnlyList<Spec> Wallpapers = new List<Spec>
         {
             new() { Id = "theme1", Name = "Fossil", Blurb = "Warm parchment, light and easy to read", Wallpaper = "theme1.png", Dark = false, P = FossilP },
-            new() { Id = "theme2", Name = "Dark Mode", Blurb = "Black and gold, calm at night", Wallpaper = null, Dark = true, P = DarkP },
+            new() { Id = "theme2", Name = "Stickers", Blurb = "A cheerful sheet of cute dinos on white", Wallpaper = "stickers.png", Dark = false, P = StickersP },
             new() { Id = "theme3", Name = "Starry Midnight", Blurb = "A calm, star-filled deep blue", Wallpaper = "theme3.png", Dark = true, P = MidnightP },
             new() { Id = "theme4", Name = "Nebula", Blurb = "Soft violet clouds where stars are born", Wallpaper = "theme4.png", Dark = true, P = NebulaP },
             new() { Id = "theme5", Name = "DinoSpace", Blurb = "The app's own painted twilight, dinosaurs and all", Wallpaper = "theme5.png", Dark = true, P = DinoP },
@@ -243,6 +244,7 @@ namespace dinospace
             "theme5" => Bg.WithAlpha(0.72f),   // hand-painted art: calm it right down
             "theme4" => Bg.WithAlpha(0.45f),
             "theme3" => Bg.WithAlpha(0.38f),
+            "theme2" => Bg.WithAlpha(0.62f),   // stickers: a soft white veil, dinos peek through
             _ => Bg.WithAlpha(0.30f),
         };
 

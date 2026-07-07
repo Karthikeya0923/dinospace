@@ -51,7 +51,6 @@ namespace dinospace.Views
             _stack.Add(Ui.PrimaryButton("✦  POINT AT THE SKY", async (_, _) => await Nav.Push(() => new SkyViewPage())));
             _stack.Add(MoonDetailCard());
             _stack.Add(AskNovaCard());
-            _stack.Add(LearnRow());
             _stack.Add(TelescopeCard());
             _stack.Add(ShowerCard());
 
@@ -67,6 +66,10 @@ namespace dinospace.Views
 
             _stack.Add(Ui.SectionHeader("The sun"));
             _stack.Add(SunCard());
+
+            // Learn the Sky lives at the very bottom — it's the "what does all
+            // this mean?" reference, reached after tonight's live sky.
+            _stack.Add(LearnRow());
 
             _stack.Add(LocationRow());
 
