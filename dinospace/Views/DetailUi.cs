@@ -13,10 +13,25 @@ namespace dinospace.Views
     public static class DetailUi
     {
         // Plain hero image. No overlays, no gradient boxes — the photo breathes.
+        // Playful rounds the bottom corners so the hero reads like a big
+        // friendly card, with a bright gradient stand-in until art arrives.
         public static View Hero(string image, string title)
         {
             var img = new Image { Source = image, Aspect = Aspect.AspectFill, HorizontalOptions = LayoutOptions.Fill, VerticalOptions = LayoutOptions.Fill };
             Ui.Describe(img, title);
+
+            if (AppLayout.Playful)
+            {
+                var g = new Grid { HeightRequest = 300 };
+                g.Add(EntryCards.PlayfulArt(title, 64));
+                g.Add(img);
+                return new Border
+                {
+                    Content = g, HeightRequest = 300, Stroke = Colors.Transparent,
+                    StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(0, 0, 30, 30) }
+                };
+            }
+
             var grid = new Grid { HeightRequest = 320 };
             grid.Add(EntryCards.ArtFallback(title, 56));
             grid.Add(img);
@@ -62,23 +77,26 @@ namespace dinospace.Views
             {
                 Text = label.ToUpperInvariant(),
                 FontFamily = Ui.Fonts, FontSize = Ui.S(10), FontAttributes = FontAttributes.Bold,
-                CharacterSpacing = 1.2, TextColor = Theme.Accent
+                CharacterSpacing = 1.2, TextColor = AppLayout.Playful ? PlayfulKit.OnSurface(accent) : Theme.Accent
             });
             col.Add(new Label
             {
                 Text = value,
                 FontFamily = Ui.Display, FontSize = Ui.S(17), TextColor = Theme.TextPrimary
             });
-            return new Border
+            // Playful gives each stat a soft colourful bubble; classic keeps the
+            // quiet surface card with a shadow.
+            var chip = new Border
             {
                 Content = col,
-                BackgroundColor = Theme.Surface,
+                BackgroundColor = AppLayout.Playful ? accent.WithAlpha(0.15f) : Theme.Surface,
                 Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 14 },
+                StrokeShape = new RoundRectangle { CornerRadius = AppLayout.Playful ? 18 : 14 },
                 Padding = new Thickness(14, 11),
-                MinimumWidthRequest = 96,
-                Shadow = Theme.CardShadow()
+                MinimumWidthRequest = 96
             };
+            if (!AppLayout.Playful) chip.Shadow = Theme.CardShadow();
+            return chip;
         }
 
         public static View StatChipRow(IEnumerable<(string label, string value, Color accent)> stats)

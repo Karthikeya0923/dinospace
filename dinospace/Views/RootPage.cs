@@ -191,11 +191,27 @@ namespace dinospace.Views
             for (int i = 0; i < _tabs.Count; i++)
             {
                 bool on = i == _current;
-                Ui.SetIcon(_navIcons[i], on && i == 2 ? Ui.IconSavedFill : _tabs[i].icon, on ? Theme.Accent : Theme.TextHint);
-                _navLabels[i].TextColor = on ? Theme.Accent : Theme.TextHint;
-                _navLabels[i].FontAttributes = on ? FontAttributes.Bold : FontAttributes.None;
-                if (i < _navCells.Count)
-                    _navCells[i].BackgroundColor = (playful && on) ? Theme.AccentSoft : Colors.Transparent;
+                string icon = on && i == 2 ? Ui.IconSavedFill : _tabs[i].icon;
+
+                if (playful)
+                {
+                    // Each active tab lights up in its own bright colour with a
+                    // solid rounded bubble — cheerful and easy for a kid to read.
+                    Color tabHue = PlayfulKit.Tab(i);
+                    Ui.SetIcon(_navIcons[i], icon, on ? Colors.White : Theme.TextHint);
+                    _navLabels[i].TextColor = on ? Colors.White : Theme.TextHint;
+                    _navLabels[i].FontAttributes = FontAttributes.Bold;
+                    if (i < _navCells.Count)
+                        _navCells[i].BackgroundColor = on ? tabHue : Colors.Transparent;
+                }
+                else
+                {
+                    Ui.SetIcon(_navIcons[i], icon, on ? Theme.Accent : Theme.TextHint);
+                    _navLabels[i].TextColor = on ? Theme.Accent : Theme.TextHint;
+                    _navLabels[i].FontAttributes = on ? FontAttributes.Bold : FontAttributes.None;
+                    if (i < _navCells.Count)
+                        _navCells[i].BackgroundColor = Colors.Transparent;
+                }
             }
         }
 

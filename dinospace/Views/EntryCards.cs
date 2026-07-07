@@ -36,12 +36,28 @@ namespace dinospace.Views
             return grid;
         }
 
+        // A bright gradient stand-in for the Playful layout — a cheerful splash
+        // of colour with the entry's initial, instead of the quiet night sky.
+        public static View PlayfulArt(string title, double letterSize)
+        {
+            var grid = new Grid { Background = PlayfulKit.GradientFill(title) };
+            grid.Add(new Label
+            {
+                Text = string.IsNullOrEmpty(title) ? "•" : title[..1].ToUpperInvariant(),
+                FontFamily = Ui.Display, FontSize = letterSize,
+                TextColor = Colors.White.WithAlpha(0.92f),
+                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
+            });
+            return grid;
+        }
+
         // Fixed heights so every card is identical whether the name is one or
         // two lines. The title area always reserves two lines and the meta
         // sits pinned at the bottom, so "Late Cretaceous" never gets clipped
         // and short-named cards don't leave an awkward gap.
         public static View GridCard(string image, string title, string meta, Action onTap)
         {
+            if (AppLayout.Playful) return PlayfulGridCard(image, title, meta, onTap);
             double imgH = 118;
             var img = new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = imgH };
             var imgWrap = new Grid { HeightRequest = imgH };
@@ -97,6 +113,55 @@ namespace dinospace.Views
             return card;
         }
 
+        // Playful card: big rounded corners, a bright gradient image frame, a
+        // chunky rounded name and a colourful little meta pill. Built for
+        // tapping and for delighting a five-year-old.
+        private static View PlayfulGridCard(string image, string title, string meta, Action onTap)
+        {
+            var hue = PlayfulKit.GradientFor(title);
+            double imgH = 124;
+            var img = new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = imgH };
+            var imgGrid = new Grid { HeightRequest = imgH };
+            imgGrid.Add(PlayfulArt(title, 34));
+            imgGrid.Add(img);
+            var imgWrap = new Border
+            {
+                Content = imgGrid, HeightRequest = imgH,
+                Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 18 }
+            };
+
+            var name = new Label
+            {
+                Text = title, FontFamily = Ui.Display, FontSize = Ui.S(16.5), LineHeight = 1.05,
+                MaxLines = 2, LineBreakMode = LineBreakMode.TailTruncation, TextColor = Theme.TextPrimary
+            };
+
+            var info = new VerticalStackLayout { Padding = new Thickness(11, 9, 11, 11), Spacing = 6, VerticalOptions = LayoutOptions.Start };
+            info.Add(name);
+            if (!string.IsNullOrEmpty(meta))
+                info.Add(new Border
+                {
+                    BackgroundColor = hue.a.WithAlpha(0.16f), Stroke = Colors.Transparent,
+                    StrokeShape = new RoundRectangle { CornerRadius = 100 }, Padding = new Thickness(9, 3),
+                    HorizontalOptions = LayoutOptions.Start,
+                    Content = new Label { Text = meta, FontFamily = Ui.Fonts, FontSize = Ui.S(11), FontAttributes = FontAttributes.Bold, TextColor = PlayfulKit.OnSurface(hue.a), MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation }
+                });
+
+            var col = new VerticalStackLayout { Spacing = 0, Padding = new Thickness(6, 6, 6, 0) };
+            col.Add(imgWrap);
+            col.Add(info);
+
+            var card = new Border
+            {
+                Content = col, BackgroundColor = Theme.Surface, Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 24 }, Padding = 0,
+                HeightRequest = 214, Shadow = Theme.CardShadow()
+            };
+            Ui.OnTap(card, (_, _) => onTap());
+            Ui.Describe(card, title);
+            return card;
+        }
+
         // Two-column grid of entry cards (plain grid; rows auto-size).
         public static View TwoColumn(IEnumerable<(string image, string title, string meta, Action onTap)> items)
         {
@@ -118,6 +183,7 @@ namespace dinospace.Views
         // Compact list row for Search and Saved: thumb, serif name, meta, chevron.
         public static View ListRow(string image, string title, string meta, Action onTap)
         {
+            if (AppLayout.Playful) return PlayfulListRow(image, title, meta, onTap);
             var thumbGrid = new Grid();
             thumbGrid.Add(ArtFallback(title, 20, stars: false));
             thumbGrid.Add(new Image { Source = image, Aspect = Aspect.AspectFill, WidthRequest = 54, HeightRequest = 54 });
@@ -150,6 +216,46 @@ namespace dinospace.Views
             wrap.Add(new BoxView { HeightRequest = 1, Color = Theme.HairlineSoft, Margin = new Thickness(66, 0, 0, 0) });
             Ui.OnTap(wrap, (_, _) => onTap());
             return wrap;
+        }
+
+        // Playful list row: a rounded, tappable "pill card" with a bright round
+        // thumbnail and a chunky name — no thin hairline rows.
+        private static View PlayfulListRow(string image, string title, string meta, Action onTap)
+        {
+            var thumbGrid = new Grid();
+            thumbGrid.Add(PlayfulArt(title, 22));
+            thumbGrid.Add(new Image { Source = image, Aspect = Aspect.AspectFill, WidthRequest = 58, HeightRequest = 58 });
+            var thumb = new Border
+            {
+                Content = thumbGrid, WidthRequest = 58, HeightRequest = 58,
+                Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 18 }
+            };
+
+            var info = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };
+            info.Add(new Label { Text = title, FontFamily = Ui.Display, FontSize = Ui.S(17.5), TextColor = Theme.TextPrimary });
+            if (!string.IsNullOrEmpty(meta))
+                info.Add(new Label { Text = meta, FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextSecondary, MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation });
+
+            var chevron = Ui.Icon(Ui.IconChevron, 22, PlayfulKit.HueFor(title));
+            chevron.VerticalOptions = LayoutOptions.Center;
+
+            var row = new Grid { ColumnSpacing = 13, Padding = new Thickness(10, 9) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.Add(thumb, 0, 0);
+            row.Add(info, 1, 0);
+            row.Add(chevron, 2, 0);
+
+            var card = new Border
+            {
+                Content = row, BackgroundColor = Theme.Surface, Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 20 }, Padding = 0,
+                Margin = new Thickness(0, 5), Shadow = Theme.CardShadow()
+            };
+            Ui.OnTap(card, (_, _) => onTap());
+            Ui.Describe(card, title);
+            return card;
         }
     }
 }

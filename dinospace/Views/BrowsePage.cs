@@ -88,6 +88,7 @@ namespace dinospace.Views
             string[] cats = _domain == "Dinosaurs"
                 ? new[] { "All", "Land", "Sea", "Flying", "Carnivore", "Herbivore" }
                 : new[] { "All", "Solar System", "Stars", "Deep Space", "Exploration" };
+            Color activeBg = AppLayout.Playful ? DomainHue.a : Theme.Accent;
             foreach (var c in cats)
             {
                 bool active = (_category == "" && c == "All") || _category == c;
@@ -96,9 +97,9 @@ namespace dinospace.Views
                     Content = new Label
                     {
                         Text = c, FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), FontAttributes = FontAttributes.Bold,
-                        TextColor = active ? Theme.TextOnAccent : Theme.ChipText
+                        TextColor = active ? (AppLayout.Playful ? Colors.White : Theme.TextOnAccent) : Theme.ChipText
                     },
-                    BackgroundColor = active ? Theme.Accent : Theme.ChipBg,
+                    BackgroundColor = active ? activeBg : Theme.ChipBg,
                     Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 100 },
                     Padding = new Thickness(14, 7)
                 };
@@ -117,8 +118,12 @@ namespace dinospace.Views
             }
         }
 
+        private (Color a, Color b) DomainHue => _domain == "Dinosaurs" ? PlayfulKit.Dino : PlayfulKit.Space;
+
         private View CardTemplate()
         {
+            if (AppLayout.Playful) return PlayfulCardTemplate();
+
             var img = new Image { Aspect = Aspect.AspectFill, HeightRequest = 118 };
             img.SetBinding(Image.SourceProperty, new Binding(nameof(EntryRow.Image)));
             // Night-sky stand-in behind the art (cheap: colour + one label).
@@ -149,6 +154,49 @@ namespace dinospace.Views
             {
                 Content = colc, BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 }, Padding = 0, HeightRequest = 196, Shadow = Theme.CardShadow()
+            };
+        }
+
+        // Playful browse card: rounded, a bright domain-coloured image frame and
+        // a colourful meta pill.
+        private View PlayfulCardTemplate()
+        {
+            var hue = DomainHue;
+            double imgH = 124;
+            var img = new Image { Aspect = Aspect.AspectFill, HeightRequest = imgH };
+            img.SetBinding(Image.SourceProperty, new Binding(nameof(EntryRow.Image)));
+            var initial = new Label
+            {
+                FontFamily = Ui.Display, FontSize = 34, TextColor = Colors.White.WithAlpha(0.92f),
+                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
+            };
+            initial.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Initial)));
+            var imgGrid = new Grid { HeightRequest = imgH, Background = PlayfulKit.Gradient(hue) };
+            imgGrid.Add(initial);
+            imgGrid.Add(img);
+            var imgWrap = new Border { Content = imgGrid, HeightRequest = imgH, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 18 } };
+
+            var name = new Label { FontFamily = Ui.Display, FontSize = Ui.S(16.5), LineHeight = 1.05, MaxLines = 2, LineBreakMode = LineBreakMode.TailTruncation, TextColor = Theme.TextPrimary };
+            name.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Title)));
+            var meta = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(11), FontAttributes = FontAttributes.Bold, MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation, TextColor = PlayfulKit.OnSurface(hue.a) };
+            meta.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Meta)));
+            var metaPill = new Border
+            {
+                BackgroundColor = hue.a.WithAlpha(0.16f), Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 100 }, Padding = new Thickness(9, 3),
+                HorizontalOptions = LayoutOptions.Start, Content = meta
+            };
+
+            var info = new VerticalStackLayout { Padding = new Thickness(11, 9, 11, 11), Spacing = 6, VerticalOptions = LayoutOptions.Start };
+            info.Add(name); info.Add(metaPill);
+
+            var colc = new VerticalStackLayout { Spacing = 0, Padding = new Thickness(6, 6, 6, 0) };
+            colc.Add(imgWrap); colc.Add(info);
+
+            return new Border
+            {
+                Content = colc, BackgroundColor = Theme.Surface, Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 24 }, Padding = 0, HeightRequest = 214, Shadow = Theme.CardShadow()
             };
         }
 

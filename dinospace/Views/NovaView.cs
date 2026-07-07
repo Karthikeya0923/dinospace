@@ -11,21 +11,27 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.Graphics;
-using Microsoft.Maui.Networking;
 using Microsoft.Maui.Storage;
 
 namespace dinospace.Views
 {
-    // NovaSaur chat. Owns three states: the one-time model setup/download
-    // overlay, the "waking up" model init, and the live conversation with a
-    // typewriter reveal. Kept as a persistent tab so the chat is preserved.
+    // NovaSaur chat — a fully offline dinosaur & space buddy.
+    //
+    // The chat opens instantly and answers every question right on the device:
+    // the vetted encyclopedia (LocalAnswer) covers the facts, and NovaCreative
+    // covers jokes, little stories, poems and open-ended chat. NO download is
+    // required. If the optional large language model happens to be installed
+    // (a Play asset-pack build), open-ended answers stream from it for extra
+    // richness — but the chat never waits on it and never blocks behind it.
+    //
+    // Kept as a persistent instance so the conversation survives tab switches.
     public class NovaView : ContentView, ITabView
     {
         private const string HistoryKey = "nova_history_v2";
         private const int MaxSaved = 60;
 
         private const string Welcome =
-            "Hey, I'm NovaSaur! Ask me anything about dinosaurs or space — like how big a T. Rex was, or why Mars is red. I run right here on your device.";
+            "Hi, I'm NovaSaur! 🦕✨ Ask me anything about dinosaurs or space — how big a T. Rex was, why Mars is red, or even for a joke or a story. I work right here on your device, no internet needed!";
 
         // A detail page can queue a question and switch to this tab.
         private static string? _pending;
@@ -51,18 +57,6 @@ namespace dinospace.Views
         private ScrollView _suggestionScroll = null!;
         private Grid _inputArea = null!;
 
-        // download overlay
-        private Grid _overlay = null!;
-        private Label _overlayTitle = null!, _overlayBody = null!, _overlayStatus = null!;
-        private Border _downloadBtn = null!;
-        private Label _downloadBtnLabel = null!;
-        private ProgressBar _progress = null!;
-        private VerticalStackLayout _progressArea = null!;
-        private HorizontalStackLayout _pauseRow = null!;
-        private Label _pauseLabel = null!;
-        private IDispatcherTimer? _packTimer;
-        private bool _subscribed;
-
         // answering
         private bool _busy;
         private bool _streaming;
@@ -70,7 +64,6 @@ namespace dinospace.Views
         private DateTime _lastSend = DateTime.MinValue;
         private bool _chatStarted;
         private bool _modelInited;
-        private bool _modelReady;
 
         // thinking status
         private View? _thinking;
@@ -105,21 +98,7 @@ namespace dinospace.Views
                 _inputArea.Padding = new Thickness(16, 8, 16, 14 + _bottomInset);
         }
 
-        public void OnSelected()
-        {
-            if (ModelManager.IsModelDownloaded())
-            {
-                StartChat();
-            }
-            else
-            {
-                ModelManager.TryBeginBundledInstall();
-                ShowOverlay();
-                Subscribe();
-                RefreshOverlay();
-                StartPackRecheck();
-            }
-        }
+        public void OnSelected() => StartChat();
 
         // ---------- layout ----------
         private void Build()
@@ -127,14 +106,11 @@ namespace dinospace.Views
             _chatStack = new VerticalStackLayout { Spacing = 10, Padding = new Thickness(16, 12, 16, 8) };
             _chatScroll = new ScrollView { Content = _chatStack, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
 
-            // header
             var header = BuildHeader();
 
-            // suggestions
             _suggestions = new HorizontalStackLayout { Spacing = 8 };
             _suggestionScroll = new ScrollView { Orientation = ScrollOrientation.Horizontal, HorizontalScrollBarVisibility = ScrollBarVisibility.Never, Content = _suggestions, Padding = new Thickness(16, 4) };
 
-            // input
             _inputArea = BuildInput();
 
             var main = new Grid { RowSpacing = 0 };
@@ -147,12 +123,7 @@ namespace dinospace.Views
             main.Add(_suggestionScroll, 0, 2);
             main.Add(_inputArea, 0, 3);
 
-            _overlay = BuildOverlay();
-
-            var root = new Grid();
-            root.Add(main);
-            root.Add(_overlay);
-            Content = root;
+            Content = main;
         }
 
         private View BuildHeader()
@@ -173,16 +144,17 @@ namespace dinospace.Views
             });
             Ui.Describe(back, "Go back");
 
+            double dotSize = AppLayout.Playful ? 46 : 40;
             var dot = new Border
             {
-                WidthRequest = 40, HeightRequest = 40,
+                WidthRequest = dotSize, HeightRequest = dotSize,
                 BackgroundColor = Ui.MultiplyAlpha(Theme.AccentNova, 0.18f),
-                Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 20 },
-                Content = new Label { Text = "✦", FontSize = 20, TextColor = Theme.AccentNova, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
+                Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = dotSize / 2 },
+                Content = new Label { Text = "🦕", FontSize = AppLayout.Playful ? 24 : 20, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
             };
             var title = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
-            title.Add(new Label { Text = "NovaSaur", FontFamily = Ui.Display, FontSize = 19, TextColor = Theme.TextPrimary });
-            title.Add(new Label { Text = "Offline dino & space guide", FontFamily = Ui.Fonts, FontSize = 11.5, TextColor = Theme.TextSecondary });
+            title.Add(new Label { Text = "NovaSaur", FontFamily = Ui.Display, FontSize = AppLayout.Playful ? 21 : 19, TextColor = Theme.TextPrimary });
+            title.Add(new Label { Text = "Your dino & space buddy", FontFamily = Ui.Fonts, FontSize = 11.5, TextColor = Theme.TextSecondary });
 
             var clear = new Label { Text = "Clear", FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.Center };
             Ui.OnTap(clear, (_, _) => ClearChat());
@@ -198,7 +170,7 @@ namespace dinospace.Views
 
         private Grid BuildInput()
         {
-            _entry = new Entry { Placeholder = "Ask about dinosaurs or space...", BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Send };
+            _entry = new Entry { Placeholder = "Ask me anything…", BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Send };
             _entry.Completed += (_, _) => OnSend();
             var entryWrap = new Border
             {
@@ -233,54 +205,40 @@ namespace dinospace.Views
         {
             if (_chatStarted) { MaybeRunPending(); return; }
             _chatStarted = true;
-            StopPackRecheck();
-            _overlay.IsVisible = false;
             LoadHistory();
-            InitModel();
-        }
 
-        private void InitModel()
-        {
-            if (!NovaSaurService.SupportedPlatform)
-            {
-                if (_messages.Count == 0) AddNova("NovaSaur runs on Android right now. The rest of DinoSpace works everywhere!");
-                SetSendEnabled(false);
-                _suggestionScroll.IsVisible = false;
-                return;
-            }
-
-            // NovaSaur can answer most dinosaur and space questions instantly
-            // from its built-in knowledge, so the chat is usable right away —
-            // no waiting on the large model to load. The model is only needed
-            // for rarer open-ended questions, and it warms up in the background
-            // and loads on demand (see Answer()).
-            _modelReady = true;
-            SetSendEnabled(true);
             if (_messages.Count == 0) AddNova(Welcome);
             ShowSuggestions();
 
-            if (!_modelInited && !NovaSaurService.IsReady)
-            {
-                _modelInited = true;
-                _ = Task.Run(async () =>
-                {
-                    try { await NovaSaurService.InitAsync(); }
-                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova init: " + ex); }
-                });
-            }
+            // The big model is entirely optional. On a Play build that shipped
+            // it as asset packs, assemble and warm it up quietly in the
+            // background so open-ended answers can stream from it; on a normal
+            // install there's nothing to do and the offline brain handles
+            // everything. Either way the chat is usable right now.
+            WarmModelIfPresent();
 
             MaybeRunPending();
         }
 
-        private void SetSendEnabled(bool enabled)
+        private void WarmModelIfPresent()
         {
-            _sendBtn.IsEnabled = enabled;
-            _sendBtn.Opacity = enabled ? 1 : 0.45;
+            if (_modelInited || !NovaSaurService.SupportedPlatform) return;
+            _modelInited = true;
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    ModelManager.TryBeginBundledInstall();
+                    if (ModelManager.IsModelDownloaded() && !NovaSaurService.IsReady)
+                        _ = NovaSaurService.InitAsync();
+                }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova warm: " + ex); }
+            });
         }
 
         private void MaybeRunPending()
         {
-            if (_pending == null || _busy || !_modelReady) return;
+            if (_pending == null || _busy) return;
             string q = _pending; _pending = null;
             AddUser(q);
             Answer(q);
@@ -288,12 +246,10 @@ namespace dinospace.Views
 
         // A suggestion chip was tapped. Debounced so spam-tapping can't stack
         // up, and it cleanly interrupts an answer in progress before starting
-        // the new one — switching questions mid-response is safe now that the
-        // engine serialises every request and never overlaps.
+        // the new one.
         private void SendFromChip(string q)
         {
-            if ((DateTime.Now - _lastSend).TotalMilliseconds < 500) return;   // ignore a flurry
-            if (!_modelReady) return;
+            if ((DateTime.Now - _lastSend).TotalMilliseconds < 500) return;
             if (_busy) StopGeneration();
             _entry.Text = q;
             OnSend();
@@ -302,7 +258,6 @@ namespace dinospace.Views
         private void OnSend()
         {
             if (_busy) { StopGeneration(); return; }
-            if (!_modelReady) return;
             string q = (_entry.Text ?? "").Trim();
             if (q.Length == 0) return;
             _lastSend = DateTime.Now;
@@ -326,34 +281,28 @@ namespace dinospace.Views
 
             if (turn.Entities.Count > 0) _lastEntities = new List<string>(turn.Entities);
 
+            // Grounded instant reply from the encyclopedia — the common case.
             if (turn.InstantReply != null)
             {
-                await Task.Delay(250);
+                await Task.Delay(200);
                 if (myGen != _gen) return;
                 StopThinking();
-                Reveal(turn.InstantReply); // typewriter for instant grounded replies
+                Reveal(turn.InstantReply);
                 return;
             }
 
-            // This question needs the language model. It usually warmed up in
-            // the background when the chat opened; if the user got here first,
-            // wait for it (with a reassuring status) instead of bouncing them —
-            // they'd much rather wait a moment than be told to come back later.
+            // Open-ended question. If the optional model is loaded, stream from
+            // it for a richer answer; otherwise answer instantly from the
+            // offline brain (a story, a joke, an honest catch-all). We never
+            // wait on the model — the offline reply is always ready.
             if (!NovaSaurService.IsReady)
             {
-                if (_thinkingLabel != null)
-                    _thinkingLabel.Text = "Waking up my deep-thinking brain — one moment…";
-                bool ready = await NovaSaurService.InitWithTimeoutAsync(TimeSpan.FromSeconds(35));
                 if (myGen != _gen) return;
-                if (!ready)
-                {
-                    FinishAnswer(myGen, "That's a big one, and my deep-thinking brain is still warming up on this device. I can instantly answer anything about a specific dinosaur, planet, or tonight's sky — give one of those a try, or ask me this again in a minute!");
-                    return;
-                }
+                StopThinking();
+                Reveal(turn.OfflineFallback ?? NovaSaurService.ErrorMessage);
+                return;
             }
 
-            // Stream the model's answer straight into a live bubble — words
-            // appear as they're generated instead of after a long silence.
             StopThinking();
             _streaming = true;
             var live = StartNovaBubble();
@@ -376,13 +325,17 @@ namespace dinospace.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("Nova ask: " + ex);
-                answer = NovaSaurService.ErrorMessage;
+                answer = turn.OfflineFallback ?? NovaSaurService.ErrorMessage;
             }
 
             _streaming = false;
             if (myGen != _gen) return;
 
-            // final text is the cleaned version (or a friendly failure line)
+            // If the model came back empty or with a failure line, fall back to
+            // the offline answer so the turn is never a dead end.
+            if (string.IsNullOrWhiteSpace(answer) || answer == NovaSaurService.ErrorMessage || answer == NovaSaurService.TimeoutMessage)
+                answer = turn.OfflineFallback ?? answer;
+
             live.Text = answer;
             if (answer.Length > 0) { _messages.Add(new ChatMessage { IsUser = false, Text = answer }); SaveHistory(); }
             _busy = false;
@@ -398,14 +351,12 @@ namespace dinospace.Views
             Reveal(finalAnswer);
         }
 
-        // Backstop for anything unforeseen (a wedged native call, a swallowed
-        // exception): if this turn is somehow still "thinking" — not streaming
-        // tokens, not revealing text — after the watchdog window, end it with a
-        // friendly timeout instead of hanging the chat. The service's own
-        // timeouts normally finish the turn long before this fires.
+        // Backstop for anything unforeseen: if this turn is somehow still
+        // "thinking" — not streaming, not revealing — after the watchdog
+        // window, end it with a friendly line instead of hanging.
         private async Task FailsafeAsync(int myGen)
         {
-            await Task.Delay(TimeSpan.FromSeconds(150));
+            await Task.Delay(TimeSpan.FromSeconds(20));
             if (myGen == _gen && _busy && !_revealActive && !_streaming)
                 FinishAnswer(myGen, NovaSaurService.TimeoutMessage);
         }
@@ -429,7 +380,6 @@ namespace dinospace.Views
             _thinking = label;
             _chatStack.Add(label);
 
-            // Reassure on long prompt-processing waits instead of looking hung.
             _thinkingTimer ??= MakeTimer(TimeSpan.FromSeconds(8), () =>
             {
                 _thinkingTicks++;
@@ -437,7 +387,7 @@ namespace dinospace.Views
                 _thinkingLabel.Text = _thinkingTicks switch
                 {
                     1 => "NovaSaur is thinking… reading up on your question.",
-                    2 => "Still thinking — big questions take a moment on-device…",
+                    2 => "Still thinking — big questions take a moment…",
                     _ => "Almost there — writing the answer…",
                 };
             });
@@ -466,7 +416,6 @@ namespace dinospace.Views
 
         private void RevealTick()
         {
-            // A Clear can null things out from under a queued tick.
             if (!_revealActive || _revealWords == null || _revealLabel == null) { _revealTimer?.Stop(); return; }
             if (_revealIndex >= _revealWords.Length) { CompleteReveal(); return; }
             _revealSb.Append(_revealWords[_revealIndex]);
@@ -515,13 +464,14 @@ namespace dinospace.Views
         private View Bubble(string text, bool isUser)
         {
             var label = new Label { Text = text, FontFamily = Ui.Fonts, FontSize = Ui.S(15), LineHeight = 1.4, TextColor = isUser ? Theme.TextOnAccent : Theme.TextPrimary };
+            double r = AppLayout.Playful ? 22 : 16;
             var bubble = new Border
             {
                 Content = label,
                 Padding = new Thickness(14, 11),
                 BackgroundColor = isUser ? Theme.AccentNova : Theme.Surface,
                 Stroke = isUser ? Colors.Transparent : Theme.HairlineSoft, StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = isUser ? new CornerRadius(16, 16, 16, 4) : new CornerRadius(16, 16, 4, 16) },
+                StrokeShape = new RoundRectangle { CornerRadius = isUser ? new CornerRadius(r, r, r, 4) : new CornerRadius(r, r, 4, r) },
                 HorizontalOptions = isUser ? LayoutOptions.End : LayoutOptions.Start,
                 MaximumWidthRequest = 300
             };
@@ -532,26 +482,19 @@ namespace dinospace.Views
         private Label StartNovaBubble()
         {
             var label = new Label { Text = "", FontFamily = Ui.Fonts, FontSize = Ui.S(15), LineHeight = 1.4, TextColor = Theme.TextPrimary };
+            double r = AppLayout.Playful ? 22 : 16;
             var bubble = new Border
             {
                 Content = label,
                 Padding = new Thickness(14, 11),
                 BackgroundColor = Theme.Surface,
                 Stroke = Theme.HairlineSoft, StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(16, 16, 4, 16) },
+                StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(r, r, 4, r) },
                 HorizontalOptions = LayoutOptions.Start,
                 MaximumWidthRequest = 300
             };
             Ui.OnTap(bubble, async (_, _) => await AnswerMenu(label.Text), haptic: false);
             _chatStack.Add(bubble);
-            return label;
-        }
-
-        private View AddStatus(string text)
-        {
-            var label = new Label { Text = text, FontFamily = Ui.Fonts, FontSize = Ui.S(13), FontAttributes = FontAttributes.Italic, TextColor = Theme.TextSecondary, HorizontalOptions = LayoutOptions.Start };
-            _chatStack.Add(label);
-            _ = ScrollToEnd();
             return label;
         }
 
@@ -661,201 +604,6 @@ namespace dinospace.Views
             t.Interval = interval;
             t.Tick += (_, _) => tick();
             return t;
-        }
-
-        // ---------- download overlay ----------
-        private Grid BuildOverlay()
-        {
-            _overlayTitle = new Label { Text = "Meet NovaSaur", FontFamily = Ui.Display, FontSize = 26, TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center };
-            _overlayBody = new Label { FontFamily = Ui.Fonts, FontSize = 14.5, LineHeight = 1.45, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center };
-            _overlayStatus = new Label { FontFamily = Ui.Fonts, FontSize = 13, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center };
-
-            _progress = new ProgressBar { Progress = 0, HeightRequest = 8, ProgressColor = Theme.Accent, BackgroundColor = Theme.SurfaceAlt };
-            _pauseLabel = new Label { Text = "Pause", FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.Accent };
-            Ui.OnTap(_pauseLabel, (_, _) => OnPauseResume());
-            var stopLabel = new Label { Text = "Stop", FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary };
-            Ui.OnTap(stopLabel, (_, _) => OnStop());
-            _pauseRow = new HorizontalStackLayout { Spacing = 24, HorizontalOptions = LayoutOptions.Center, Children = { _pauseLabel, stopLabel } };
-
-            _progressArea = new VerticalStackLayout { Spacing = 12, IsVisible = false };
-            _progressArea.Add(_overlayStatus);
-            _progressArea.Add(_progress);
-            _progressArea.Add(_pauseRow);
-
-            _downloadBtnLabel = new Label { Text = "Download NovaSaur", FontFamily = Ui.Fonts, FontSize = 15, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center };
-            _downloadBtn = new Border
-            {
-                Content = _downloadBtnLabel,
-                BackgroundColor = Theme.AccentNova, Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 16 },
-                Padding = new Thickness(20, 14)
-            };
-            Ui.OnTap(_downloadBtn, (_, _) => OnDownload());
-
-            var icon = new Border
-            {
-                WidthRequest = 72, HeightRequest = 72,
-                BackgroundColor = Ui.MultiplyAlpha(Theme.AccentNova, 0.18f),
-                Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 36 },
-                HorizontalOptions = LayoutOptions.Center,
-                Content = new Label { Text = "✦", FontSize = 34, TextColor = Theme.AccentNova, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
-            };
-
-            var card = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(24), VerticalOptions = LayoutOptions.Center };
-            card.Add(icon);
-            card.Add(_overlayTitle);
-            card.Add(_overlayBody);
-            card.Add(_downloadBtn);
-            card.Add(_progressArea);
-
-            var g = new Grid { BackgroundColor = Theme.Bg, Padding = new Thickness(20) };
-            g.Add(new ScrollView { Content = card });
-            g.IsVisible = false;
-            return g;
-        }
-
-        private void ShowOverlay() => _overlay.IsVisible = true;
-
-        private void Subscribe()
-        {
-            if (_subscribed) return;
-            ModelManager.Changed += OnModelChanged;
-            _subscribed = true;
-        }
-
-        private void Unsubscribe()
-        {
-            if (!_subscribed) return;
-            ModelManager.Changed -= OnModelChanged;
-            _subscribed = false;
-        }
-
-        private void OnModelChanged() => MainThread.BeginInvokeOnMainThread(RefreshOverlay);
-
-        private void StartPackRecheck()
-        {
-            _packTimer ??= MakeTimer(TimeSpan.FromSeconds(5), () =>
-            {
-                if (_chatStarted || ModelManager.State == DownloadState.Downloading) return;
-                if (ModelManager.TryBeginBundledInstall()) RefreshOverlay();
-            });
-            _packTimer.Start();
-        }
-
-        private void StopPackRecheck() => _packTimer?.Stop();
-
-        private void RefreshOverlay()
-        {
-            switch (ModelManager.State)
-            {
-                case DownloadState.Completed:
-                    Unsubscribe(); StopPackRecheck(); StartChat();
-                    break;
-                case DownloadState.Downloading:
-                    _downloadBtn.IsVisible = false;
-                    _progressArea.IsVisible = true;
-                    _progress.Progress = ModelManager.Progress;
-                    if (ModelManager.IsLocalInstall)
-                    {
-                        _overlayTitle.Text = "Getting NovaSaur ready";
-                        _overlayBody.Text = "One-time setup, about a minute. Keep DinoSpace open while it finishes.";
-                        _overlayStatus.Text = ProgressText("Setting up");
-                        _pauseRow.IsVisible = false;
-                    }
-                    else
-                    {
-                        _overlayTitle.Text = "Downloading NovaSaur";
-                        _overlayBody.Text = "Keep exploring the app while it downloads. If you leave, it picks up right where it left off next time.";
-                        _overlayStatus.Text = ProgressText("Downloading");
-                        _pauseRow.IsVisible = true;
-                        _pauseLabel.Text = "Pause";
-                    }
-                    break;
-                case DownloadState.Paused:
-                    _downloadBtn.IsVisible = false;
-                    _progressArea.IsVisible = true;
-                    _progress.Progress = ModelManager.Progress;
-                    _overlayStatus.Text = ProgressText("Paused at");
-                    _pauseLabel.Text = "Resume";
-                    break;
-                case DownloadState.Failed:
-                    _overlayTitle.Text = "Download paused";
-                    _overlayBody.Text = "The download stopped. Tap resume and it picks up where it left off.";
-                    _downloadBtn.IsVisible = true;
-                    _downloadBtnLabel.Text = "Resume download";
-                    _progressArea.IsVisible = false;
-                    break;
-                default:
-                    _overlayTitle.Text = "Meet NovaSaur";
-                    if (ModelManager.BundledPartsFound() > 0)
-                    {
-                        _overlayBody.Text = "Google Play is finishing NovaSaur's setup in the background. It'll appear here automatically in a few minutes.";
-                        _downloadBtn.IsVisible = false;
-                    }
-                    else
-                    {
-                        _overlayBody.Text = "An offline AI that answers your dinosaur and space questions, right on your phone. It's a one-time download of about 3 GB (wifi recommended).";
-                        _downloadBtn.IsVisible = true;
-                        _downloadBtnLabel.Text = ModelManager.HasPartialDownload() ? "Resume download" : "Download NovaSaur";
-                    }
-                    _progressArea.IsVisible = false;
-                    break;
-            }
-        }
-
-        private string ProgressText(string prefix)
-        {
-            int pct = (int)(ModelManager.Progress * 100);
-            long total = ModelManager.TotalBytes;
-            if (total > 0)
-            {
-                double done = ModelManager.DoneBytes / 1_000_000_000.0;
-                double tot = total / 1_000_000_000.0;
-                return $"{prefix} {pct}% ({done:0.0} of {tot:0.0} GB)";
-            }
-            return $"{prefix} {pct}%";
-        }
-
-        private async void OnDownload()
-        {
-            if (ModelManager.State == DownloadState.Downloading) return;
-            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
-            long free = ModelManager.GetFreeSpaceBytes();
-            long needed = Math.Max(500_000_000, ModelManager.RequiredFreeBytes - ModelManager.GetPartialSizeBytes());
-            if (free >= 0 && free < needed && page != null)
-            {
-                await page.DisplayAlertAsync("Not enough space", $"NovaSaur needs about {needed / 1_000_000_000.0:0.0} GB free. Free up some space and try again.", "OK");
-                return;
-            }
-            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet && page != null)
-            {
-                await page.DisplayAlertAsync("No internet", "Connect to the internet to download NovaSaur.", "OK");
-                return;
-            }
-            if (!Connectivity.Current.ConnectionProfiles.Contains(ConnectionProfile.WiFi) && page != null)
-            {
-                bool go = await page.DisplayAlertAsync("Not on wifi", "This is a large download (about 3 GB). Downloading over mobile data may use up your plan. Download anyway?", "Download", "Wait for wifi");
-                if (!go) return;
-            }
-            ModelManager.Start();
-            RefreshOverlay();
-        }
-
-        private void OnPauseResume()
-        {
-            if (ModelManager.State == DownloadState.Downloading) ModelManager.Pause();
-            else ModelManager.Start();
-            RefreshOverlay();
-        }
-
-        private async void OnStop()
-        {
-            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
-            if (page == null) return;
-            bool sure = await page.DisplayAlertAsync("Stop download?", "This deletes what's downloaded so far. You'd start over next time.", "Stop", "Keep downloading");
-            if (!sure) return;
-            ModelManager.Stop();
-            RefreshOverlay();
         }
     }
 }

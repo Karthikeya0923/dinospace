@@ -34,27 +34,29 @@ namespace dinospace.Views
 
             // Your journey
             stack.Add(Ui.SectionHeader("Your journey"));
-            _journey = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(14.5), LineHeight = 1.5, TextColor = Theme.TextPrimary, Margin = new Thickness(0, 10, 0, 8) };
-            stack.Add(_journey);
+            _journey = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(14.5), LineHeight = 1.5, TextColor = Theme.TextPrimary };
+            if (AppLayout.Playful)
+                stack.Add(new Border
+                {
+                    Content = _journey, BackgroundColor = Ui.MultiplyAlpha(PlayfulKit.Tab(0), 0.14f),
+                    Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 20 },
+                    Padding = new Thickness(16, 14), Margin = new Thickness(0, 6, 0, 2)
+                });
+            else { _journey.Margin = new Thickness(0, 10, 0, 8); stack.Add(_journey); }
 
-            // Preferences
             // Visuals — layout, themes and type size.
             stack.Add(Ui.SectionHeader("Visuals"));
-            stack.Add(LinkRow("Choose a layout", CurrentLayoutName(), async () => await Nav.Push(() => new LayoutsPage())));
-            stack.Add(Rule());
-            stack.Add(LinkRow("Choose a theme", CurrentThemeName(), async () => await Nav.Push(() => new ThemesPage())));
-            stack.Add(Rule());
-            stack.Add(TextSizeRow());
-            stack.Add(Rule());
+            stack.Add(Group(
+                LinkRow("Choose a layout", CurrentLayoutName(), async () => await Nav.Push(() => new LayoutsPage())),
+                LinkRow("Choose a theme", CurrentThemeName(), async () => await Nav.Push(() => new ThemesPage())),
+                TextSizeRow()));
 
             // General
             stack.Add(Ui.SectionHeader("General"));
-            stack.Add(HapticRow());
-            stack.Add(Rule());
-            stack.Add(LinkRow("Contact us", "dinospace.app@gmail.com", OpenFeedback));
-            stack.Add(Rule());
-            stack.Add(DangerRow("Reset progress & bookmarks", ConfirmReset));
-            stack.Add(Rule());
+            stack.Add(Group(
+                HapticRow(),
+                LinkRow("Contact us", "dinospace.app@gmail.com", OpenFeedback),
+                DangerRow("Reset progress & bookmarks", ConfirmReset)));
 
             stack.Add(new Label
             {
@@ -67,7 +69,24 @@ namespace dinospace.Views
             RefreshJourney();
         }
 
-        private static BoxView Rule() => new() { HeightRequest = 1, Color = Theme.HairlineSoft };
+        // A settings group. Playful wraps the rows in one rounded card with
+        // faint dividers; the classic layout keeps flat hairline-separated rows.
+        private static View Group(params View[] rows)
+        {
+            var col = new VerticalStackLayout { Spacing = 0 };
+            for (int i = 0; i < rows.Length; i++)
+            {
+                col.Add(rows[i]);
+                if (i < rows.Length - 1) col.Add(new BoxView { HeightRequest = 1, Color = Theme.HairlineSoft });
+            }
+            if (!AppLayout.Playful) return col;
+            return new Border
+            {
+                Content = col, BackgroundColor = Theme.Surface, Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 20 }, Padding = new Thickness(16, 2),
+                Margin = new Thickness(0, 4), Shadow = Theme.CardShadow()
+            };
+        }
 
         private static Label RowTitle(string text) => new()
         {

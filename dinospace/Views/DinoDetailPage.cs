@@ -14,7 +14,9 @@ namespace dinospace.Views
     {
         private readonly Dinosaur _d;
         private Microsoft.Maui.Controls.Shapes.Path _saveIcon = null!;
-        private static Color Accent => Theme.Accent;
+        // Each creature gets its own bright colour in the Playful layout so its
+        // stat bars and stat bubbles feel personal; classic keeps the theme gold.
+        private Color Accent => AppLayout.Playful ? PlayfulKit.HueFor(_d.Name) : Theme.Accent;
 
         public DinoDetailPage(Dinosaur d)
         {

@@ -61,7 +61,7 @@ namespace dinospace.Views
                 StrokeShape = new RoundRectangle { CornerRadius = 14 }, MinimumHeightRequest = 52
             });
 
-            _segments = new HorizontalStackLayout { Spacing = 22 };
+            _segments = new HorizontalStackLayout { Spacing = AppLayout.Playful ? 8 : 22 };
             _segments.Add(SegItem("All", 0));
             _segments.Add(SegItem("Dinosaurs", 1));
             _segments.Add(SegItem("Space", 2));
@@ -95,6 +95,23 @@ namespace dinospace.Views
 
         private View SegItem(string text, int index)
         {
+            if (AppLayout.Playful)
+            {
+                var lbl = new Label
+                {
+                    Text = text, FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), FontAttributes = FontAttributes.Bold,
+                    TextColor = Theme.ChipText, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
+                };
+                var pill = new Border
+                {
+                    Content = lbl, BackgroundColor = Theme.ChipBg, Stroke = Colors.Transparent,
+                    StrokeShape = new RoundRectangle { CornerRadius = 100 }, Padding = new Thickness(16, 9)
+                };
+                pill.BindingContext = (lbl, (View)pill, index, true);
+                Ui.OnTap(pill, async (_, _) => { _segment = index; SyncSegments(); await System.Threading.Tasks.Task.Yield(); Refresh(); });
+                return pill;
+            }
+
             var label = new Label
             {
                 Text = text, FontFamily = Ui.Fonts, FontSize = Ui.S(14), FontAttributes = FontAttributes.Bold,
@@ -102,7 +119,7 @@ namespace dinospace.Views
             };
             var underline = new BoxView { HeightRequest = 2.5, Color = Colors.Transparent, Margin = new Thickness(0, 5, 0, 0) };
             var col = new VerticalStackLayout { Spacing = 0, Children = { label, underline } };
-            col.BindingContext = (label, underline, index);
+            col.BindingContext = (label, (View)underline, index, false);
             // Underline moves immediately; the list swap follows a frame later.
             Ui.OnTap(col, async (_, _) => { _segment = index; SyncSegments(); await System.Threading.Tasks.Task.Yield(); Refresh(); });
             return col;
@@ -111,16 +128,37 @@ namespace dinospace.Views
         private void SyncSegments()
         {
             foreach (var child in _segments.Children)
-                if (child is VerticalStackLayout col && col.BindingContext is ValueTuple<Label, BoxView, int> t)
+                if (child is BindableObject bo && bo.BindingContext is ValueTuple<Label, View, int, bool> t)
                 {
                     bool on = t.Item3 == _segment;
-                    t.Item1.TextColor = on ? Theme.TextPrimary : Theme.TextSecondary;
-                    t.Item2.Color = on ? Theme.Accent : Colors.Transparent;
+                    if (t.Item4) // playful pill
+                    {
+                        ((Border)t.Item2).BackgroundColor = on ? PlayfulKit.Tab(1) : Theme.ChipBg;
+                        t.Item1.TextColor = on ? Colors.White : Theme.ChipText;
+                    }
+                    else
+                    {
+                        t.Item1.TextColor = on ? Theme.TextPrimary : Theme.TextSecondary;
+                        ((BoxView)t.Item2).Color = on ? Theme.Accent : Colors.Transparent;
+                    }
                 }
         }
 
+        // Title -> a stable bright colour, so the playful list reads like a
+        // rainbow instead of a wall of grey rows.
+        private sealed class NameHueConverter : IValueConverter
+        {
+            public object Convert(object? value, Type t, object? p, System.Globalization.CultureInfo c)
+                => value is string s ? PlayfulKit.HueFor(s) : Theme.Accent;
+            public object ConvertBack(object? value, Type t, object? p, System.Globalization.CultureInfo c)
+                => throw new NotSupportedException();
+        }
+        private static readonly NameHueConverter _hue = new();
+
         private View RowTemplate()
         {
+            if (AppLayout.Playful) return PlayfulRowTemplate();
+
             var img = new Image { Aspect = Aspect.AspectFill, WidthRequest = 54, HeightRequest = 54 };
             img.SetBinding(Image.SourceProperty, new Binding(nameof(EntryRow.Image)));
             var thumb = new Border
@@ -149,6 +187,44 @@ namespace dinospace.Views
             wrap.Add(row);
             wrap.Add(new BoxView { HeightRequest = 1, Color = Theme.HairlineSoft, Margin = new Thickness(66, 0, 0, 0) });
             return wrap;
+        }
+
+        // Playful search row: rounded pill card with a bright, per-item round
+        // thumbnail. Kept in the CollectionView so it stays virtualized.
+        private View PlayfulRowTemplate()
+        {
+            var img = new Image { Aspect = Aspect.AspectFill, WidthRequest = 58, HeightRequest = 58 };
+            img.SetBinding(Image.SourceProperty, new Binding(nameof(EntryRow.Image)));
+            var initial = new Label { FontFamily = Ui.Display, FontSize = 22, TextColor = Colors.White.WithAlpha(0.92f), HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
+            initial.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Initial)));
+            var thumbGrid = new Grid();
+            thumbGrid.Add(initial);
+            thumbGrid.Add(img);
+            var thumb = new Border { Content = thumbGrid, WidthRequest = 58, HeightRequest = 58, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 18 } };
+            thumb.SetBinding(Border.BackgroundColorProperty, new Binding(nameof(EntryRow.Title), converter: _hue));
+
+            var title = new Label { FontFamily = Ui.Display, FontSize = Ui.S(17.5), TextColor = Theme.TextPrimary };
+            title.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Title)));
+            var meta = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextSecondary, MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation };
+            meta.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Meta)));
+            var info = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };
+            info.Add(title); info.Add(meta);
+
+            var chevron = Ui.Icon(Ui.IconChevron, 22, PlayfulKit.Tab(1));
+            chevron.VerticalOptions = LayoutOptions.Center;
+
+            var row = new Grid { ColumnSpacing = 13, Padding = new Thickness(10, 9) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.Add(thumb, 0, 0); row.Add(info, 1, 0); row.Add(chevron, 2, 0);
+
+            return new Border
+            {
+                Content = row, BackgroundColor = Theme.Surface, Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 20 }, Padding = 0,
+                Margin = new Thickness(0, 5), Shadow = Theme.CardShadow()
+            };
         }
 
         private async void OnSelectedRow(object? sender, SelectionChangedEventArgs e)

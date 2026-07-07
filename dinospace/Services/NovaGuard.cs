@@ -69,8 +69,38 @@ namespace dinospace.Services
             if (Phrase(q, "what can you do") || Phrase(q, "how do you work") || Phrase(q, "help") && q.Length <= 6)
                 return "I answer questions about dinosaurs, prehistoric creatures, and space. Try me — how big was a Brachiosaurus? Why is Mars red?";
 
-            if (Phrase(q, "how are you") || Phrase(q, "how are u"))
+            // Note: q is already normalized (lowercased, punctuation and
+            // apostrophes turned into spaces), so contractions arrive split —
+            // "how's it going" -> "how s it going", "i'm bored" -> "i m bored".
+            // The phrase literals below match those normalized forms.
+            if (Phrase(q, "how are you") || Phrase(q, "how are u") || Phrase(q, "how s it going") || Phrase(q, "hows it going"))
                 return "I'm great, thanks for asking! Ready to talk dinosaurs and space whenever you are.";
+
+            if (Phrase(q, "are you real") || Phrase(q, "are you alive") || Phrase(q, "are you a robot") || Phrase(q, "are you human") || Phrase(q, "are you a person"))
+                return "I'm a friendly helper that lives right inside this app — part dinosaur, part space explorer, all here to answer your questions! I'm not alive, but I love a good chat.";
+
+            if (Phrase(q, "how old are you") || Phrase(q, "your age"))
+                return "Older than the dinosaurs and younger than the stars — let's just say I'm timeless! Now, what would you like to explore?";
+
+            if (Phrase(q, "where are you") || Phrase(q, "where do you live"))
+                return "I live right here on your device — no internet needed! That means I'm always ready, wherever you are. Ask me anything about dinosaurs or space.";
+
+            // A little personality: favourites. Kids love asking these.
+            if (Phrase(q, "favourite dinosaur") || Phrase(q, "favorite dinosaur") || Phrase(q, "best dinosaur"))
+                return "Tough call, but I have a soft spot for Triceratops — three horns, a giant frill, and totally chill munching plants. Who's YOUR favourite?";
+            if (Phrase(q, "favourite planet") || Phrase(q, "favorite planet") || Phrase(q, "best planet"))
+                return "Saturn, no contest — those rings are dazzling, and it's so light it would float in a giant bathtub! Which one do you like best?";
+            if (Phrase(q, "favourite") || Phrase(q, "favorite"))
+                return "I love it all — but if I had to pick, a Triceratops watching a Saturn-rise would be pretty magical. What's your favourite?";
+
+            if (Phrase(q, "i love you") || Phrase(q, "love you") || Phrase(q, "you re cool") || Phrase(q, "youre cool") ||
+                Phrase(q, "you re awesome") || Phrase(q, "youre awesome") || Phrase(q, "you re smart") || Phrase(q, "youre smart") ||
+                Phrase(q, "you re the best") || Phrase(q, "youre the best") || Phrase(q, "you are cool") || Phrase(q, "you are awesome") ||
+                Phrase(q, "you are the best") || Phrase(q, "i like you"))
+                return "Aww, thank you! You're pretty stellar yourself. Let's discover something amazing together — ask me anything about dinosaurs or space!";
+
+            if (Phrase(q, "i m bored") || Phrase(q, "im bored") || Phrase(q, "so bored") || Phrase(q, "entertain me"))
+                return "Let's fix that! Ask me for a dinosaur joke, a space story, or something wild — like which dinosaur had the strongest bite, or why it rains diamonds on Neptune!";
 
             return null;
         }

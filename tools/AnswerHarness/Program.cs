@@ -45,23 +45,21 @@ string[] questions =
     "why is the sky dark at night", "what are fossils", "can trex swim", "did raptors hunt in packs",
 };
 
-int instant = 0, model = 0, blocked = 0;
-var needsModel = new List<string>();
+int instant = 0, offline = 0, uncovered = 0;
+var notCovered = new List<string>();
 foreach (var q in questions)
 {
     var turn = PromptBuilder.Build(q, history, carryover);
     if (turn.Entities.Count > 0) carryover = new List<string>(turn.Entities);
-    if (turn.InstantReply != null)
-    {
-        bool offTopic = turn.InstantReply == NovaGuard.OffTopic;
-        if (offTopic) { blocked++; Console.WriteLine($"BLOCKED  {q}"); }
-        else { instant++; Console.WriteLine($"instant  {q}  ->  {Snip(turn.InstantReply)}"); }
-    }
-    else { model++; needsModel.Add(q); Console.WriteLine($"MODEL    {q}"); }
+    if (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic)
+    { instant++; Console.WriteLine($"instant   {q}  ->  {Snip(turn.InstantReply)}"); }
+    else if (turn.OfflineFallback != null)
+    { offline++; Console.WriteLine($"offline   {q}  ->  {Snip(turn.OfflineFallback)}"); }
+    else { uncovered++; notCovered.Add(q); Console.WriteLine($"UNCOVERED {q}"); }
 }
 
-Console.WriteLine($"\n=== {instant} instant, {model} need the model, {blocked} blocked as off-topic ===");
-if (needsModel.Count > 0) { Console.WriteLine("Model-dependent:"); foreach (var q in needsModel) Console.WriteLine("  - " + q); }
+Console.WriteLine($"\n=== {instant} instant, {offline} offline-fallback, {uncovered} UNCOVERED (dead ends) ===");
+if (notCovered.Count > 0) { Console.WriteLine("Dead ends:"); foreach (var q in notCovered) Console.WriteLine("  - " + q); }
 
 static string Snip(string s) => s.Length <= 80 ? s : s[..80] + "...";
 
@@ -91,9 +89,39 @@ foreach (var q in round2)
     var turn = PromptBuilder.Build(q, history, carryover);
     if (turn.Entities.Count > 0) carryover = new List<string>(turn.Entities);
     if (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic) i2++;
-    else { m2++; Console.WriteLine($"R2-MISS  {q}"); }
+    else if (turn.OfflineFallback != null) i2++;
+    else { m2++; Console.WriteLine($"R2-UNCOVERED  {q}"); }
 }
-Console.WriteLine($"=== round 2: {i2} instant, {m2} missed ===");
+Console.WriteLine($"=== round 2: {i2} covered, {m2} uncovered ===");
 
-// CI-friendly: fail the run if anything regressed.
-Environment.Exit(model + blocked + m2 > 0 ? 1 : 0);
+// round 3: conversational + creative + curveballs. These lean on the offline
+// brain (smalltalk, NovaCreative). NONE may dead-end.
+string[] round3 =
+{
+    "hi", "hello there", "how are you", "who are you", "what can you do",
+    "thanks", "ok cool", "goodbye", "are you real", "how old are you",
+    "whats your favourite dinosaur", "whats your favorite planet", "i'm bored", "you're awesome",
+    "tell me a joke", "tell me another joke", "say something funny", "make me laugh",
+    "tell me a story", "tell me a story about a t rex", "tell me a story about the moon",
+    "write a poem about saturn", "sing me a space song", "rap about dinosaurs",
+    "what if dinosaurs never went extinct", "imagine a velociraptor in space",
+    "pretend you are a rocket", "tell me a fun fact", "surprise me",
+    // deliberate curveballs the model used to swallow
+    "what is your favourite colour", "do you like pizza", "whats 2 plus 2",
+    "who is the president", "what is love", "tell me about minecraft",
+    "why is the grass green", "what should i be when i grow up",
+};
+int i3 = 0, m3 = 0;
+foreach (var q in round3)
+{
+    var turn = PromptBuilder.Build(q, history, carryover);
+    if (turn.Entities.Count > 0) carryover = new List<string>(turn.Entities);
+    string? reply = (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic) ? turn.InstantReply : turn.OfflineFallback;
+    if (reply != null) { i3++; Console.WriteLine($"chat      {q}  ->  {Snip(reply)}"); }
+    else { m3++; Console.WriteLine($"R3-UNCOVERED  {q}"); }
+}
+Console.WriteLine($"=== round 3 (chat): {i3} covered, {m3} uncovered ===");
+
+// CI-friendly: fail only if a question truly dead-ends (no instant reply AND
+// no offline fallback). Model-routing with a fallback is fine.
+Environment.Exit(uncovered + m2 + m3 > 0 ? 1 : 0);

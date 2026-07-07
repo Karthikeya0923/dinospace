@@ -11,7 +11,7 @@ namespace dinospace.Views
     {
         private readonly SpaceObject _s;
         private Microsoft.Maui.Controls.Shapes.Path _saveIcon = null!;
-        private static Color Accent => Theme.Accent;
+        private Color Accent => AppLayout.Playful ? PlayfulKit.HueFor(_s.Name) : Theme.Accent;
 
         public SpaceDetailPage(SpaceObject s)
         {

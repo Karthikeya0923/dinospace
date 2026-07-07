@@ -33,13 +33,29 @@ namespace dinospace.Views
         // extras. Colourful, chunky, and built for tapping, not reading.
         private void BuildPlayful()
         {
-            var stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(16, 16, 16, 30) };
+            var stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(16, 14, 16, 30) };
 
-            // Big playful masthead.
-            var title = new VerticalStackLayout { Spacing = 2 };
-            title.Add(new Label { Text = "DinoSpace", FontFamily = Ui.Display, FontSize = Ui.S(40), TextColor = Theme.Accent, LineHeight = 1.0 });
-            title.Add(new Label { Text = "Explore · Learn · Imagine!", FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary });
-            stack.Add(title);
+            // A big, colourful welcome banner — a mascot, the wordmark, and a
+            // cheery tagline on a deep-space gradient.
+            var titleCol = new VerticalStackLayout { Spacing = 1, VerticalOptions = LayoutOptions.Center };
+            titleCol.Add(new Label { Text = "DinoSpace", FontFamily = Ui.Display, FontSize = Ui.S(34), TextColor = Colors.White, LineHeight = 1.0 });
+            titleCol.Add(new Label { Text = "Explore · Learn · Imagine!", FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), FontAttributes = FontAttributes.Bold, TextColor = Colors.White.WithAlpha(0.92f) });
+
+            var bannerGrid = new Grid { ColumnSpacing = 12, Padding = new Thickness(18, 18) };
+            bannerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            bannerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            bannerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            bannerGrid.Add(new Label { Text = "🦕", FontSize = 40, VerticalOptions = LayoutOptions.Center }, 0, 0);
+            bannerGrid.Add(titleCol, 1, 0);
+            bannerGrid.Add(new Label { Text = "🚀", FontSize = 34, VerticalOptions = LayoutOptions.Center }, 2, 0);
+
+            stack.Add(new Border
+            {
+                Content = bannerGrid,
+                Background = PlayfulKit.Gradient(PlayfulKit.Space),
+                Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 26 },
+                Shadow = Theme.CardShadow()
+            });
 
             // Live sky teaser (kept — it's a lovely, dynamic touch).
             stack.Add(SkyCard());
@@ -50,12 +66,12 @@ namespace dinospace.Views
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             for (int r = 0; r < 3; r++) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            grid.Add(WorldTile("🦕", "Dinosaurs", "Meet amazing creatures", "#3FA34D", "#1E7A3A", async () => await Nav.Push(() => new BrowsePage("Dinosaurs"))), 0, 0);
-            grid.Add(WorldTile("🪐", "Space", "Planets, stars & galaxies", "#6C5CE7", "#3B2E9E", async () => await Nav.Push(() => new BrowsePage("Space"))), 1, 0);
-            grid.Add(WorldTile("🔭", "Sky Tonight", "See what's above you", "#2E86DE", "#1B4F9E", async () => await Nav.Push(() => new SkyPage())), 0, 1);
-            grid.Add(WorldTile("✦", "Ask NovaSaur", "Your AI dino & space pal", "#00B894", "#0A7A66", async () => await Nav.Push(() => new NovaPage())), 1, 1);
-            grid.Add(WorldTile("⚔️", "Dino Battles", "Who would win?", "#E17055", "#C0392B", async () => await Nav.Push(() => new BattlePage(null))), 0, 2);
-            grid.Add(WorldTile("🎨", "Your Creations", "Draw your own!", "#E84393", "#A83279", async () => await Nav.Push(() => new CreationsPage())), 1, 2);
+            grid.Add(WorldTile("🦕", "Dinosaurs", "Meet amazing creatures", "#3FBF6A", "#2E8B57", async () => await Nav.Push(() => new BrowsePage("Dinosaurs"))), 0, 0);
+            grid.Add(WorldTile("🪐", "Space", "Planets, stars & galaxies", "#A66BFF", "#7C3AED", async () => await Nav.Push(() => new BrowsePage("Space"))), 1, 0);
+            grid.Add(WorldTile("🔭", "Sky Scanner", "Point at the real sky!", "#3E9BFF", "#2E5FD0", async () => await Nav.Push(() => new SkyViewPage())), 0, 1);
+            grid.Add(WorldTile("🤖", "Ask NovaSaur", "Your dino & space buddy", "#25C7C7", "#0E9E9E", async () => await Nav.Push(() => new NovaPage())), 1, 1);
+            grid.Add(WorldTile("⚔️", "Dino Battles", "Who would win?", "#FF7361", "#E23B3B", async () => await Nav.Push(() => new BattlePage(null))), 0, 2);
+            grid.Add(WorldTile("🎨", "Editor", "Draw your own entry!", "#FF6FB0", "#E14A97", async () => await Nav.Push(() => new CreationsPage())), 1, 2);
             stack.Add(grid);
 
             // A quick row of extras.

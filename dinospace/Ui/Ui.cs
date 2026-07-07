@@ -347,20 +347,22 @@ namespace dinospace
                 HorizontalOptions = LayoutOptions.End
             }, 1, 0);
 
+            double barH = AppLayout.Playful ? 12 : 7;
+            double barR = barH / 2;
             var fill = new Border
             {
                 BackgroundColor = accent,
                 Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 5 },
-                HeightRequest = 7,
+                StrokeShape = new RoundRectangle { CornerRadius = barR },
+                HeightRequest = barH,
                 HorizontalOptions = LayoutOptions.Start
             };
             var track = new Border
             {
                 BackgroundColor = Theme.SurfaceAlt,
                 Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 5 },
-                HeightRequest = 7,
+                StrokeShape = new RoundRectangle { CornerRadius = barR },
+                HeightRequest = barH,
                 Content = fill
             };
             track.SizeChanged += (_, _) => { if (track.Width > 0) fill.WidthRequest = track.Width * fraction; };

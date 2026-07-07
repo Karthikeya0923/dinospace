@@ -5,11 +5,17 @@ using System.Text;
 
 namespace dinospace.Services
 {
-    // What the chat page gets back. Exactly one of Prompt / InstantReply is set.
+    // What the chat page gets back.
+    //   • InstantReply set  -> show it, no model needed.
+    //   • Prompt set        -> send to the model IF it's loaded; otherwise show
+    //                          OfflineFallback. OfflineFallback is always set
+    //                          alongside Prompt so the chat answers every
+    //                          question even with no model download.
     public class NovaTurn
     {
-        public string? Prompt;         // send this to the model
-        public string? InstantReply;   // show immediately, no model needed
+        public string? Prompt;
+        public string? InstantReply;
+        public string? OfflineFallback;
         public List<string> Entities = new();
     }
 
@@ -34,6 +40,12 @@ namespace dinospace.Services
             var screened = NovaGuard.Screen(q);
             if (screened != null) { turn.InstantReply = screened; return turn; }
 
+            // 2.5 jokes and "tell me a fact" — always instant and fun, and
+            //     resolved before grounding so a chat's carryover can't turn
+            //     "tell me a joke" into a fact about the last thing discussed.
+            var quick = NovaCreative.QuickReply(q);
+            if (quick != null) { turn.InstantReply = quick; return turn; }
+
             // 3. grounding (used only to spot an encyclopedia entry we can
             //    answer instantly and to carry "it"/"they" across follow-ups —
             //    NOT to build the model prompt).
@@ -53,12 +65,13 @@ namespace dinospace.Services
                 if (direct != null) { turn.InstantReply = direct; return turn; }
             }
 
-            // 4. Everything the encyclopedia didn't answer goes to the model.
-            //    There is NO hard topic gate any more — that was what made Nova
-            //    "only answer the chip questions" and reject anything typed. The
-            //    model's own instructions keep it kindly on-topic; a canned
-            //    refusal in front of it just made the app feel broken.
+            // 4. Everything the encyclopedia didn't answer goes to the model —
+            //    but only if it's actually loaded. There is NO hard topic gate:
+            //    that was what made Nova "only answer the chip questions". We
+            //    always attach a fully offline reply (a story, a joke, an
+            //    honest catch-all) so the chat answers even with no model.
             turn.Prompt = Compose(question, creative);
+            turn.OfflineFallback = NovaCreative.Answer(question, q, g, creative);
             return turn;
         }
 
