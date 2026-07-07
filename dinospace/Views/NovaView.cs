@@ -342,12 +342,12 @@ namespace dinospace.Views
             if (!NovaSaurService.IsReady)
             {
                 if (_thinkingLabel != null)
-                    _thinkingLabel.Text = "Waking up my deep-thinking brain — first big question takes a moment…";
-                bool ready = await NovaSaurService.InitWithTimeoutAsync(TimeSpan.FromSeconds(75));
+                    _thinkingLabel.Text = "Waking up my deep-thinking brain — one moment…";
+                bool ready = await NovaSaurService.InitWithTimeoutAsync(TimeSpan.FromSeconds(35));
                 if (myGen != _gen) return;
                 if (!ready)
                 {
-                    FinishAnswer(myGen, "That's a big one, and my deep-thinking brain is having trouble waking up on this device. I can still instantly answer anything about a specific dinosaur, planet, or tonight's sky — give one of those a try!");
+                    FinishAnswer(myGen, "That's a big one, and my deep-thinking brain is still warming up on this device. I can instantly answer anything about a specific dinosaur, planet, or tonight's sky — give one of those a try, or ask me this again in a minute!");
                     return;
                 }
             }

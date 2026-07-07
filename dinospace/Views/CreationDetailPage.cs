@@ -44,24 +44,35 @@ namespace dinospace.Views
 
             if (c.Kind == CreationKind.Dinosaur)
             {
+                var d = c.ToDinosaur();
                 string meta = string.Join("  ·  ", new[] { Quote(c.Meaning), c.Diet, c.Era }.Where(s => !string.IsNullOrWhiteSpace(s)));
                 stack.Add(DetailUi.TitleBlock(c.Name, c.Pronunciation, meta));
-                stack.Add(DinoStatBars(c.ToDinosaur()));
+                stack.Add(DinoStatBars(d));
+                stack.Add(DetailUi.Section("About", d.AboutText, Accent));
+                stack.Add(DetailUi.Section("Key features", d.KeyFeaturesText, Accent));
+                stack.Add(DetailUi.Section("Habitat & environment", d.LifeEnvironmentText, Accent));
+                stack.Add(DetailUi.Section("Behaviour", d.BehaviourText, Accent));
+                stack.Add(DetailUi.FunFacts(d.FunFactsText, Accent));
             }
             else
             {
-                string meta = string.Join("  ·  ", new[] { c.TypeLabel, c.Subtitle }.Where(s => !string.IsNullOrWhiteSpace(s)));
+                var s = c.ToSpaceObject();
+                string meta = string.Join("  ·  ", new[] { c.TypeLabel, c.Subtitle }.Where(x => !string.IsNullOrWhiteSpace(x)));
                 stack.Add(DetailUi.TitleBlock(c.Name, c.Pronunciation, meta));
                 var chips = new[]
                 {
-                    (c.Stat1Label, c.Stat1Value, Accent), (c.Stat2Label, c.Stat2Value, Accent),
-                    (c.Stat3Label, c.Stat3Value, Accent), (c.Stat4Label, c.Stat4Value, Accent),
+                    (s.Stat1Label, s.Stat1Value, Accent), (s.Stat2Label, s.Stat2Value, Accent),
+                    (s.Stat3Label, s.Stat3Value, Accent), (s.Stat4Label, s.Stat4Value, Accent),
                 }.Where(x => !string.IsNullOrWhiteSpace(x.Item2)).ToList();
                 if (chips.Count > 0) stack.Add(DetailUi.StatChipRow(chips));
+                stack.Add(DetailUi.Section("About", s.AboutText, Accent));
+                stack.Add(DetailUi.Section("Key features", s.KeyFeaturesText, Accent));
+                stack.Add(DetailUi.Section("Orbit & movement", s.OrbitMovementText, Accent));
+                stack.Add(DetailUi.Section("Surface & composition", s.SurfaceCompositionText, Accent));
+                stack.Add(DetailUi.Section("History", s.HistoryText, Accent));
+                stack.Add(DetailUi.Section("What's inside", s.WhatsInsideText, Accent));
+                stack.Add(DetailUi.FunFacts(s.FunFactsText, Accent));
             }
-
-            stack.Add(DetailUi.Section("About", c.About, Accent));
-            stack.Add(DetailUi.FunFacts(c.FunFacts, Accent));
 
             var badge = new Border
             {

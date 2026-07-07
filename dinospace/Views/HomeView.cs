@@ -27,9 +27,102 @@ namespace dinospace.Views
 
         public void OnSelected() => StatsStore.UpdateStreak();
 
+        // ================= PLAYFUL LAYOUT =================
+        // A completely different home for young explorers: a big welcome, a
+        // grid of vibrant gradient "worlds" to jump into, and a quick row of
+        // extras. Colourful, chunky, and built for tapping, not reading.
+        private void BuildPlayful()
+        {
+            var stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(16, 16, 16, 30) };
+
+            // Big playful masthead.
+            var title = new VerticalStackLayout { Spacing = 2 };
+            title.Add(new Label { Text = "DinoSpace", FontFamily = Ui.Display, FontSize = Ui.S(40), TextColor = Theme.Accent, LineHeight = 1.0 });
+            title.Add(new Label { Text = "Explore · Learn · Imagine!", FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary });
+            stack.Add(title);
+
+            // Live sky teaser (kept — it's a lovely, dynamic touch).
+            stack.Add(SkyCard());
+
+            // The six big worlds, two per row.
+            var grid = new Grid { ColumnSpacing = 14, RowSpacing = 14 };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            for (int r = 0; r < 3; r++) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            grid.Add(WorldTile("🦕", "Dinosaurs", "Meet amazing creatures", "#3FA34D", "#1E7A3A", async () => await Nav.Push(() => new BrowsePage("Dinosaurs"))), 0, 0);
+            grid.Add(WorldTile("🪐", "Space", "Planets, stars & galaxies", "#6C5CE7", "#3B2E9E", async () => await Nav.Push(() => new BrowsePage("Space"))), 1, 0);
+            grid.Add(WorldTile("🔭", "Sky Tonight", "See what's above you", "#2E86DE", "#1B4F9E", async () => await Nav.Push(() => new SkyPage())), 0, 1);
+            grid.Add(WorldTile("✦", "Ask NovaSaur", "Your AI dino & space pal", "#00B894", "#0A7A66", async () => await Nav.Push(() => new NovaPage())), 1, 1);
+            grid.Add(WorldTile("⚔️", "Dino Battles", "Who would win?", "#E17055", "#C0392B", async () => await Nav.Push(() => new BattlePage(null))), 0, 2);
+            grid.Add(WorldTile("🎨", "Your Creations", "Draw your own!", "#E84393", "#A83279", async () => await Nav.Push(() => new CreationsPage())), 1, 2);
+            stack.Add(grid);
+
+            // A quick row of extras.
+            var quick = new Grid { ColumnSpacing = 12 };
+            quick.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            quick.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            quick.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            quick.Add(QuickTile("🧩", "Quizzes", "#F0A81E", async () => await StartQuiz()), 0, 0);
+            quick.Add(QuickTile("📚", "Collections", "#4C6EF5", async () => await Nav.Push(() => new CollectionsListPage())), 1, 0);
+            quick.Add(QuickTile("🎲", "Surprise Me", "#12A594", async () => await OpenSurprise()), 2, 0);
+            stack.Add(quick);
+
+            // Fun fact at the bottom.
+            stack.Add(new Label { Text = "Did you know?", FontFamily = Ui.Display, FontSize = Ui.S(20), TextColor = Theme.TextPrimary, Margin = new Thickness(2, 6, 0, 0) });
+            stack.Add(FactCard());
+
+            Content = new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
+        }
+
+        private View WorldTile(string emoji, string title, string sub, string c1, string c2, Func<System.Threading.Tasks.Task> onTap)
+        {
+            var col = new VerticalStackLayout { Spacing = 4, Padding = new Thickness(16, 18, 16, 16), HeightRequest = 150, VerticalOptions = LayoutOptions.Fill };
+            col.Add(new Label { Text = emoji, FontSize = 38 });
+            col.Add(new BoxView { HeightRequest = 4, Color = Colors.Transparent });
+            col.Add(new Label { Text = title, FontFamily = Ui.Display, FontSize = Ui.S(20), TextColor = Colors.White, LineHeight = 1.0 });
+            col.Add(new Label { Text = sub, FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Colors.White.WithAlpha(0.9f), LineHeight = 1.2 });
+
+            var tile = new Border
+            {
+                Content = col,
+                Background = new LinearGradientBrush(
+                    new GradientStopCollection { new GradientStop(Color.FromArgb(c1), 0), new GradientStop(Color.FromArgb(c2), 1) },
+                    new Point(0, 0), new Point(1, 1)),
+                Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 24 },
+                Shadow = Theme.CardShadow()
+            };
+            Ui.OnTap(tile, async (_, _) => await onTap());
+            Ui.Describe(tile, $"{title}: {sub}");
+            return tile;
+        }
+
+        private View QuickTile(string emoji, string title, string c, Func<System.Threading.Tasks.Task> onTap)
+        {
+            var col = new VerticalStackLayout { Spacing = 3, Padding = new Thickness(6, 14), HorizontalOptions = LayoutOptions.Fill };
+            col.Add(new Label { Text = emoji, FontSize = 24, HorizontalTextAlignment = TextAlignment.Center });
+            col.Add(new Label { Text = title, FontFamily = Ui.Display, FontSize = Ui.S(13.5), TextColor = Colors.White, HorizontalTextAlignment = TextAlignment.Center });
+
+            var tile = new Border
+            {
+                Content = col,
+                BackgroundColor = Color.FromArgb(c),
+                Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 20 },
+                Shadow = Theme.CardShadow()
+            };
+            Ui.OnTap(tile, async (_, _) => await onTap());
+            Ui.Describe(tile, title);
+            return tile;
+        }
+        // ================= END PLAYFUL =================
+
         private void Build()
         {
-            var stack = new VerticalStackLayout { Spacing = AppLayout.Playful ? 20 : 18, Padding = new Thickness(18, AppLayout.Playful ? 14 : 10, 18, 28) };
+            if (AppLayout.Playful) { BuildPlayful(); return; }
+
+            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(18, 10, 18, 28) };
 
             stack.Add(Masthead());
 
@@ -43,25 +136,13 @@ namespace dinospace.Views
                 "65 million years in your pocket.", "Somewhere, a star is being born.", "Dig in!"
             };
             string helloText = hellos[DateTime.Now.DayOfYear % hellos.Length];
-
-            if (AppLayout.Playful)
+            stack.Add(new Label
             {
-                // A big, warm welcome that reads like a friend saying hi.
-                var greet = new VerticalStackLayout { Spacing = 2 };
-                greet.Add(new Label { Text = "Hi there, explorer! 👋", FontFamily = Ui.Display, FontSize = Ui.S(26), TextColor = Theme.TextPrimary });
-                greet.Add(new Label { Text = helloText, FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold, TextColor = Theme.Accent });
-                stack.Add(greet);
-            }
-            else
-            {
-                stack.Add(new Label
-                {
-                    Text = helloText,
-                    FontFamily = Ui.Display,
-                    FontSize = Ui.S(28),
-                    TextColor = Theme.TextSecondary
-                });
-            }
+                Text = helloText,
+                FontFamily = Ui.Display,
+                FontSize = Ui.S(28),
+                TextColor = Theme.TextSecondary
+            });
 
             if (ExplorerRow() is View explorer)
                 stack.Add(explorer);

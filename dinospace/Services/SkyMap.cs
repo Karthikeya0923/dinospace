@@ -14,7 +14,7 @@ namespace dinospace
 
         public sealed record MapStar(string Name, double RaHours, double DecDeg, double Mag, string Colour);
         public sealed record MapFigure(string Name, (double ra, double dec)[] Stars, (int a, int b)[] Lines);
-        public sealed record DeepSkyObject(string Name, string Kind, double RaHours, double DecDeg, string Blurb);
+        public sealed record DeepSkyObject(string Name, string Kind, double RaHours, double DecDeg, string Blurb, bool NakedEye = false);
 
         // The 24 stars worth naming on a phone screen.
         public static readonly MapStar[] Stars =
@@ -92,9 +92,9 @@ namespace dinospace
         // Showpiece deep-sky objects for the "through a telescope" card.
         public static readonly DeepSkyObject[] DeepSky =
         {
-            new("Orion Nebula (M42)", "nebula", 5.588, -5.39, "A stellar nursery you can spot with binoculars, below Orion's belt"),
-            new("Pleiades (M45)", "star cluster", 3.790, 24.12, "The Seven Sisters — a sparkling little cluster even city eyes can find"),
-            new("Andromeda Galaxy (M31)", "galaxy", 0.712, 41.27, "The farthest thing visible to the naked eye — 2.5 million light-years"),
+            new("Orion Nebula (M42)", "nebula", 5.588, -5.39, "A stellar nursery you can spot below Orion's belt", NakedEye: true),
+            new("Pleiades (M45)", "star cluster", 3.790, 24.12, "The Seven Sisters — a sparkling little cluster even city eyes can find", NakedEye: true),
+            new("Andromeda Galaxy (M31)", "galaxy", 0.712, 41.27, "The farthest thing visible to the naked eye — 2.5 million light-years", NakedEye: true),
             new("Hercules Cluster (M13)", "star cluster", 16.695, 36.46, "A snowball of 300,000 ancient stars"),
             new("Beehive Cluster (M44)", "star cluster", 8.670, 19.98, "A hive of stars hiding in faint Cancer"),
             new("Lagoon Nebula (M8)", "nebula", 18.060, -24.38, "A glowing cloud in the heart of the Milky Way"),

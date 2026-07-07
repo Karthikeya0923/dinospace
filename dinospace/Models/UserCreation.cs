@@ -33,6 +33,9 @@ namespace dinospace.Models
         public string Weight { get; set; } = "";         // plain number (kg)
         public string Speed { get; set; } = "";          // plain number (km/h)
         public string BiteForce { get; set; } = "";      // plain number (PSI)
+        public string KeyFeatures { get; set; } = "";
+        public string Habitat { get; set; } = "";
+        public string Behaviour { get; set; } = "";
 
         // Space
         public string Subtitle { get; set; } = "";
@@ -46,6 +49,11 @@ namespace dinospace.Models
         public string Stat3Value { get; set; } = "";
         public string Stat4Label { get; set; } = "";
         public string Stat4Value { get; set; } = "";
+        public string SpaceKeyFeatures { get; set; } = "";
+        public string OrbitMovement { get; set; } = "";
+        public string SurfaceComposition { get; set; } = "";
+        public string History { get; set; } = "";
+        public string WhatsInside { get; set; } = "";
 
         // A number the user typed gets its unit appended for display; anything
         // they wrote with letters is left exactly as-is.
@@ -76,6 +84,9 @@ namespace dinospace.Models
             BiteForce = WithUnit(BiteForce, "PSI"),
             ImageFile = ImagePath,
             AboutText = About,
+            KeyFeaturesText = KeyFeatures,
+            LifeEnvironmentText = Habitat,
+            BehaviourText = Behaviour,
             FunFactsText = FunFacts,
         };
 
@@ -93,6 +104,11 @@ namespace dinospace.Models
             Stat4Label = Stat4Label, Stat4Value = Stat4Value,
             ImageFile = ImagePath,
             AboutText = About,
+            KeyFeaturesText = SpaceKeyFeatures,
+            OrbitMovementText = OrbitMovement,
+            SurfaceCompositionText = SurfaceComposition,
+            HistoryText = History,
+            WhatsInsideText = WhatsInside,
             FunFactsText = FunFacts,
         };
 

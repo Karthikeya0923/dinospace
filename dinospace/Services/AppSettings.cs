@@ -24,7 +24,7 @@ namespace dinospace.Services
         }
 
         // Theme id ("theme1".."theme7"); old installs may still say "classic",
-        // which Theme.ApplyCurrent maps onto Fossil / Stickers.
+        // which Theme.ApplyCurrent maps onto Fossil / Dark Mode.
         public static string ThemeId
         {
             get => Preferences.Get("set_theme", "theme1");

@@ -583,9 +583,12 @@ namespace dinospace.Views
                 }
             }
 
-            // deep-sky highlights as little diamonds
+            // deep-sky highlights as little diamonds — only the three you can
+            // genuinely catch with the naked eye, so the overlay matches the
+            // real sky (fainter targets live on the Sky Tonight binocular card)
             foreach (var d in SkyMap.DeepSky)
             {
+                if (!d.NakedEye) continue;
                 var (alt, az) = SkyCalc.AltAz(d.RaHours * 15.0, d.DecDeg, Lat, Lon, utc);
                 if (alt < 5) continue;
                 var (x, y, vis) = SkyMap.Project(alt, az, v);

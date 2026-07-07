@@ -9,28 +9,39 @@ using dinospace.Services;
 
 namespace dinospace.Views
 {
-    // Draw a creature or space object, then give it stats — a simple, fun
-    // "make your own encyclopedia entry" studio. The drawing is a real paint
-    // canvas (finger strokes, colours, brush sizes, undo, clear); the form
-    // collects every field a built-in entry has.
+    // Draw a creature or space object, then give it stats — a proper little
+    // paint studio (comparable to MS Paint: freehand brush/pencil/marker,
+    // shapes, adjustable sizes, a colour palette with a custom-colour mixer,
+    // a fill bucket, undo/redo) plus a full stat form so a creation looks
+    // exactly like a real encyclopedia entry.
     public class CreationEditorPage : ContentPage
     {
         private readonly UserCreation _c;
         private readonly bool _isNew;
+
+        // Canvas state.
         private readonly PaintDrawable _paint = new();
         private GraphicsView _canvas = null!;
-        private Stroke? _active;
+        private DrawOp? _current;
+        private readonly Stack<DrawOp> _redo = new();
 
         private CreationKind _kind;
         private VerticalStackLayout _formArea = null!;
+
+        // Tools.
+        private DrawTool _tool = DrawTool.Brush;
         private Color _brush = Color.FromArgb("#2B2B33");
         private float _brushSize = 8;
-        private bool _erasing;
+        private bool _fillShapes;
 
-        // Toolbar pieces we repaint when the selection changes.
+        // Toolbar pieces we repaint on change.
         private readonly List<(Border border, Color color)> _swatches = new();
         private readonly List<(Border border, float size)> _sizes = new();
-        private Border _eraserBtn = null!;
+        private readonly List<(Border border, DrawTool tool)> _toolBtns = new();
+        private Border _customSwatch = null!;
+        private Border _fillToggle = null!;
+        private VerticalStackLayout _mixer = null!;
+        private int _cr = 120, _cg = 90, _cb = 220;
 
         // The form entries, read back on save.
         private readonly Dictionary<string, Entry> _fields = new();
@@ -121,28 +132,46 @@ namespace dinospace.Views
         {
             _canvas = new GraphicsView { Drawable = _paint, HeightRequest = 300, BackgroundColor = Colors.White };
 
-            var pointer = new PointerGestureRecognizer();
-            pointer.PointerPressed += (_, e) =>
+            // GraphicsView interaction events fire on real touch drags on
+            // Android (unlike PointerGestureRecognizer.PointerMoved, which only
+            // reported hovers — that was why drawing came out as dots).
+            _canvas.StartInteraction += (_, e) =>
             {
-                var p = e.GetPosition(_canvas);
-                if (p == null) return;
-                _active = new Stroke { Color = _erasing ? Colors.White : _brush, Width = _erasing ? _brushSize * 2.2f : _brushSize };
-                _active.Points.Add(new PointF((float)p.Value.X, (float)p.Value.Y));
-                _paint.Strokes.Add(_active);
-                _canvas.Invalidate();
-            };
-            pointer.PointerMoved += (_, e) =>
-            {
-                if (_active == null) return;
-                var p = e.GetPosition(_canvas);
-                if (p == null) return;
-                _active.Points.Add(new PointF((float)p.Value.X, (float)p.Value.Y));
-                _canvas.Invalidate();
-            };
-            pointer.PointerReleased += (_, _) => _active = null;
-            _canvas.GestureRecognizers.Add(pointer);
+                var p = e.Touches.FirstOrDefault();
+                _redo.Clear();
+                if (_tool == DrawTool.Fill) { _paint.Background = _brush; _canvas.Invalidate(); AppSettings.Tap(); return; }
 
-            return new Border
+                _current = new DrawOp
+                {
+                    Tool = _tool,
+                    Color = _tool == DrawTool.Eraser ? _paint.Background : _brush,
+                    Width = _tool == DrawTool.Eraser ? _brushSize * 2.4f : _brushSize,
+                    Fill = _fillShapes && IsShape(_tool),
+                    Start = p, End = p
+                };
+                if (_tool is DrawTool.Brush or DrawTool.Eraser) _current.Points.Add(p);
+                _paint.Ops.Add(_current);
+                _canvas.Invalidate();
+            };
+            _canvas.DragInteraction += (_, e) =>
+            {
+                if (_current == null) return;
+                var p = e.Touches.FirstOrDefault();
+                if (_current.Tool is DrawTool.Brush or DrawTool.Eraser) _current.Points.Add(p);
+                else _current.End = p;   // live shape preview
+                _canvas.Invalidate();
+            };
+            _canvas.EndInteraction += (_, e) =>
+            {
+                if (_current == null) return;
+                var p = e.Touches.FirstOrDefault();
+                if (_current.Tool is DrawTool.Brush or DrawTool.Eraser) { if (p != default) _current.Points.Add(p); }
+                else _current.End = p == default ? _current.End : p;
+                _current = null;
+                _canvas.Invalidate();
+            };
+
+            var frame = new Border
             {
                 Content = _canvas,
                 BackgroundColor = Colors.White,
@@ -150,107 +179,201 @@ namespace dinospace.Views
                 StrokeShape = new RoundRectangle { CornerRadius = 16 },
                 Padding = 0, HeightRequest = 300
             };
+            return frame;
         }
 
-        // ----- brush / colour / undo / clear toolbar -----
+        private static bool IsShape(DrawTool t) =>
+            t is DrawTool.Rectangle or DrawTool.Ellipse or DrawTool.Triangle or DrawTool.Star or DrawTool.Line or DrawTool.Arrow;
+
+        // ----- toolbar -----
         private View Toolbar()
         {
+            var col = new VerticalStackLayout { Spacing = 10 };
+
+            // Tools
+            col.Add(SmallLabel("Tools"));
+            _toolBtns.Clear();
+            var toolsRow = new HorizontalStackLayout { Spacing = 8, Padding = new Thickness(2, 2) };
+            (DrawTool tool, string glyph)[] tools =
+            {
+                (DrawTool.Brush, "🖌"), (DrawTool.Line, "／"), (DrawTool.Rectangle, "▭"), (DrawTool.Ellipse, "◯"),
+                (DrawTool.Triangle, "△"), (DrawTool.Star, "★"), (DrawTool.Arrow, "➤"), (DrawTool.Fill, "🪣"), (DrawTool.Eraser, "🧽")
+            };
+            foreach (var (tool, glyph) in tools)
+            {
+                var b = ChromeChip(new Label { Text = glyph, FontSize = 18, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center });
+                b.WidthRequest = 46; b.HeightRequest = 42;
+                Ui.OnTap(b, (_, _) => { _tool = tool; RefreshTools(); });
+                _toolBtns.Add((b, tool));
+                toolsRow.Add(b);
+            }
+            col.Add(HScroll(toolsRow));
+
+            // Sizes
+            col.Add(SmallLabel("Brush size"));
+            _sizes.Clear();
+            var sizeRow = new HorizontalStackLayout { Spacing = 8, Padding = new Thickness(2, 2) };
+            foreach (var size in new float[] { 3, 8, 16, 28 })
+            {
+                var b = new Border
+                {
+                    WidthRequest = 46, HeightRequest = 40, BackgroundColor = Theme.Surface, StrokeThickness = 2,
+                    StrokeShape = new RoundRectangle { CornerRadius = 12 },
+                    Content = new GraphicsView { Drawable = new DotDrawable { Radius = Math.Min(size / 2, 12) }, InputTransparent = true }
+                };
+                float s = size;
+                Ui.OnTap(b, (_, _) => { _brushSize = s; RefreshTools(); });
+                _sizes.Add((b, size));
+                sizeRow.Add(b);
+            }
+            col.Add(HScroll(sizeRow));
+
+            // Colours
+            col.Add(SmallLabel("Colours"));
+            _swatches.Clear();
+            var swatchRow = new HorizontalStackLayout { Spacing = 9, Padding = new Thickness(2, 2) };
             string[] palette =
             {
-                "#2B2B33", "#E5484D", "#F0883E", "#F4C63D", "#3FB950", "#3B82F6",
-                "#8B5CF6", "#EC4899", "#8B5E3C", "#12A594", "#FFFFFF"
+                "#000000", "#5A5A5A", "#9B9B9B", "#FFFFFF", "#7A3B12", "#E5544B", "#F0883E", "#F4C63D",
+                "#8ED081", "#2E9E4B", "#12A594", "#3B82F6", "#1E3A8A", "#8B5CF6", "#EC4899", "#F6B8B0"
             };
-            _swatches.Clear();
-            _sizes.Clear();
-
-            var swatches = new HorizontalStackLayout { Spacing = 10, Padding = new Thickness(2, 2) };
             foreach (var hex in palette)
             {
                 var swatchColor = Color.FromArgb(hex);
                 var sw = new Border
                 {
-                    WidthRequest = 34, HeightRequest = 34,
-                    BackgroundColor = swatchColor,
-                    StrokeThickness = 3,
-                    StrokeShape = new RoundRectangle { CornerRadius = 17 }
+                    WidthRequest = 32, HeightRequest = 32, BackgroundColor = swatchColor,
+                    StrokeThickness = 3, StrokeShape = new RoundRectangle { CornerRadius = 16 }
                 };
-                Ui.OnTap(sw, (_, _) => { _brush = swatchColor; _erasing = false; RefreshTools(); });
+                Ui.OnTap(sw, (_, _) => { _brush = swatchColor; if (_tool == DrawTool.Eraser) _tool = DrawTool.Brush; RefreshTools(); });
                 _swatches.Add((sw, swatchColor));
-                swatches.Add(sw);
+                swatchRow.Add(sw);
             }
-
-            var sizeRow = new HorizontalStackLayout { Spacing = 8, Padding = new Thickness(2, 2) };
-            foreach (var size in new float[] { 4, 8, 16, 28 })
+            // Custom colour swatch (opens the mixer).
+            _customSwatch = new Border
             {
-                var dotWrap = new Border
-                {
-                    WidthRequest = 46, HeightRequest = 38,
-                    BackgroundColor = Theme.Surface, StrokeThickness = 2,
-                    StrokeShape = new RoundRectangle { CornerRadius = 12 },
-                    Content = new GraphicsView { Drawable = new DotDrawable { Radius = Math.Min(size / 2, 12) }, InputTransparent = true }
-                };
-                float s = size;
-                Ui.OnTap(dotWrap, (_, _) => { _brushSize = s; _erasing = false; RefreshTools(); });
-                _sizes.Add((dotWrap, size));
-                sizeRow.Add(dotWrap);
-            }
+                WidthRequest = 32, HeightRequest = 32, BackgroundColor = Color.FromRgb(_cr, _cg, _cb),
+                StrokeThickness = 3, StrokeShape = new RoundRectangle { CornerRadius = 16 },
+                Content = new Label { Text = "+", FontSize = 16, FontAttributes = FontAttributes.Bold, TextColor = Colors.White, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
+            };
+            Ui.OnTap(_customSwatch, (_, _) => { _mixer.IsVisible = !_mixer.IsVisible; _brush = Color.FromRgb(_cr, _cg, _cb); if (_tool == DrawTool.Eraser) _tool = DrawTool.Brush; RefreshTools(); });
+            swatchRow.Add(_customSwatch);
+            col.Add(HScroll(swatchRow));
 
-            Border ToolBtn(string glyph, string label, Action tap)
-            {
-                var content = new HorizontalStackLayout
-                {
-                    Spacing = 6, HorizontalOptions = LayoutOptions.Center,
-                    Children =
-                    {
-                        new Label { Text = glyph, FontSize = 15, VerticalTextAlignment = TextAlignment.Center },
-                        new Label { Text = label, FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, VerticalTextAlignment = TextAlignment.Center }
-                    }
-                };
-                var b = new Border
-                {
-                    Content = content, BackgroundColor = Theme.Surface,
-                    Stroke = Theme.HairlineSoft, StrokeThickness = 2,
-                    StrokeShape = new RoundRectangle { CornerRadius = 12 }, Padding = new Thickness(14, 9)
-                };
-                Ui.OnTap(b, (_, _) => tap());
-                return b;
-            }
+            // Custom colour mixer (R/G/B sliders), hidden until "+" is tapped.
+            _mixer = BuildMixer();
+            col.Add(_mixer);
 
-            _eraserBtn = ToolBtn("🧽", "Eraser", () => { _erasing = !_erasing; RefreshTools(); });
-
+            // Actions
             var actions = new HorizontalStackLayout { Spacing = 8, Padding = new Thickness(2, 2) };
-            actions.Add(_eraserBtn);
-            actions.Add(ToolBtn("↩", "Undo", () =>
-            {
-                if (_paint.Strokes.Count > 0) { _paint.Strokes.RemoveAt(_paint.Strokes.Count - 1); _canvas.Invalidate(); AppSettings.Tap(); }
-            }));
-            actions.Add(ToolBtn("🗑", "Clear", () => { _paint.Strokes.Clear(); _canvas.Invalidate(); AppSettings.Tap(); }));
-
-            var col = new VerticalStackLayout { Spacing = 10 };
-            col.Add(new Label { Text = "Colours", FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextHint });
-            col.Add(new ScrollView { Orientation = ScrollOrientation.Horizontal, HorizontalScrollBarVisibility = ScrollBarVisibility.Never, Content = swatches });
-            col.Add(new Label { Text = "Brush & tools", FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextHint, Margin = new Thickness(0, 2, 0, 0) });
-            var tools = new HorizontalStackLayout { Spacing = 8 };
-            tools.Add(new ScrollView { Orientation = ScrollOrientation.Horizontal, HorizontalScrollBarVisibility = ScrollBarVisibility.Never, Content = sizeRow });
-            col.Add(tools);
-            col.Add(new ScrollView { Orientation = ScrollOrientation.Horizontal, HorizontalScrollBarVisibility = ScrollBarVisibility.Never, Content = actions });
+            _fillToggle = ActionChip("⬛ Fill shapes", () => { _fillShapes = !_fillShapes; RefreshTools(); });
+            actions.Add(_fillToggle);
+            actions.Add(ActionChip("↩ Undo", Undo));
+            actions.Add(ActionChip("↪ Redo", Redo));
+            actions.Add(ActionChip("🗑 Clear", () => { _paint.Ops.Clear(); _paint.Background = Colors.White; _redo.Clear(); _canvas.Invalidate(); AppSettings.Tap(); }));
+            col.Add(HScroll(actions));
 
             RefreshTools();
             return col;
         }
 
-        // Repaints the selected colour, brush size and eraser so the current
-        // tool is always obvious.
+        private VerticalStackLayout BuildMixer()
+        {
+            var box = new VerticalStackLayout { Spacing = 6, IsVisible = false, Padding = new Thickness(2, 4) };
+            box.Add(SmallLabel("Mix your own colour"));
+            Slider Make(int init, Color tint, Action<int> set)
+            {
+                var sl = new Slider { Minimum = 0, Maximum = 255, Value = init, MinimumTrackColor = tint, ThumbColor = tint };
+                sl.ValueChanged += (_, e) => { set((int)e.NewValue); UpdateCustom(); };
+                return sl;
+            }
+            box.Add(RowWith("R", Make(_cr, Colors.Red, v => _cr = v)));
+            box.Add(RowWith("G", Make(_cg, Colors.Green, v => _cg = v)));
+            box.Add(RowWith("B", Make(_cb, Colors.Blue, v => _cb = v)));
+            return box;
+        }
+
+        private View RowWith(string letter, View slider)
+        {
+            var g = new Grid { ColumnSpacing = 8 };
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            g.Add(new Label { Text = letter, FontFamily = Ui.Fonts, FontSize = Ui.S(13), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.Center }, 0, 0);
+            g.Add(slider, 1, 0);
+            return g;
+        }
+
+        private void UpdateCustom()
+        {
+            var c = Color.FromRgb(_cr, _cg, _cb);
+            _customSwatch.BackgroundColor = c;
+            _brush = c;
+            if (_tool == DrawTool.Eraser) _tool = DrawTool.Brush;
+            RefreshTools();
+        }
+
+        private static Label SmallLabel(string t) => new()
+        {
+            Text = t, FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextHint
+        };
+
+        private static ScrollView HScroll(View content) =>
+            new() { Orientation = ScrollOrientation.Horizontal, HorizontalScrollBarVisibility = ScrollBarVisibility.Never, Content = content };
+
+        private static Border ChromeChip(View content) => new()
+        {
+            Content = content, BackgroundColor = Theme.Surface, StrokeThickness = 2,
+            StrokeShape = new RoundRectangle { CornerRadius = 12 }
+        };
+
+        private Border ActionChip(string text, Action tap)
+        {
+            var b = new Border
+            {
+                Content = new Label { Text = text, FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, VerticalTextAlignment = TextAlignment.Center },
+                BackgroundColor = Theme.Surface, Stroke = Theme.HairlineSoft, StrokeThickness = 2,
+                StrokeShape = new RoundRectangle { CornerRadius = 12 }, Padding = new Thickness(12, 9)
+            };
+            Ui.OnTap(b, (_, _) => tap());
+            return b;
+        }
+
+        private void Undo()
+        {
+            if (_paint.Ops.Count == 0) return;
+            var last = _paint.Ops[^1];
+            _paint.Ops.RemoveAt(_paint.Ops.Count - 1);
+            _redo.Push(last);
+            _canvas.Invalidate();
+            AppSettings.Tap();
+        }
+
+        private void Redo()
+        {
+            if (_redo.Count == 0) return;
+            _paint.Ops.Add(_redo.Pop());
+            _canvas.Invalidate();
+            AppSettings.Tap();
+        }
+
+        // Repaints selection rings so the current tool/size/colour is obvious.
         private void RefreshTools()
         {
-            foreach (var (border, color) in _swatches)
-                border.Stroke = (!_erasing && ColorsEqual(color, _brush)) ? Theme.Accent : Color.FromArgb("#22000000");
-            foreach (var (border, size) in _sizes)
-                border.Stroke = (!_erasing && Math.Abs(size - _brushSize) < 0.1f) ? Theme.Accent : Theme.HairlineSoft;
-            if (_eraserBtn != null)
+            foreach (var (b, tool) in _toolBtns)
             {
-                _eraserBtn.Stroke = _erasing ? Theme.Accent : Theme.HairlineSoft;
-                _eraserBtn.BackgroundColor = _erasing ? Ui.MultiplyAlpha(Theme.Accent, 0.14f) : Theme.Surface;
+                bool on = _tool == tool;
+                b.Stroke = on ? Theme.Accent : Theme.HairlineSoft;
+                b.BackgroundColor = on ? Ui.MultiplyAlpha(Theme.Accent, 0.14f) : Theme.Surface;
+            }
+            foreach (var (b, size) in _sizes)
+                b.Stroke = Math.Abs(size - _brushSize) < 0.1f ? Theme.Accent : Theme.HairlineSoft;
+            foreach (var (b, color) in _swatches)
+                b.Stroke = (_tool != DrawTool.Eraser && ColorsEqual(color, _brush)) ? Theme.Accent : Color.FromArgb("#22000000");
+            _customSwatch.Stroke = (_tool != DrawTool.Eraser && ColorsEqual(Color.FromRgb(_cr, _cg, _cb), _brush)) ? Theme.Accent : Color.FromArgb("#22000000");
+            if (_fillToggle != null)
+            {
+                _fillToggle.Stroke = _fillShapes ? Theme.Accent : Theme.HairlineSoft;
+                _fillToggle.BackgroundColor = _fillShapes ? Ui.MultiplyAlpha(Theme.Accent, 0.14f) : Theme.Surface;
             }
             AppSettings.Tap();
         }
@@ -284,6 +407,12 @@ namespace dinospace.Views
                 _formArea.Add(Field("weight", "Weight (kg)", _c.Weight, "e.g. 7000", numeric: true));
                 _formArea.Add(Field("speed", "Top speed (km/h)", _c.Speed, "e.g. 30", numeric: true));
                 _formArea.Add(Field("bite", "Bite force (PSI)", _c.BiteForce, "e.g. 12000", numeric: true));
+
+                _formArea.Add(Ui.SectionHeader("Its story"));
+                _formArea.Add(Field("about", "About", _c.About, "Describe your creation…", multiline: true));
+                _formArea.Add(Field("features", "Key features", _c.KeyFeatures, "Claws, horns, armour, feathers…", multiline: true));
+                _formArea.Add(Field("habitat", "Habitat & environment", _c.Habitat, "Where and when it lived…", multiline: true));
+                _formArea.Add(Field("behaviour", "Behaviour", _c.Behaviour, "How it hunted, moved, or defended itself…", multiline: true));
             }
             else
             {
@@ -291,14 +420,21 @@ namespace dinospace.Views
                 _formArea.Add(Picker("type", "What kind is it?", new[] { "Planet", "Moon", "Star", "Galaxy", "Nebula", "Comet", "Asteroid", "Black hole" }, string.IsNullOrWhiteSpace(_c.TypeLabel) ? "Planet" : _c.TypeLabel));
 
                 _formArea.Add(Ui.SectionHeader("Facts (label + value)"));
-                _formArea.Add(StatPair("s1", "Fact 1", _c.Stat1Label, _c.Stat1Value, "Diameter", "e.g. 12,000 km"));
-                _formArea.Add(StatPair("s2", "Fact 2", _c.Stat2Label, _c.Stat2Value, "Distance", "e.g. 200 million km"));
-                _formArea.Add(StatPair("s3", "Fact 3", _c.Stat3Label, _c.Stat3Value, "Temperature", "e.g. -100°C"));
-                _formArea.Add(StatPair("s4", "Fact 4", _c.Stat4Label, _c.Stat4Value, "Moons", "e.g. 3"));
+                _formArea.Add(StatPair("s1", _c.Stat1Label, _c.Stat1Value, "Diameter", "e.g. 12,000 km"));
+                _formArea.Add(StatPair("s2", _c.Stat2Label, _c.Stat2Value, "Distance", "e.g. 200 million km"));
+                _formArea.Add(StatPair("s3", _c.Stat3Label, _c.Stat3Value, "Temperature", "e.g. -100°C"));
+                _formArea.Add(StatPair("s4", _c.Stat4Label, _c.Stat4Value, "Moons", "e.g. 3"));
+
+                _formArea.Add(Ui.SectionHeader("Its story"));
+                _formArea.Add(Field("about", "About", _c.About, "Describe your creation…", multiline: true));
+                _formArea.Add(Field("features", "Key features", _c.SpaceKeyFeatures, "What makes it special…", multiline: true));
+                _formArea.Add(Field("orbit", "Orbit & movement", _c.OrbitMovement, "How it moves through space…", multiline: true));
+                _formArea.Add(Field("surface", "Surface & composition", _c.SurfaceComposition, "What it's made of…", multiline: true));
+                _formArea.Add(Field("history", "History", _c.History, "How it was found or formed…", multiline: true));
+                _formArea.Add(Field("inside", "What's inside", _c.WhatsInside, "Its core, layers, or contents…", multiline: true));
             }
 
-            _formArea.Add(Ui.SectionHeader("Tell its story"));
-            _formArea.Add(Field("about", "About", _c.About, "Describe your creation…", multiline: true));
+            _formArea.Add(Ui.SectionHeader("Fun facts"));
             _formArea.Add(Field("facts", "Fun facts (one per line)", _c.FunFacts, "Write a cool fact…", multiline: true));
         }
 
@@ -325,7 +461,7 @@ namespace dinospace.Views
             return col;
         }
 
-        private View StatPair(string key, string label, string labelVal, string valueVal, string labelHint, string valueHint)
+        private View StatPair(string key, string labelVal, string valueVal, string labelHint, string valueHint)
         {
             var l = new Entry { Text = labelVal, Placeholder = labelHint, FontFamily = Ui.Fonts, FontSize = Ui.S(14), TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, BackgroundColor = Colors.Transparent };
             var v = new Entry { Text = valueVal, Placeholder = valueHint, FontFamily = Ui.Fonts, FontSize = Ui.S(14), TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, BackgroundColor = Colors.Transparent };
@@ -345,7 +481,6 @@ namespace dinospace.Views
             return grid;
         }
 
-        // A simple wrap of tappable pills; the chosen one is remembered in _picks.
         private View Picker(string key, string label, string[] options, string current)
         {
             _picks[key] = string.IsNullOrWhiteSpace(current) ? options[0] : current;
@@ -416,6 +551,9 @@ namespace dinospace.Views
                 _c.Weight = F("weight");
                 _c.Speed = F("speed");
                 _c.BiteForce = F("bite");
+                _c.KeyFeatures = F("features");
+                _c.Habitat = F("habitat");
+                _c.Behaviour = F("behaviour");
             }
             else
             {
@@ -425,18 +563,23 @@ namespace dinospace.Views
                 _c.Stat2Label = F("s2L"); _c.Stat2Value = F("s2V");
                 _c.Stat3Label = F("s3L"); _c.Stat3Value = F("s3V");
                 _c.Stat4Label = F("s4L"); _c.Stat4Value = F("s4V");
+                _c.SpaceKeyFeatures = F("features");
+                _c.OrbitMovement = F("orbit");
+                _c.SurfaceComposition = F("surface");
+                _c.History = F("history");
+                _c.WhatsInside = F("inside");
             }
 
             if (_c.CreatedTicks == 0) _c.CreatedTicks = DateTime.UtcNow.Ticks;
 
             // Export the drawing to a PNG. If they didn't draw anything on an
             // edit, keep the picture they already had.
-            if (_paint.Strokes.Count > 0)
+            if (_paint.Ops.Count > 0 || _paint.Background != Colors.White)
             {
                 string path = CreationStore.NewImagePath(_c.Id);
                 double density = 2.75;
                 try { density = DeviceDisplay.MainDisplayInfo.Density; } catch { }
-                bool ok = CreationCanvas.ExportPng(_paint.Strokes, _canvas.Width, _canvas.Height, density, path);
+                bool ok = CreationCanvas.ExportPng(_paint, _canvas.Width, _canvas.Height, density, path);
                 if (ok) _c.ImagePath = path;
             }
 
@@ -454,44 +597,133 @@ namespace dinospace.Views
         }
     }
 
-    // One drawn stroke: a colour, a width, and the points the finger traced.
-    public class Stroke
+    public enum DrawTool { Brush, Line, Rectangle, Ellipse, Triangle, Star, Arrow, Fill, Eraser }
+
+    // One drawing operation — a freehand stroke or a shape.
+    public class DrawOp
     {
-        public List<PointF> Points { get; set; } = new();
+        public DrawTool Tool { get; set; }
         public Color Color { get; set; } = Colors.Black;
         public float Width { get; set; } = 8;
+        public bool Fill { get; set; }
+        public List<PointF> Points { get; set; } = new();   // freehand / eraser
+        public PointF Start { get; set; }
+        public PointF End { get; set; }
     }
 
-    // Renders the strokes onto the on-screen canvas.
+    // Renders the operations onto the on-screen canvas. The same geometry is
+    // used by the PNG exporter so what you draw is exactly what you save.
     public class PaintDrawable : IDrawable
     {
-        public List<Stroke> Strokes { get; } = new();
+        public List<DrawOp> Ops { get; } = new();
+        public Color Background { get; set; } = Colors.White;
 
         public void Draw(ICanvas canvas, RectF rect)
         {
             canvas.Antialias = true;
-            canvas.FillColor = Colors.White;
+            canvas.FillColor = Background;
             canvas.FillRectangle(rect);
             canvas.StrokeLineCap = LineCap.Round;
             canvas.StrokeLineJoin = LineJoin.Round;
 
-            foreach (var s in Strokes)
+            foreach (var op in Ops)
             {
-                canvas.StrokeColor = s.Color;
-                canvas.StrokeSize = s.Width;
-                if (s.Points.Count == 1)
+                canvas.StrokeColor = op.Color;
+                canvas.FillColor = op.Color;
+                canvas.StrokeSize = op.Width;
+
+                switch (op.Tool)
                 {
-                    canvas.FillColor = s.Color;
-                    canvas.FillCircle(s.Points[0].X, s.Points[0].Y, s.Width / 2);
-                }
-                else if (s.Points.Count > 1)
-                {
-                    var path = new PathF();
-                    path.MoveTo(s.Points[0].X, s.Points[0].Y);
-                    for (int i = 1; i < s.Points.Count; i++) path.LineTo(s.Points[i].X, s.Points[i].Y);
-                    canvas.DrawPath(path);
+                    case DrawTool.Brush:
+                    case DrawTool.Eraser:
+                        if (op.Points.Count == 1)
+                            canvas.FillCircle(op.Points[0].X, op.Points[0].Y, op.Width / 2);
+                        else if (op.Points.Count > 1)
+                        {
+                            var path = new PathF();
+                            path.MoveTo(op.Points[0].X, op.Points[0].Y);
+                            for (int i = 1; i < op.Points.Count; i++) path.LineTo(op.Points[i].X, op.Points[i].Y);
+                            canvas.DrawPath(path);
+                        }
+                        break;
+                    case DrawTool.Line:
+                        canvas.DrawLine(op.Start.X, op.Start.Y, op.End.X, op.End.Y);
+                        break;
+                    case DrawTool.Arrow:
+                        DrawArrow(canvas, op);
+                        break;
+                    case DrawTool.Rectangle:
+                    {
+                        var r = Norm(op.Start, op.End);
+                        if (op.Fill) canvas.FillRectangle(r); else canvas.DrawRectangle(r);
+                        break;
+                    }
+                    case DrawTool.Ellipse:
+                    {
+                        var r = Norm(op.Start, op.End);
+                        if (op.Fill) canvas.FillEllipse(r); else canvas.DrawEllipse(r);
+                        break;
+                    }
+                    case DrawTool.Triangle:
+                    case DrawTool.Star:
+                    {
+                        var pts = ShapeGeometry.Polygon(op.Tool, op.Start, op.End);
+                        var path = new PathF();
+                        path.MoveTo(pts[0].X, pts[0].Y);
+                        for (int i = 1; i < pts.Count; i++) path.LineTo(pts[i].X, pts[i].Y);
+                        path.Close();
+                        if (op.Fill) canvas.FillPath(path); else canvas.DrawPath(path);
+                        break;
+                    }
                 }
             }
+        }
+
+        private static void DrawArrow(ICanvas canvas, DrawOp op)
+        {
+            canvas.DrawLine(op.Start.X, op.Start.Y, op.End.X, op.End.Y);
+            foreach (var (x, y) in ShapeGeometry.ArrowHead(op.Start, op.End, op.Width))
+                canvas.DrawLine(op.End.X, op.End.Y, x, y);
+        }
+
+        private static RectF Norm(PointF a, PointF b)
+            => new(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y), Math.Abs(a.X - b.X), Math.Abs(a.Y - b.Y));
+    }
+
+    // Geometry shared by the on-screen renderer and the PNG exporter.
+    public static class ShapeGeometry
+    {
+        public static List<PointF> Polygon(DrawTool tool, PointF a, PointF b)
+        {
+            float minX = Math.Min(a.X, b.X), minY = Math.Min(a.Y, b.Y);
+            float w = Math.Abs(a.X - b.X), h = Math.Abs(a.Y - b.Y);
+            float cx = minX + w / 2, cy = minY + h / 2;
+
+            if (tool == DrawTool.Triangle)
+                return new List<PointF> { new(cx, minY), new(minX, minY + h), new(minX + w, minY + h) };
+
+            // 5-point star
+            var pts = new List<PointF>();
+            float rx = w / 2, ry = h / 2;
+            for (int i = 0; i < 10; i++)
+            {
+                double ang = -Math.PI / 2 + i * Math.PI / 5;
+                float fr = (i % 2 == 0) ? 1f : 0.42f;
+                pts.Add(new PointF(cx + (float)(Math.Cos(ang) * rx * fr), cy + (float)(Math.Sin(ang) * ry * fr)));
+            }
+            return pts;
+        }
+
+        public static (float x, float y)[] ArrowHead(PointF start, PointF end, float width)
+        {
+            double ang = Math.Atan2(end.Y - start.Y, end.X - start.X);
+            float len = Math.Max(12, width * 3);
+            double a1 = ang + Math.PI * 0.82, a2 = ang - Math.PI * 0.82;
+            return new[]
+            {
+                (end.X + (float)(Math.Cos(a1) * len), end.Y + (float)(Math.Sin(a1) * len)),
+                (end.X + (float)(Math.Cos(a2) * len), end.Y + (float)(Math.Sin(a2) * len)),
+            };
         }
     }
 
@@ -507,11 +739,11 @@ namespace dinospace.Views
         }
     }
 
-    // Rasterises the strokes to a PNG file. Android-native (the shipping
-    // platform); a no-op elsewhere, where the gallery falls back to a placeholder.
+    // Rasterises the drawing to a PNG. Android-native (the shipping platform);
+    // a no-op elsewhere, where the gallery falls back to a placeholder.
     public static class CreationCanvas
     {
-        public static bool ExportPng(List<Stroke> strokes, double viewWidth, double viewHeight, double density, string path)
+        public static bool ExportPng(PaintDrawable paint, double viewWidth, double viewHeight, double density, string path)
         {
 #if ANDROID
             try
@@ -520,32 +752,70 @@ namespace dinospace.Views
                 int h = Math.Max(1, (int)(viewHeight * density));
                 using var bitmap = Android.Graphics.Bitmap.CreateBitmap(w, h, Android.Graphics.Bitmap.Config.Argb8888!);
                 using var acanvas = new Android.Graphics.Canvas(bitmap);
-                acanvas.DrawColor(Android.Graphics.Color.White);
+                acanvas.DrawColor(ToA(paint.Background));
 
-                using var paint = new Android.Graphics.Paint { AntiAlias = true };
-                paint.StrokeCap = Android.Graphics.Paint.Cap.Round;
-                paint.StrokeJoin = Android.Graphics.Paint.Join.Round;
-
-                foreach (var s in strokes)
+                float d = (float)density;
+                foreach (var op in paint.Ops)
                 {
-                    var col = Android.Graphics.Color.Argb(
-                        (int)(s.Color.Alpha * 255), (int)(s.Color.Red * 255),
-                        (int)(s.Color.Green * 255), (int)(s.Color.Blue * 255));
-                    paint.Color = col;
-                    paint.StrokeWidth = (float)(s.Width * density);
-                    if (s.Points.Count == 1)
+                    using var pnt = new Android.Graphics.Paint { AntiAlias = true };
+                    pnt.Color = ToA(op.Color);
+                    pnt.StrokeWidth = op.Width * d;
+                    pnt.StrokeCap = Android.Graphics.Paint.Cap.Round;
+                    pnt.StrokeJoin = Android.Graphics.Paint.Join.Round;
+                    bool fill = op.Fill;
+                    pnt.SetStyle(fill ? Android.Graphics.Paint.Style.Fill : Android.Graphics.Paint.Style.Stroke);
+
+                    switch (op.Tool)
                     {
-                        paint.SetStyle(Android.Graphics.Paint.Style.Fill);
-                        acanvas.DrawCircle((float)(s.Points[0].X * density), (float)(s.Points[0].Y * density), (float)(s.Width * density / 2), paint);
-                    }
-                    else if (s.Points.Count > 1)
-                    {
-                        paint.SetStyle(Android.Graphics.Paint.Style.Stroke);
-                        using var apath = new Android.Graphics.Path();
-                        apath.MoveTo((float)(s.Points[0].X * density), (float)(s.Points[0].Y * density));
-                        for (int i = 1; i < s.Points.Count; i++)
-                            apath.LineTo((float)(s.Points[i].X * density), (float)(s.Points[i].Y * density));
-                        acanvas.DrawPath(apath, paint);
+                        case DrawTool.Brush:
+                        case DrawTool.Eraser:
+                            pnt.SetStyle(Android.Graphics.Paint.Style.Stroke);
+                            if (op.Points.Count == 1)
+                            {
+                                pnt.SetStyle(Android.Graphics.Paint.Style.Fill);
+                                acanvas.DrawCircle(op.Points[0].X * d, op.Points[0].Y * d, op.Width * d / 2, pnt);
+                            }
+                            else if (op.Points.Count > 1)
+                            {
+                                using var ap = new Android.Graphics.Path();
+                                ap.MoveTo(op.Points[0].X * d, op.Points[0].Y * d);
+                                for (int i = 1; i < op.Points.Count; i++) ap.LineTo(op.Points[i].X * d, op.Points[i].Y * d);
+                                acanvas.DrawPath(ap, pnt);
+                            }
+                            break;
+                        case DrawTool.Line:
+                            acanvas.DrawLine(op.Start.X * d, op.Start.Y * d, op.End.X * d, op.End.Y * d, pnt);
+                            break;
+                        case DrawTool.Arrow:
+                            acanvas.DrawLine(op.Start.X * d, op.Start.Y * d, op.End.X * d, op.End.Y * d, pnt);
+                            foreach (var (x, y) in ShapeGeometry.ArrowHead(op.Start, op.End, op.Width))
+                                acanvas.DrawLine(op.End.X * d, op.End.Y * d, x * d, y * d, pnt);
+                            break;
+                        case DrawTool.Rectangle:
+                        {
+                            float l = Math.Min(op.Start.X, op.End.X) * d, t = Math.Min(op.Start.Y, op.End.Y) * d;
+                            float r = Math.Max(op.Start.X, op.End.X) * d, bt = Math.Max(op.Start.Y, op.End.Y) * d;
+                            acanvas.DrawRect(l, t, r, bt, pnt);
+                            break;
+                        }
+                        case DrawTool.Ellipse:
+                        {
+                            float l = Math.Min(op.Start.X, op.End.X) * d, t = Math.Min(op.Start.Y, op.End.Y) * d;
+                            float r = Math.Max(op.Start.X, op.End.X) * d, bt = Math.Max(op.Start.Y, op.End.Y) * d;
+                            acanvas.DrawOval(new Android.Graphics.RectF(l, t, r, bt), pnt);
+                            break;
+                        }
+                        case DrawTool.Triangle:
+                        case DrawTool.Star:
+                        {
+                            var pts = ShapeGeometry.Polygon(op.Tool, op.Start, op.End);
+                            using var ap = new Android.Graphics.Path();
+                            ap.MoveTo(pts[0].X * d, pts[0].Y * d);
+                            for (int i = 1; i < pts.Count; i++) ap.LineTo(pts[i].X * d, pts[i].Y * d);
+                            ap.Close();
+                            acanvas.DrawPath(ap, pnt);
+                            break;
+                        }
                     }
                 }
 
@@ -559,5 +829,10 @@ namespace dinospace.Views
             return false;
 #endif
         }
+
+#if ANDROID
+        private static Android.Graphics.Color ToA(Color c) =>
+            new Android.Graphics.Color((byte)(c.Red * 255), (byte)(c.Green * 255), (byte)(c.Blue * 255), (byte)(c.Alpha * 255));
+#endif
     }
 }

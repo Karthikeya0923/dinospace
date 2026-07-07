@@ -28,13 +28,13 @@ Open the app and it tells you what's above you *right now*: the moon's phase (dr
 An AI guide powered by Google's Gemma running locally through [NovaSaur](https://github.com/Karthikeya0923/novasaur), the inference engine built for this app. Anything askable by name answers **instantly** from the hand-checked encyclopedia and a 70-topic knowledge base — verified by an in-repo harness that runs 124 typed-style questions through the production pipeline (`tools/AnswerHarness`). Live sky questions ("where is Jupiter right now?", "when is the next meteor shower?") are answered by the astronomy engine with tonight's real answer — something a frozen language model could never know. Everything else goes straight to the model — there is no topic wall that bounces typed questions. Open-ended answers stream token by token, ChatGPT-style; the engine handles exactly one question at a time and reloads itself before each new one, so every answer starts on a completely clean slate and the chat can never hang or clog up.
 
 ### 🎨 Your Creations — draw your own
-A simple, fun paint studio: draw a dinosaur or a space object with real finger-strokes (colours, brush sizes, eraser, undo), then fill in its stats — name, pronunciation, name meaning, era, diet, size, weight, speed, bite force, an about section and fun facts, exactly like a real encyclopedia entry. Your creations get their own gallery, drop into your custom lists, and the dinosaurs you draw can march straight into **Dino Battle** with an "Include my creatures" toggle — your drawing and all. (They're yours, so there's no Ask-NovaSaur button, and they stay out of Surprise Me.)
+A proper little paint studio (comparable to MS Paint): real finger-drag freehand, shapes (line, rectangle, circle, triangle, star, arrow), adjustable brush sizes, a colour palette with a custom R/G/B mixer, a fill bucket, and undo/redo. Then fill in a full entry — name, pronunciation, name meaning, era, diet, size/weight/speed/bite for a dinosaur (or type + four facts for a space object), plus About, Key features, Habitat, Behaviour and Fun facts — so your creation looks *identical* to a built-in encyclopedia entry. Creations get their own gallery, drop into your custom lists, and the dinosaurs you draw can march straight into **Dino Battle** with an "Include my creatures" toggle — your drawing and all. (They're yours, so there's no Ask-NovaSaur button, and they stay out of Surprise Me.)
 
 ### 🎮 Play
 Quizzes (5 to 100 questions, dinosaurs / space / mixed), Dino Battles with stat-driven verdicts that argue each matchup like a sports column, daily featured creatures, a **Surprise Me** button that pulls a creature or world you haven't met yet, and streak + discovery counters to keep explorers coming back.
 
 ### 🪄 Two layouts, one app
-A whole second look you can switch to instantly, with the same seamless cross-fade the themes use. **Native** is the grown-up editorial style — elegant serif headlines, a flat tab bar. **Playful** is built for 5-to-10-year-olds: big rounded Baloo headlines, a "Hi there, explorer!" home screen, chunky buttons, and a bubbly tab bar. Same features, completely different feel. Choose it under Settings → Choose a layout. Five full themes (including the cheerful new **Stickers** sheet of cute green dinos) sit alongside, under Choose a theme.
+A whole second look you can switch to instantly, with the same seamless cross-fade the themes use. **Native** is the grown-up editorial style — elegant serif headlines, a flat tab bar, magazine-style lists. **Playful** is a ground-up redesign for 5-to-10-year-olds: rounded Baloo headlines, a home screen of big colourful gradient "worlds" to tap into, chunky buttons, and a bubbly tab bar. Same features, a completely different app. Choose it under Settings → Choose a layout. Five full themes sit alongside, under Choose a theme.
 
 ---
 
@@ -82,7 +82,7 @@ Tracked in detail on the [project board →](https://github.com/users/Karthikeya
 - [x] Meteor showers on Sky Tonight — active shower, next peak, moonlight forecast
 - [x] Moonrise/moonset and true astronomical-dark times
 - [x] Surprise Me discovery, daily streak & discovery counters
-- [x] Five full themes with wallpapers — including the new **Stickers** theme — switched with a seamless cross-fade
+- [x] Five full themes with wallpapers, switched with a seamless cross-fade
 - [x] True edge-to-edge UI, haptic strength control, adjustable text size
 - [x] Zero-warning build; AI answer pipeline covered by an automated test harness
 
