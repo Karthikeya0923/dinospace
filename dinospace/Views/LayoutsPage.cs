@@ -40,7 +40,7 @@ namespace dinospace.Views
             });
 
             stack.Add(LayoutCard("native", "Native",
-                "Clean and grown-up — elegant serif headlines and a simple bar. The classic look.",
+                "Clean and factual — photo cards, denser info, quieter colours. The encyclopedia look.",
                 NativePreview()));
             stack.Add(LayoutCard("playful", "Playful",
                 "Big, rounded and colourful — made for young explorers. Chunky buttons, bubbly tabs, friendly type.",
@@ -55,10 +55,10 @@ namespace dinospace.Views
         private View NativePreview()
         {
             var col = new VerticalStackLayout { Spacing = 6, Padding = new Thickness(12) };
-            col.Add(new Label { Text = "DinoSpace", FontFamily = "Serif", FontSize = 20, TextColor = Theme.Accent });
-            col.Add(new BoxView { HeightRequest = 1.5, Color = Theme.Hairline, WidthRequest = 40, HorizontalOptions = LayoutOptions.Start });
-            col.Add(MiniCard(6));
-            col.Add(new Label { Text = "DINOSAURS", FontFamily = "Nunito", FontSize = 10, FontAttributes = FontAttributes.Bold, CharacterSpacing = 2, TextColor = Theme.TextSecondary, Margin = new Thickness(0, 4, 0, 0) });
+            col.Add(new Label { Text = "DinoSpace", FontFamily = "Baloo", FontSize = 19, TextColor = Theme.Accent });
+            col.Add(MiniCard(12));
+            col.Add(new Label { Text = "Dinosaurs", FontFamily = "Baloo", FontSize = 13, TextColor = Theme.TextPrimary, Margin = new Thickness(0, 4, 0, 0) });
+            col.Add(new Border { WidthRequest = 26, HeightRequest = 4, BackgroundColor = Theme.Accent, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 2 }, HorizontalOptions = LayoutOptions.Start });
             col.Add(MiniBar());
             return PreviewFrame(col);
         }

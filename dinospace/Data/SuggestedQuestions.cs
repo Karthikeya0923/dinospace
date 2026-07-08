@@ -80,12 +80,6 @@ namespace dinospace.Data
             "Who was the first person on the Moon?",
             "What is the smartest dinosaur?",
             "How long did a T. Rex live?",
-
-            // Creative — these go to the model on purpose
-            "Tell me a story about a T. Rex astronaut",
-            "What if dinosaurs never went extinct?",
-            "Write a poem about Saturn's rings",
-            "Imagine a Velociraptor's first day in space",
         };
     }
 }

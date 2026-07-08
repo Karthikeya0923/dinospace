@@ -72,10 +72,12 @@ namespace dinospace.Views
         private GraphicsView _preview = null!;
         private Border _previewWrap = null!;
 
-        // The form.
+        // The form. Values are InputViews: single-line fields are Entries,
+        // long-text fields are Editors (so the return key makes a new line —
+        // "one fact per line" is impossible in an Entry).
         private CreationKind _kind;
         private VerticalStackLayout _formArea = null!;
-        private readonly Dictionary<string, Entry> _fields = new();
+        private readonly Dictionary<string, InputView> _fields = new();
         private readonly Dictionary<string, string> _picks = new();
 
         public CreationEditorPage(UserCreation? existing = null)
@@ -89,6 +91,11 @@ namespace dinospace.Views
             // NOTE: no SwipeBack here — a left-to-right brush stroke must never
             // be mistaken for a back-swipe. The top-bar arrow handles going back.
         }
+
+        // The drawing is made in the SAME wide shape entries display it in —
+        // the hero band, gallery cards and battle slots are all about 1.4:1 —
+        // so what's drawn is what shows, edge to edge, no leftover bands.
+        private const double ArtAspect = 1.4;   // width : height
 
         // ================= STEP 1: DRAW =================
         private View BuildDrawStep()
@@ -104,6 +111,7 @@ namespace dinospace.Views
                 StrokeShape = new RoundRectangle { CornerRadius = 20 },
                 Padding = 0,
                 Margin = new Thickness(14, 6, 14, 10),
+                VerticalOptions = LayoutOptions.Center,
                 Shadow = Theme.CardShadow()
             };
 
@@ -116,6 +124,12 @@ namespace dinospace.Views
             root.Add(DrawTopBar(), 0, 0);
             root.Add(frame, 0, 1);
             root.Add(toolPanel, 0, 2);
+
+            // Lock the canvas to the entry-art shape once the page has a width.
+            root.SizeChanged += (_, _) =>
+            {
+                if (root.Width > 0) frame.HeightRequest = (root.Width - 28) / ArtAspect;
+            };
             return root;
         }
 
@@ -619,14 +633,24 @@ namespace dinospace.Views
 
         private View Field(string key, string label, string value, string placeholder, bool numeric = false, bool multiline = false)
         {
-            var entry = new Entry
-            {
-                Text = value, Placeholder = placeholder,
-                FontFamily = Ui.Fonts, FontSize = Ui.S(15),
-                TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint,
-                BackgroundColor = Colors.Transparent,
-                Keyboard = numeric ? Keyboard.Numeric : Keyboard.Default
-            };
+            InputView entry = multiline
+                ? new Editor
+                {
+                    Text = value, Placeholder = placeholder,
+                    FontFamily = Ui.Fonts, FontSize = Ui.S(15),
+                    TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint,
+                    BackgroundColor = Colors.Transparent,
+                    AutoSize = EditorAutoSizeOption.TextChanges,
+                    MinimumHeightRequest = 84
+                }
+                : new Entry
+                {
+                    Text = value, Placeholder = placeholder,
+                    FontFamily = Ui.Fonts, FontSize = Ui.S(15),
+                    TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint,
+                    BackgroundColor = Colors.Transparent,
+                    Keyboard = numeric ? Keyboard.Numeric : Keyboard.Default
+                };
             _fields[key] = entry;
             var col = new VerticalStackLayout { Spacing = 4 };
             col.Add(new Label { Text = label, FontFamily = Ui.Fonts, FontSize = Ui.S(12), FontAttributes = FontAttributes.Bold, TextColor = Theme.Accent });

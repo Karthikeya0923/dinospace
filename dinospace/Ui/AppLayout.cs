@@ -26,26 +26,28 @@ namespace dinospace
             => Mode = Services.AppSettings.LayoutId == "playful" ? LayoutMode.Playful : LayoutMode.Native;
 
         // ---- fonts ----
-        // Playful swaps the serif display for rounded Baloo everywhere headlines
-        // appear; body text stays Nunito (already friendly and legible) in both.
-        public static string DisplayFont => Playful ? "Baloo" : "Serif";
-        public static string DisplayItalicFont => Playful ? "Baloo" : "SerifItalic";
+        // Rounded Baloo headlines in BOTH layouts — the old serif read like a
+        // cooking magazine, not an encyclopedia for curious kids. Native stays
+        // the denser, more factual layout; Playful stays the big-and-bright
+        // one. Body text is Nunito everywhere.
+        public static string DisplayFont => "Baloo";
+        public static string DisplayItalicFont => "Baloo";
         public static string BodyFont => "Nunito";
 
         // ---- shape & scale ----
-        public static double CardRadius => Playful ? 24 : 16;
-        public static double ButtonRadius => Playful ? 22 : 14;
-        public static double HeroRadius => Playful ? 26 : 20;
+        public static double CardRadius => Playful ? 24 : 20;
+        public static double ButtonRadius => Playful ? 22 : 18;
+        public static double HeroRadius => Playful ? 26 : 24;
 
         // Playful nudges headline type up a touch for a bolder, friendlier feel.
         public static double HeadlineScale => Playful ? 1.05 : 1.0;
 
-        // Section headers: Native uses the tight ALL-CAPS + rule; Playful uses a
-        // big rounded title with a chunky accent underline.
-        public static bool FriendlyHeaders => Playful;
+        // Chunky title + accent underline headers in both layouts (the old
+        // ALL-CAPS-with-hairline header was the other half of the recipe look).
+        public static bool FriendlyHeaders => true;
 
-        // The tab bar: Native is a flat bar, Playful is a floating pill row with
-        // a highlighted bubble behind the active tab.
-        public static bool BubbleTabs => Playful;
+        // Both layouts use the rounded bubble behind the active tab; Native's
+        // bar is just a little more compact.
+        public static bool BubbleTabs => true;
     }
 }

@@ -142,22 +142,24 @@ namespace dinospace.Views
 
             stack.Add(Masthead());
 
-            // A different hello each day — tiny thing, but it makes the app
-            // feel alive instead of like a menu.
+            // A different line each day — quiet, factual, a little wondrous.
             string[] hellos =
             {
-                "Let's explore.", "Ready to roar?", "The sky is calling.",
-                "Time to dig for treasure.", "Big teeth. Bigger universe.", "Look up. Look back.",
-                "Adventure awaits, explorer.", "What will you discover today?", "Stomp. Zoom. Wonder.",
-                "65 million years in your pocket.", "Somewhere, a star is being born.", "Dig in!"
+                "What will you discover today?",
+                "The sky is different every night.",
+                "Every fossil tells a story.",
+                "Look up. Look back.",
+                "Somewhere, a star is being born.",
+                "Some of these creatures had no name until someone curious found them.",
             };
             string helloText = hellos[DateTime.Now.DayOfYear % hellos.Length];
             stack.Add(new Label
             {
                 Text = helloText,
-                FontFamily = Ui.Display,
-                FontSize = Ui.S(28),
-                TextColor = Theme.TextSecondary
+                FontFamily = Ui.Fonts,
+                FontSize = Ui.S(15),
+                TextColor = Theme.TextSecondary,
+                Margin = new Thickness(2, -6, 0, 0)
             });
 
             if (ExplorerRow() is View explorer)
@@ -193,13 +195,19 @@ namespace dinospace.Views
             stack.Add(Ui.SectionHeader("Ask NovaSaur"));
             stack.Add(NovaCard());
 
-            // Play
+            // Play — big colour tiles, not a list of rows.
             stack.Add(Ui.SectionHeader("Play"));
-            stack.Add(PlayRow(Ui.IconQuiz, "Quizzes", "Test what you know", async () => await StartQuiz()));
-            stack.Add(PlayRow(Ui.IconBolt, "Dino Battle", "Two creatures face off", async () => await Nav.Push(() => new BattlePage(null))));
-            stack.Add(PlayRow(Ui.IconList, "Collections", "Curated ranked lists", async () => await Nav.Push(() => new CollectionsListPage())));
-            stack.Add(PlayRow(Ui.IconBrush, "Your Creations", "Draw your own dino or planet", async () => await Nav.Push(() => new CreationsPage())));
-            stack.Add(PlayRow(Ui.IconStar, "Surprise Me", "Spin the wheel — meet someone new", async () => await OpenSurprise()));
+            var play = new Grid { ColumnSpacing = 12, RowSpacing = 12 };
+            play.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            play.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            for (int r = 0; r < 3; r++) play.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            play.Add(PlayTile(Ui.IconQuiz, "Quizzes", "Test what you know", "#379E6B", "#25714C", async () => await StartQuiz()), 0, 0);
+            play.Add(PlayTile(Ui.IconBolt, "Dino Battle", "Two creatures face off", "#E0684B", "#B44432", async () => await Nav.Push(() => new BattlePage(null))), 1, 0);
+            play.Add(PlayTile(Ui.IconBrush, "Your Creations", "Draw your own entry", "#C25AA4", "#93407C", async () => await Nav.Push(() => new CreationsPage())), 0, 1);
+            play.Add(PlayTile(Ui.IconList, "Collections", "Curated ranked lists", "#4C74D9", "#3352A8", async () => await Nav.Push(() => new CollectionsListPage())), 1, 1);
+            play.Add(PlayTile(Ui.IconStar, "Surprise Me", "Meet someone new", "#C99231", "#98691D", async () => await OpenSurprise()), 0, 2);
+            play.Add(PlayTile(Ui.IconSearch, "Scan the Sky", "Point at the real sky", "#4B66C9", "#2F4494", async () => await Nav.Push(() => new SkyViewPage())), 1, 2);
+            stack.Add(play);
 
             // Fact
             stack.Add(Ui.SectionHeader("Did you know?"));
@@ -412,37 +420,39 @@ namespace dinospace.Views
             return Ui.Card(col, radius: 18, padding: new Thickness(18, 16));
         }
 
-        // ----- play rows -----
-        private View PlayRow(string icon, string title, string sub, Func<System.Threading.Tasks.Task> onTap)
+        // ----- play tiles -----
+        // Two-tone colour tiles with a vector icon — friendly without being
+        // babyish. The colours are muted a step from the Playful worlds so the
+        // grid reads game-like, not preschool.
+        private View PlayTile(string icon, string title, string sub, string c1, string c2, Func<System.Threading.Tasks.Task> onTap)
         {
+            var col = new VerticalStackLayout { Spacing = 3, Padding = new Thickness(14, 14, 14, 13) };
             var iconWrap = new Border
             {
-                WidthRequest = 44, HeightRequest = 44,
-                BackgroundColor = Theme.AccentSoft,
+                WidthRequest = 40, HeightRequest = 40,
+                BackgroundColor = Colors.White.WithAlpha(0.22f),
                 Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 22 },
-                VerticalOptions = LayoutOptions.Center,
-                Content = Ui.Icon(icon, 22, Theme.Accent)
+                StrokeShape = new RoundRectangle { CornerRadius = 13 },
+                Content = Ui.Icon(icon, 22, Colors.White),
+                Margin = new Thickness(0, 0, 0, 7)
             };
+            col.Add(iconWrap);
+            col.Add(new Label { Text = title, FontFamily = Ui.Display, FontSize = Ui.S(17), TextColor = Colors.White, LineHeight = 1.0 });
+            col.Add(new Label { Text = sub, FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), TextColor = Colors.White.WithAlpha(0.88f), LineHeight = 1.2 });
 
-            var info = new VerticalStackLayout { Spacing = 1, VerticalOptions = LayoutOptions.Center };
-            info.Add(new Label { Text = title, FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
-            info.Add(new Label { Text = sub, FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), TextColor = Theme.TextSecondary });
-
-            var chevron = Ui.Icon(Ui.IconChevron, 24, Theme.TextHint);
-            chevron.VerticalOptions = LayoutOptions.Center;
-
-            var grid = new Grid { ColumnSpacing = 14 };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.Add(iconWrap, 0, 0);
-            grid.Add(info, 1, 0);
-            grid.Add(chevron, 2, 0);
-
-            var card = Ui.Card(grid, radius: 16, padding: new Thickness(14, 12));
-            Ui.OnTap(card, async (_, _) => await onTap());
-            return card;
+            var tile = new Border
+            {
+                Content = col,
+                Background = new LinearGradientBrush(
+                    new GradientStopCollection { new GradientStop(Color.FromArgb(c1), 0), new GradientStop(Color.FromArgb(c2), 1) },
+                    new Point(0, 0), new Point(1, 1)),
+                Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = AppLayout.CardRadius },
+                Shadow = Theme.CardShadow()
+            };
+            Ui.OnTap(tile, async (_, _) => await onTap());
+            Ui.Describe(tile, $"{title}: {sub}");
+            return tile;
         }
 
         private static async System.Threading.Tasks.Task StartQuiz()

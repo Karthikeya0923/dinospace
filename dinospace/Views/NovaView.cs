@@ -298,11 +298,13 @@ namespace dinospace.Views
                 return;
             }
 
-            // Open-ended question. If the optional model is loaded, stream from
+            // Open-ended question. If the model is loaded AND warm, stream from
             // it for a richer answer; otherwise answer instantly from the
             // offline brain (a story, a joke, an honest catch-all). We never
-            // wait on the model — the offline reply is always ready.
-            if (!NovaSaurService.IsReady)
+            // wait on the model — a cold engine takes a minute to produce its
+            // first token, and pointing questions at it is what used to leave
+            // the chat "thinking…" until the timeout.
+            if (!NovaSaurService.IsWarm)
             {
                 if (myGen != _gen) return;
                 StopThinking();

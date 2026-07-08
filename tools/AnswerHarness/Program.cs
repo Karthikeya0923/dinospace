@@ -122,6 +122,20 @@ foreach (var q in round3)
 }
 Console.WriteLine($"=== round 3 (chat): {i3} covered, {m3} uncovered ===");
 
+// round 4: every suggestion chip the app actually shows, read from the live
+// list so it can never drift. The bar is HIGHER here: a chip the app itself
+// suggests must come back with a real instant answer — a canned fallback that
+// dodges the question counts as a failure.
+int i4 = 0, m4 = 0;
+foreach (var q in dinospace.Data.SuggestedQuestions.All)
+{
+    var turn = PromptBuilder.Build(q, new List<ChatMessage>(), new List<string>());
+    if (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic)
+    { i4++; }
+    else { m4++; Console.WriteLine($"CHIP-FLOP  {q}  ->  {Snip(turn.OfflineFallback ?? "(nothing)")}"); }
+}
+Console.WriteLine($"=== round 4 (chips): {i4} instant, {m4} FLOPS ===");
+
 // CI-friendly: fail only if a question truly dead-ends (no instant reply AND
-// no offline fallback). Model-routing with a fallback is fine.
-Environment.Exit(uncovered + m2 + m3 > 0 ? 1 : 0);
+// no offline fallback), or a suggestion chip can't answer instantly.
+Environment.Exit(uncovered + m2 + m3 + m4 > 0 ? 1 : 0);

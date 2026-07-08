@@ -51,6 +51,53 @@ namespace dinospace.Services
 #endif
         }
 
+        // The engine only counts as usable once it has actually produced a
+        // token. LiteRT-LM "initializes" in milliseconds because it loads the
+        // model weights lazily on the FIRST inference — so right after init
+        // (and after every per-answer reset) the first answer pays a cold
+        // model load that can take a minute on a phone CPU. Routing questions
+        // at a cold engine is what showed "thinking…" until the timeout on
+        // every single question. The warm-up below absorbs that load in the
+        // background; until it finishes, questions take the instant offline
+        // path instead.
+        private static volatile bool _warm;
+        private static int _warmPending;
+        public static bool IsWarm => IsReady && _warm;
+
+        private static void ScheduleWarmUp()
+        {
+#if ANDROID
+            if (Interlocked.Exchange(ref _warmPending, 1) == 1) return;
+            _ = Task.Run(async () =>
+            {
+                await _lock.WaitAsync(CancellationToken.None);
+                try
+                {
+                    Interlocked.Exchange(ref _warmPending, 0);
+                    WarmUpLocked();
+                }
+                finally { _lock.Release(); }
+            });
+#endif
+        }
+
+#if ANDROID
+        // Runs one tiny inference to force the lazy model load. Must be called
+        // while holding _lock.
+        private static void WarmUpLocked()
+        {
+            if (_warm || !IsReady) return;
+            long t0 = Environment.TickCount64;
+            try { Android.Util.Log.Info("NovaSaur", "warm-up inference starting"); } catch { }
+            string? r = null;
+            try { r = Com.Novasaur.NovaSaurModule.Ask("Say OK."); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova warm-up: " + ex); }
+            bool ok = r != null && !r.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase);
+            if (ok) _warm = true;
+            try { Android.Util.Log.Info("NovaSaur", $"warm-up {(ok ? "done" : "failed")} in {(Environment.TickCount64 - t0) / 1000.0:0.0}s"); } catch { }
+        }
+#endif
+
         private static Task? _initTask;
         private static readonly object _initGate = new();
         private static int _autoInitHooked;
@@ -80,9 +127,14 @@ namespace dinospace.Services
                 if (_initTask == null || _initTask.IsFaulted || stale)
                     _initTask = Task.Run(() =>
                     {
-                        if (Com.Novasaur.NovaSaurModule.IsReady) return;
-                        var ctx = Android.App.Application.Context;
-                        Com.Novasaur.NovaSaurModule.Init(ctx);
+                        if (!Com.Novasaur.NovaSaurModule.IsReady)
+                        {
+                            var ctx = Android.App.Application.Context;
+                            Com.Novasaur.NovaSaurModule.Init(ctx);
+                        }
+                        // Init is fast (the weights load lazily) — the warm-up
+                        // is what actually gets the model into memory.
+                        ScheduleWarmUp();
                     });
                 return _initTask;
             }
@@ -102,6 +154,9 @@ namespace dinospace.Services
         // question timed out in a row.
         private static void ScheduleReset()
         {
+            // The engine is cold from this moment until the post-reset warm-up
+            // finishes — questions in that window answer offline instantly.
+            _warm = false;
             if (Interlocked.Exchange(ref _resetPending, 1) == 1) return;
             _ = Task.Run(async () =>
             {
@@ -110,6 +165,7 @@ namespace dinospace.Services
                 {
                     Interlocked.Exchange(ref _resetPending, 0);
                     Com.Novasaur.NovaSaurModule.Reset();
+                    WarmUpLocked();   // absorb the lazy reload now, not on the next question
                 }
                 catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova reset: " + ex); }
                 finally { _lock.Release(); }
@@ -279,7 +335,7 @@ namespace dinospace.Services
 #endif
 
         public const string TimeoutMessage =
-            "Phew, that one's a real brain-bender! Give me a few seconds to catch my breath, then try asking it a shorter way.";
+            "That answer took longer than it should have, so I stopped it. Give it a moment and ask again — shorter questions help.";
         public const string ErrorMessage =
             "Something went sideways answering that. Give it another try in a moment.";
         public const string BusyMessage =
