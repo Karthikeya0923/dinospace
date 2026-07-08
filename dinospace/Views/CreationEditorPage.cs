@@ -67,6 +67,11 @@ namespace dinospace.Views
         // the PNG from the details step, where the canvas is no longer laid out.
         private double _canvasW, _canvasH;
 
+        // Live preview of the drawing shown above the details form.
+        private readonly PaintPreviewDrawable _previewDrawable = new();
+        private GraphicsView _preview = null!;
+        private Border _previewWrap = null!;
+
         // The form.
         private CreationKind _kind;
         private VerticalStackLayout _formArea = null!;
@@ -417,8 +422,22 @@ namespace dinospace.Views
             // Remember the canvas dimensions while it's still measured, so the
             // PNG export from the details step rasterises at the right size.
             if (_canvas.Width > 0 && _canvas.Height > 0) { _canvasW = _canvas.Width; _canvasH = _canvas.Height; }
+
+            RefreshPreview();
             Content = _detailsStep;
             AppSettings.Tap();
+        }
+
+        // Keeps the details-step preview in sync with the current drawing.
+        private void RefreshPreview()
+        {
+            _previewDrawable.Source = _paint;
+            _previewDrawable.SrcW = _canvasW;
+            _previewDrawable.SrcH = _canvasH;
+            bool hasDrawing = _paint.Strokes.Count > 0 || _paint.Background != Colors.White;
+            _previewWrap.IsVisible = hasDrawing && _canvasW > 0;
+            _previewWrap.BackgroundColor = _paint.Background;
+            _preview.Invalidate();
         }
         private void ShowDraw() { Content = _drawStep; AppSettings.Tap(); }
 
@@ -444,6 +463,19 @@ namespace dinospace.Views
                 Text = "Name your creation and give it stats. It'll join your collection — and your dinosaurs can even enter Dino Battle!",
                 FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), LineHeight = 1.4, TextColor = Theme.TextSecondary
             });
+
+            // The drawing, small, right above the form — so naming it never
+            // feels disconnected from what was just drawn.
+            _preview = new GraphicsView { Drawable = _previewDrawable, HeightRequest = 150, InputTransparent = true };
+            _previewWrap = new Border
+            {
+                Content = _preview, HeightRequest = 150,
+                BackgroundColor = Colors.White,
+                Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                StrokeShape = new RoundRectangle { CornerRadius = 16 },
+                IsVisible = false
+            };
+            stack.Add(_previewWrap);
 
             stack.Add(KindToggle());
 
@@ -523,6 +555,7 @@ namespace dinospace.Views
         private void RebuildKind()
         {
             _detailsStep = BuildDetailsStep();
+            RefreshPreview();
             Content = _detailsStep;
             AppSettings.Tap();
         }
@@ -730,7 +763,14 @@ namespace dinospace.Views
                     double density = 2.75;
                     try { density = DeviceDisplay.MainDisplayInfo.Density; } catch { }
                     bool ok = CreationCanvas.ExportPng(_paint, w, h, density, path);
-                    if (ok) _c.ImagePath = path;
+                    if (ok)
+                    {
+                        _c.ImagePath = path;
+                        // Cards letterbox the drawing on this colour so the
+                        // whole picture always shows, never a cropped middle.
+                        var bg = _paint.Background;
+                        _c.CanvasColor = $"#{(int)(bg.Red * 255):X2}{(int)(bg.Green * 255):X2}{(int)(bg.Blue * 255):X2}";
+                    }
                 }
             }
 

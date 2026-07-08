@@ -61,14 +61,18 @@ namespace dinospace.Views
 
         private View RowTemplate()
         {
-            var img = new Image { Aspect = Aspect.AspectFill, WidthRequest = 48, HeightRequest = 48 };
+            // Drawn creatures letterbox on their canvas colour so the whole
+            // drawing shows; built-in art fills and crops as usual.
+            var img = new Image { WidthRequest = 48, HeightRequest = 48 };
             img.SetBinding(Image.SourceProperty, new Binding(nameof(Dinosaur.ImageFile)));
+            img.SetBinding(Image.AspectProperty, new Binding(nameof(Dinosaur.CreationBg), converter: new DrawingAspectConverter()));
             var thumb = new Border
             {
                 Content = img, WidthRequest = 48, HeightRequest = 48,
-                BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent,
+                Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 12 }
             };
+            thumb.SetBinding(Border.BackgroundColorProperty, new Binding(nameof(Dinosaur.CreationBg), converter: new DrawingBgConverter()));
 
             var name = new Label { FontFamily = Ui.Display, FontSize = 16, TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center };
             name.SetBinding(Label.TextProperty, new Binding(nameof(Dinosaur.Name)));
@@ -116,5 +120,27 @@ namespace dinospace.Views
             _onPick(d);
             try { if (Navigation.NavigationStack.Count > 1) await Navigation.PopAsync(); } catch { }
         }
+    }
+
+    // CreationBg (hex, empty for built-ins) → how the row thumb renders: a
+    // drawing letterboxes on its canvas colour, built-in art fills the square.
+    public class DrawingAspectConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+            => string.IsNullOrEmpty(value as string) ? Aspect.AspectFill : Aspect.AspectFit;
+        public object? ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+
+    public class DrawingBgConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+        {
+            string hex = value as string ?? "";
+            if (hex.Length == 0) return Colors.Transparent;
+            try { return Color.FromArgb(hex); } catch { return Colors.White; }
+        }
+        public object? ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+            => throw new NotSupportedException();
     }
 }

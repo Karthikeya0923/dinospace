@@ -36,16 +36,18 @@ by Google's Gemma model running **locally on your device** (using LiteRT-LM):
 
 ## How the AI model gets onto your device
 
-When you install DinoSpace from Google Play, the NovaSaur model (about 3 GB) is
+When you install DinoSpace from Google Play, the NovaSaur model (about 2.5 GB) is
 delivered by Google Play as part of the app install, under
 [Google's privacy policy](https://policies.google.com/privacy). We receive nothing.
 
-If the model is ever missing (for example on a version not installed through Google
-Play), the app can download it directly from Hugging Face, a file-hosting service. Like
-any web download, Hugging Face's servers process standard connection information (such
-as your IP address) to deliver the file — see the
+If the model isn't on your device (for example on a version not installed through
+Google Play), the chat and Settings offer an optional download — it only starts if you
+tap it. The file comes directly from Hugging Face, a file-hosting service. Like any web
+download, Hugging Face's servers process standard connection information (such as your
+IP address) to deliver the file — see the
 [Hugging Face privacy policy](https://huggingface.co/privacy). No account is needed,
-nothing about you is sent by the app, and we receive nothing.
+nothing about you is sent by the app, and we receive nothing. You can pause or remove
+the download, or delete the model, any time in Settings.
 
 ## Information stored on your device
 
@@ -65,6 +67,8 @@ with *Settings → Reset progress & bookmarks*; uninstalling removes everything.
   camera view appears behind the star overlay so you can line the sky up by eye. The
   picture is shown on screen and nothing else: no photos or video are captured, stored,
   or sent anywhere. If you say no, Scan Sky draws a rendered night sky instead.
+- **Vibration** — for the small haptic taps you feel on buttons. Adjustable or
+  switchable off under *Settings → Haptic feedback*.
 
 ## Children's privacy
 

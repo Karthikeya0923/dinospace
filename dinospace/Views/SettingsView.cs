@@ -51,6 +51,10 @@ namespace dinospace.Views
                 LinkRow("Choose a theme", CurrentThemeName(), async () => await Nav.Push(() => new ThemesPage())),
                 TextSizeRow()));
 
+            // NovaSaur AI — install, pause/resume, or remove the optional model.
+            stack.Add(Ui.SectionHeader("NovaSaur AI"));
+            stack.Add(new NovaModelCard(hideWhenInstalled: false) { Margin = new Thickness(0, 8, 0, 4) });
+
             // General
             stack.Add(Ui.SectionHeader("General"));
             stack.Add(Group(

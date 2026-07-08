@@ -53,6 +53,19 @@ namespace dinospace.Services
 
         private static Task? _initTask;
         private static readonly object _initGate = new();
+        private static int _autoInitHooked;
+
+        // One-time hook: the moment an in-app model download completes, load
+        // the model — so the very next question streams from it, no restart.
+        public static void EnsureAutoInit()
+        {
+            if (Interlocked.Exchange(ref _autoInitHooked, 1) == 1) return;
+            ModelManager.Changed += () =>
+            {
+                if (ModelManager.State == DownloadState.Completed && !IsReady)
+                    _ = InitAsync();
+            };
+        }
 
         // Loads the model into memory. Single-flight: every caller shares one
         // native Init — running two at once (background warm-up + on-demand
@@ -79,15 +92,25 @@ namespace dinospace.Services
         }
 
 #if ANDROID
+        private static int _resetPending;
+
         // Reload the engine to a clean slate, in the background, after an
         // answer. Holds the lock while it runs so the next question simply
-        // waits its turn; if it fails the next Init recovers.
+        // waits its turn; if it fails the next Init recovers. Only one reload
+        // ever queues — a reload takes tens of seconds on a slow phone, and
+        // stacking them kept the engine busy long enough that every following
+        // question timed out in a row.
         private static void ScheduleReset()
         {
+            if (Interlocked.Exchange(ref _resetPending, 1) == 1) return;
             _ = Task.Run(async () =>
             {
                 await _lock.WaitAsync(CancellationToken.None);
-                try { Com.Novasaur.NovaSaurModule.Reset(); }
+                try
+                {
+                    Interlocked.Exchange(ref _resetPending, 0);
+                    Com.Novasaur.NovaSaurModule.Reset();
+                }
                 catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova reset: " + ex); }
                 finally { _lock.Release(); }
             });
@@ -113,11 +136,17 @@ namespace dinospace.Services
 #if ANDROID
             long inferenceStart = 0;
             long callStart = Environment.TickCount64;
+            int abandoned = 0;   // 1 = the caller gave up while we were still queued
 
             var work = Task.Run(async () =>
             {
                 await _lock.WaitAsync(CancellationToken.None);
-                try { inferenceStart = Environment.TickCount64; return (string?)Com.Novasaur.NovaSaurModule.Ask(prompt); }
+                try
+                {
+                    if (Interlocked.CompareExchange(ref abandoned, 0, 0) == 1) return (string?)"ERROR:abandoned";
+                    inferenceStart = Environment.TickCount64;
+                    return (string?)Com.Novasaur.NovaSaurModule.Ask(prompt);
+                }
                 finally { _lock.Release(); }
             }, CancellationToken.None);
 
@@ -126,7 +155,12 @@ namespace dinospace.Services
                 await Task.Delay(300, CancellationToken.None);
                 if (inferenceStart == 0)
                 {
-                    if (Environment.TickCount64 - callStart > QueueCap.TotalMilliseconds) { ScheduleReset(); return TimeoutMessage; }
+                    // Queue timeout: the engine was never touched, so no reset.
+                    if (Environment.TickCount64 - callStart > QueueCap.TotalMilliseconds)
+                    {
+                        Interlocked.Exchange(ref abandoned, 1);
+                        return TimeoutMessage;
+                    }
                     continue;
                 }
                 if (Environment.TickCount64 - inferenceStart > FirstTokenCap.TotalMilliseconds) { ScheduleReset(); return TimeoutMessage; }
@@ -158,12 +192,18 @@ namespace dinospace.Services
             long lastActivity = 0;
             bool inferenceStarted = false;
             long callStart = Environment.TickCount64;
+            int abandoned = 0;   // 1 = the caller gave up while we were still queued
 
             var work = Task.Run(async () =>
             {
                 await _lock.WaitAsync(CancellationToken.None);
                 try
                 {
+                    // The caller may have timed out while we sat in the queue —
+                    // don't run a stale inference nobody is waiting for, it
+                    // would only delay the user's NEXT question.
+                    if (Interlocked.CompareExchange(ref abandoned, 0, 0) == 1) return "ERROR:abandoned";
+
                     // The lock is ours — the engine is idle and reset. Inference
                     // starts NOW, so the idle clock starts here (queue/reload
                     // time is not counted against the answer).
@@ -187,8 +227,14 @@ namespace dinospace.Services
                 if (!inferenceStarted)
                 {
                     // Still waiting for the engine (a background reload or the
-                    // previous answer). Bound that wait so it can't hang.
-                    if (Environment.TickCount64 - callStart > QueueCap.TotalMilliseconds) { ScheduleReset(); return TimeoutMessage; }
+                    // previous answer). Bound that wait so it can't hang. The
+                    // engine was never touched, so no reset is needed — queuing
+                    // one here just made the jam longer.
+                    if (Environment.TickCount64 - callStart > QueueCap.TotalMilliseconds)
+                    {
+                        Interlocked.Exchange(ref abandoned, 1);
+                        return TimeoutMessage;
+                    }
                     continue;
                 }
                 long idleMs = Environment.TickCount64 - lastActivity;

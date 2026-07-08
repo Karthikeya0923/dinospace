@@ -116,14 +116,17 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.80" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 		<!-- camera preview for Scan Sky -->
-		<PackageReference Include="CommunityToolkit.Maui.Camera" Version="2.0.2" />
+		<PackageReference Include="CommunityToolkit.Maui.Camera" Version="6.1.0" />
 		<!-- pins androidx.tracing to one version; CameraX and the Play Core
 		     libraries otherwise each bundle their own copy and dexing fails -->
 		<PackageReference Include="Xamarin.AndroidX.Tracing.Tracing" Version="1.3.0.4" Condition="$(TargetFramework.Contains('-android'))" />
 		<PackageReference Include="Xamarin.AndroidX.Tracing.Tracing.Ktx" Version="1.3.0.4" Condition="$(TargetFramework.Contains('-android'))" />
+		<!-- pins concurrent-futures-ktx level with concurrent-futures, or the
+		     resolver mixes 1.2/1.3 and warns on every build -->
+		<PackageReference Include="Xamarin.AndroidX.Concurrent.Futures.Ktx" Version="1.3.0.4" Condition="$(TargetFramework.Contains('-android'))" />
 	</ItemGroup>
 
 	<ItemGroup>

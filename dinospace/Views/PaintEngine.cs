@@ -196,6 +196,28 @@ namespace dinospace.Views
         }
     }
 
+    // Shrinks the live drawing to fit any smaller rect — the details step
+    // shows it above the form, so the child sees exactly what they're saving
+    // while they name it.
+    public class PaintPreviewDrawable : IDrawable
+    {
+        public PaintDrawable? Source;
+        public double SrcW, SrcH;   // the drawing canvas size, in view units
+
+        public void Draw(ICanvas canvas, RectF rect)
+        {
+            if (Source == null || SrcW <= 0 || SrcH <= 0) return;
+            canvas.Antialias = true;
+            float s = Math.Min(rect.Width / (float)SrcW, rect.Height / (float)SrcH);
+            float w = (float)SrcW * s, h = (float)SrcH * s;
+            canvas.SaveState();
+            canvas.Translate(rect.Left + (rect.Width - w) / 2f, rect.Top + (rect.Height - h) / 2f);
+            canvas.Scale(s, s);
+            Source.Draw(canvas, new RectF(0, 0, (float)SrcW, (float)SrcH));
+            canvas.RestoreState();
+        }
+    }
+
     // A little sample stroke shown on each brush button so it's obvious what
     // the brush does before you pick it.
     public class BrushPreviewDrawable : IDrawable

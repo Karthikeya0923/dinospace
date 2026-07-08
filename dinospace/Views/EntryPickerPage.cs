@@ -65,9 +65,11 @@ namespace dinospace.Views
                 HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
             };
             initial.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Initial)));
-            var img = new Image { Aspect = Aspect.AspectFill, WidthRequest = 46, HeightRequest = 46 };
+            var img = new Image { WidthRequest = 46, HeightRequest = 46 };
             img.SetBinding(Image.SourceProperty, new Binding(nameof(EntryRow.Image)));
-            var thumbGrid = new Grid { BackgroundColor = Color.FromArgb("#111527") };
+            img.SetBinding(Image.AspectProperty, new Binding(nameof(EntryRow.ThumbAspect)));
+            var thumbGrid = new Grid();
+            thumbGrid.SetBinding(Grid.BackgroundColorProperty, new Binding(nameof(EntryRow.ThumbBg)));
             thumbGrid.Add(initial);
             thumbGrid.Add(img);
             var thumb = new Border
@@ -99,7 +101,7 @@ namespace dinospace.Views
             // this, and they mix into any list right alongside the built-ins.
             foreach (var c in CreationStore.All())
                 if (q.Length == 0 || Retriever.Normalize(c.Name).Contains(q))
-                    _items.Add(new EntryRow { Image = c.ImagePath, Title = c.Name, Meta = "★ " + c.MetaLine, Data = c });
+                    _items.Add(new EntryRow { Image = c.ImagePath, Title = c.Name, Meta = "★ " + c.MetaLine, Data = c, DrawingBg = c.CanvasColor });
 
             foreach (var d in DinoData.All.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
                 if (q.Length == 0 || Retriever.Normalize(d.Name).Contains(q))

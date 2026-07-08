@@ -17,6 +17,20 @@ namespace dinospace.Views
         public object Data { get; init; } = null!;
         // First letter, shown on the night-sky stand-in until real art loads.
         public string Initial => Title.Length > 0 ? Title[..1].ToUpperInvariant() : "•";
+
+        // Canvas colour when this row is a user drawing, empty otherwise.
+        // Drawings letterbox (AspectFit on their canvas colour) so the whole
+        // picture shows; built-in art fills the square as usual.
+        public string DrawingBg { get; init; } = "";
+        public Aspect ThumbAspect => DrawingBg.Length == 0 ? Aspect.AspectFill : Aspect.AspectFit;
+        public Color ThumbBg
+        {
+            get
+            {
+                if (DrawingBg.Length == 0) return Color.FromArgb("#111527");
+                try { return Color.FromArgb(DrawingBg); } catch { return Colors.White; }
+            }
+        }
     }
 
     // The Search tab: big rounded field, All/Dinosaurs/Space filter, and a

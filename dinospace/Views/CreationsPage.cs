@@ -50,7 +50,10 @@ namespace dinospace.Views
             var all = CreationStore.All();
             if (all.Count == 0)
             {
-                _stack.Add(Ui.Card(Ui.Muted("Nothing here yet! Tap the button above to draw your very first creature or planet. Anything you imagine can live here."), 16, new Thickness(16, 16)));
+                // Copy kept short enough to wrap the same way at the card's
+                // measure and layout widths — text near that boundary gets its
+                // last line clipped on Android.
+                _stack.Add(Ui.Card(Ui.Muted("Nothing here yet! Tap the button above and draw your very first creature or planet."), 16, new Thickness(16, 16)));
                 return;
             }
 
@@ -91,7 +94,7 @@ namespace dinospace.Views
             var imgGrid = new Grid { HeightRequest = 130, BackgroundColor = Colors.White };
             imgGrid.Add(EntryCards.ArtFallback(c.Name, 30, stars: false));
             if (!string.IsNullOrEmpty(c.ImagePath) && System.IO.File.Exists(c.ImagePath))
-                imgGrid.Add(new Image { Source = ImageSource.FromFile(c.ImagePath), Aspect = Aspect.AspectFill });
+                imgGrid.Add(EntryCards.Drawing(c.ImagePath, c.CanvasColor));
 
             var imgWrap = new Border
             {

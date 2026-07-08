@@ -113,15 +113,21 @@ namespace dinospace.Views
 
             _inputArea = BuildInput();
 
+            // The model card sits under the header until the model is
+            // installed, then disappears — the chat itself never needs it.
+            var modelCard = new NovaModelCard(hideWhenInstalled: true) { Margin = new Thickness(16, 2, 16, 4) };
+
             var main = new Grid { RowSpacing = 0 };
+            main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             main.Add(header, 0, 0);
-            main.Add(_chatScroll, 0, 1);
-            main.Add(_suggestionScroll, 0, 2);
-            main.Add(_inputArea, 0, 3);
+            main.Add(modelCard, 0, 1);
+            main.Add(_chatScroll, 0, 2);
+            main.Add(_suggestionScroll, 0, 3);
+            main.Add(_inputArea, 0, 4);
 
             Content = main;
         }
@@ -224,6 +230,7 @@ namespace dinospace.Views
         {
             if (_modelInited || !NovaSaurService.SupportedPlatform) return;
             _modelInited = true;
+            NovaSaurService.EnsureAutoInit();   // load the model the moment a download completes
             _ = Task.Run(() =>
             {
                 try
@@ -303,9 +310,11 @@ namespace dinospace.Views
                 return;
             }
 
-            StopThinking();
+            // The bubble is created on the FIRST token, not up front — until
+            // then the "thinking…" line stays, so a slow engine warm-up reads
+            // as thinking instead of a mysterious empty bubble.
             _streaming = true;
-            var live = StartNovaBubble();
+            Label? live = null;
             var liveSb = new StringBuilder();
 
             string answer;
@@ -315,7 +324,10 @@ namespace dinospace.Views
                 {
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
-                        if (myGen != _gen) return;
+                        // Ignore stragglers after this turn was finalised (a
+                        // timed-out stream can keep emitting for a moment).
+                        if (myGen != _gen || !_streaming) return;
+                        if (live == null) { StopThinking(); live = StartNovaBubble(); }
                         liveSb.Append(token);
                         live.Text = liveSb.ToString();
                         try { _ = _chatScroll.ScrollToAsync(0, _chatStack.Height, false); } catch { }
@@ -336,6 +348,8 @@ namespace dinospace.Views
             if (string.IsNullOrWhiteSpace(answer) || answer == NovaSaurService.ErrorMessage || answer == NovaSaurService.TimeoutMessage)
                 answer = turn.OfflineFallback ?? answer;
 
+            StopThinking();                     // still up if no token ever arrived
+            live ??= StartNovaBubble();
             live.Text = answer;
             if (answer.Length > 0) { _messages.Add(new ChatMessage { IsUser = false, Text = answer }); SaveHistory(); }
             _busy = false;

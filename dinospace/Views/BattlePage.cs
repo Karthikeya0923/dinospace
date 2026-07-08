@@ -137,7 +137,11 @@ namespace dinospace.Views
             }
             else
             {
-                var img = new Image { Source = d!.ImageFile, Aspect = Aspect.AspectFill, HeightRequest = 100 };
+                // A drawn creature shows whole on its canvas colour; built-in
+                // art can safely fill and crop.
+                View img = string.IsNullOrEmpty(d!.CreationBg)
+                    ? new Image { Source = d.ImageFile, Aspect = Aspect.AspectFill, HeightRequest = 100 }
+                    : EntryCards.Drawing(d.ImageFile, d.CreationBg, 100);
                 var imgWrap = new Border { Content = img, HeightRequest = 100, BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 12 } };
                 inner = new VerticalStackLayout
                 {

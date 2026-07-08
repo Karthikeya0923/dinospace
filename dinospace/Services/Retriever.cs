@@ -273,6 +273,18 @@ namespace dinospace.Services
 
         private static bool LooksLikeFollowUp(string q)
         {
+            // "what is love", "whats a modem" — a what/who question that names
+            // something NEW (not a pronoun) is a fresh question, even a short
+            // one. Reusing the carryover here answered "what is love" with a
+            // summary of whatever creature was discussed last.
+            foreach (var intro in new[] { "what is ", "what are ", "whats ", "who is ", "whos " })
+                if (q.StartsWith(intro, StringComparison.Ordinal))
+                {
+                    string first = q[intro.Length..].Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+                    string[] refersBack = { "it", "its", "that", "this", "he", "she", "they", "those", "these", "them" };
+                    if (first.Length > 0 && !refersBack.Contains(first)) return false;
+                }
+
             string p = " " + q + " ";
             int words = q.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
             if (words <= 3) return true;

@@ -104,7 +104,7 @@ namespace dinospace.Views
             var grid = new Grid { HeightRequest = 300, BackgroundColor = Colors.White };
             grid.Add(EntryCards.ArtFallback(c.Name, 56));
             if (!string.IsNullOrEmpty(c.ImagePath) && System.IO.File.Exists(c.ImagePath))
-                grid.Add(new Image { Source = ImageSource.FromFile(c.ImagePath), Aspect = Aspect.AspectFit });
+                grid.Add(EntryCards.Drawing(c.ImagePath, c.CanvasColor));
             return grid;
         }
 

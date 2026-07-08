@@ -92,7 +92,12 @@ namespace dinospace.Views
                     FontFamily = Ui.Display, FontSize = 18, TextColor = Color.FromArgb("#E3BE55"),
                     HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
                 });
-                thumbGrid.Add(new Image { Source = image, Aspect = Aspect.AspectFill, WidthRequest = 46, HeightRequest = 46 });
+                // User drawings show whole on their canvas colour; built-in art fills.
+                string drawingBg = data is Dinosaur dd ? dd.CreationBg : data is SpaceObject ss ? ss.CreationBg : "";
+                if (drawingBg.Length == 0)
+                    thumbGrid.Add(new Image { Source = image, Aspect = Aspect.AspectFill, WidthRequest = 46, HeightRequest = 46 });
+                else
+                    thumbGrid.Add(EntryCards.Drawing(image, drawingBg));
                 var thumb = new Border
                 {
                     Content = thumbGrid, WidthRequest = 46, HeightRequest = 46,

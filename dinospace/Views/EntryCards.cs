@@ -36,6 +36,21 @@ namespace dinospace.Views
             return grid;
         }
 
+        // A user drawing, shown WHOLE. AspectFill crops a tall canvas into a
+        // wide slot — kids kept losing the head and feet of their creature —
+        // so drawings letterbox with AspectFit on the exact canvas colour they
+        // were painted on, and the bars blend invisibly into the picture.
+        public static View Drawing(string imagePath, string bgHex, double height = -1)
+        {
+            Color bg;
+            try { bg = Color.FromArgb(string.IsNullOrWhiteSpace(bgHex) ? "#FFFFFF" : bgHex); }
+            catch { bg = Colors.White; }
+            var grid = new Grid { BackgroundColor = bg };
+            if (height > 0) grid.HeightRequest = height;
+            grid.Add(new Image { Source = ImageSource.FromFile(imagePath), Aspect = Aspect.AspectFit });
+            return grid;
+        }
+
         // A bright gradient stand-in for the Playful layout — a cheerful splash
         // of colour with the entry's initial, instead of the quiet night sky.
         public static View PlayfulArt(string title, double letterSize)

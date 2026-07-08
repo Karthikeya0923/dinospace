@@ -14,6 +14,11 @@ namespace dinospace.Models
         public string Id { get; set; } = "";
         public CreationKind Kind { get; set; }
         public string ImagePath { get; set; } = "";     // absolute path to the drawing PNG
+        // The canvas background at save time. Cards and heroes letterbox the
+        // drawing on this exact colour, so the whole picture always shows —
+        // cropping a tall drawing into a wide slot used to chop the head and
+        // feet off every creature. Older saves default to the old white canvas.
+        public string CanvasColor { get; set; } = "#FFFFFF";
         public long CreatedTicks { get; set; }
 
         // Shared
@@ -83,6 +88,7 @@ namespace dinospace.Models
             Speed = WithUnit(Speed, "km/h"),
             BiteForce = WithUnit(BiteForce, "PSI"),
             ImageFile = ImagePath,
+            CreationBg = CanvasColor,
             AboutText = About,
             KeyFeaturesText = KeyFeatures,
             LifeEnvironmentText = Habitat,
@@ -103,6 +109,7 @@ namespace dinospace.Models
             Stat3Label = Stat3Label, Stat3Value = Stat3Value,
             Stat4Label = Stat4Label, Stat4Value = Stat4Value,
             ImageFile = ImagePath,
+            CreationBg = CanvasColor,
             AboutText = About,
             KeyFeaturesText = SpaceKeyFeatures,
             OrbitMovementText = OrbitMovement,

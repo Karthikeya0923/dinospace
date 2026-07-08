@@ -23,6 +23,11 @@ namespace dinospace.Models
 
         public string ImageFile { get; set; } = "";
 
+        // Set only when this entry is a user drawing (converted UserCreation):
+        // the canvas colour the drawing should be letterboxed on so it never
+        // gets cropped. Empty for built-in entries.
+        public string CreationBg { get; set; } = "";
+
         public string AboutText { get; set; } = "";
         public string KeyFeaturesText { get; set; } = "";
         public string OrbitMovementText { get; set; } = "";
