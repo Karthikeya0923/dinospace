@@ -111,32 +111,7 @@ namespace dinospace.Views
             root.Add(DrawTopBar(), 0, 0);
             root.Add(frame, 0, 1);
             root.Add(toolPanel, 0, 2);
-
-            // Lock to landscape for better drawing experience - wider canvas
-#if ANDROID
-            try
-            {
-                if (Platform.CurrentActivity is Android.App.Activity a)
-                    a.RequestedOrientation = Android.Content.PM.ScreenOrientation.SensorLandscape;
-            }
-            catch { }
-#endif
-
             return root;
-        }
-
-        protected override void OnDisappearing()
-        {
-            base.OnDisappearing();
-            // Restore portrait when leaving
-#if ANDROID
-            try
-            {
-                if (Platform.CurrentActivity is Android.App.Activity a)
-                    a.RequestedOrientation = Android.Content.PM.ScreenOrientation.Unspecified;
-            }
-            catch { }
-#endif
         }
 
         private View DrawTopBar()
@@ -439,20 +414,9 @@ namespace dinospace.Views
         // ================= STEP 2: DETAILS =================
         private void ShowDetails()
         {
-            // CRITICAL: Capture the canvas dimensions BEFORE switching views.
-            // The GraphicsView won't be measured after leaving this page,
-            // so we must lock them down now for proper PNG export.
-            if (_canvas.Width > 0 && _canvas.Height > 0) 
-            { 
-                _canvasW = _canvas.Width; 
-                _canvasH = _canvas.Height; 
-            }
-            else
-            {
-                // Fallback to reasonable defaults if measurement failed
-                _canvasW = 400;
-                _canvasH = 600;
-            }
+            // Remember the canvas dimensions while it's still measured, so the
+            // PNG export from the details step rasterises at the right size.
+            if (_canvas.Width > 0 && _canvas.Height > 0) { _canvasW = _canvas.Width; _canvasH = _canvas.Height; }
             Content = _detailsStep;
             AppSettings.Tap();
         }
