@@ -35,27 +35,9 @@ namespace dinospace.Views
         {
             var stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(16, 14, 16, 30) };
 
-            // A big, colourful welcome banner — a mascot, the wordmark, and a
-            // cheery tagline on a deep-space gradient.
-            var titleCol = new VerticalStackLayout { Spacing = 1, VerticalOptions = LayoutOptions.Center };
-            titleCol.Add(new Label { Text = "DinoSpace", FontFamily = Ui.Display, FontSize = Ui.S(34), TextColor = Colors.White, LineHeight = 1.0 });
-            titleCol.Add(new Label { Text = "Explore · Learn · Imagine!", FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), FontAttributes = FontAttributes.Bold, TextColor = Colors.White.WithAlpha(0.92f) });
-
-            var bannerGrid = new Grid { ColumnSpacing = 12, Padding = new Thickness(18, 18) };
-            bannerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            bannerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            bannerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            bannerGrid.Add(new Label { Text = "🦕", FontSize = 40, VerticalOptions = LayoutOptions.Center }, 0, 0);
-            bannerGrid.Add(titleCol, 1, 0);
-            bannerGrid.Add(new Label { Text = "🚀", FontSize = 34, VerticalOptions = LayoutOptions.Center }, 2, 0);
-
-            stack.Add(new Border
-            {
-                Content = bannerGrid,
-                Background = PlayfulKit.Gradient(PlayfulKit.Space),
-                Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 26 },
-                Shadow = Theme.CardShadow()
-            });
+            // Reserved logo slot: the DinoSpace wordmark artwork goes here.
+            // Kept as clear space so the art drops in without moving anything.
+            stack.Add(new BoxView { HeightRequest = 96, Color = Colors.Transparent, InputTransparent = true });
 
             // Live sky teaser (kept — it's a lovely, dynamic touch).
             stack.Add(SkyCard());
@@ -66,12 +48,14 @@ namespace dinospace.Views
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             for (int r = 0; r < 3; r++) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            grid.Add(WorldTile("🦕", "Dinosaurs", "Meet amazing creatures", "#3FBF6A", "#2E8B57", async () => await Nav.Push(() => new BrowsePage("Dinosaurs"))), 0, 0);
-            grid.Add(WorldTile("🪐", "Space", "Planets, stars & galaxies", "#A66BFF", "#7C3AED", async () => await Nav.Push(() => new BrowsePage("Space"))), 1, 0);
-            grid.Add(WorldTile("🔭", "Sky Scanner", "Point at the real sky!", "#3E9BFF", "#2E5FD0", async () => await Nav.Push(() => new SkyViewPage())), 0, 1);
-            grid.Add(WorldTile("🤖", "Ask NovaSaur", "Your dino & space buddy", "#25C7C7", "#0E9E9E", async () => await Nav.Push(() => new NovaPage())), 1, 1);
-            grid.Add(WorldTile("⚔️", "Dino Battles", "Who would win?", "#FF7361", "#E23B3B", async () => await Nav.Push(() => new BattlePage(null))), 0, 2);
-            grid.Add(WorldTile("🎨", "Editor", "Draw your own entry!", "#FF6FB0", "#E14A97", async () => await Nav.Push(() => new CreationsPage())), 1, 2);
+            // Storybook pastels from the kit — sage, powder, blush — instead
+            // of the old neon set. Each world keeps a distinct hue, just soft.
+            grid.Add(WorldTile("🦕", "Dinosaurs", "Meet amazing creatures", "#8FBC8F", "#5E8C5E", async () => await Nav.Push(() => new BrowsePage("Dinosaurs"))), 0, 0);
+            grid.Add(WorldTile("🪐", "Space", "Planets, stars & galaxies", "#B5A3DE", "#8971BE", async () => await Nav.Push(() => new BrowsePage("Space"))), 1, 0);
+            grid.Add(WorldTile("🔭", "Sky Scanner", "Point at the real sky!", "#92B8E0", "#5F8BBF", async () => await Nav.Push(() => new SkyViewPage())), 0, 1);
+            grid.Add(WorldTile("🤖", "Ask NovaSaur", "Your dino & space buddy", "#8FCBB8", "#5FA48F", async () => await Nav.Push(() => new NovaPage())), 1, 1);
+            grid.Add(WorldTile("⚔️", "Dino Battles", "Who would win?", "#DE9E8F", "#B97263", async () => await Nav.Push(() => new BattlePage(null))), 0, 2);
+            grid.Add(WorldTile("🎨", "Editor", "Draw your own entry!", "#E8A8BE", "#C77E97", async () => await Nav.Push(() => new CreationsPage())), 1, 2);
             stack.Add(grid);
 
             // A quick row of extras.
@@ -79,9 +63,9 @@ namespace dinospace.Views
             quick.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             quick.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             quick.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            quick.Add(QuickTile("🧩", "Quizzes", "#F0A81E", async () => await StartQuiz()), 0, 0);
-            quick.Add(QuickTile("📚", "Collections", "#4C6EF5", async () => await Nav.Push(() => new CollectionsListPage())), 1, 0);
-            quick.Add(QuickTile("🎲", "Surprise Me", "#12A594", async () => await OpenSurprise()), 2, 0);
+            quick.Add(QuickTile("🧩", "Quizzes", "#E0C98A", async () => await StartQuiz()), 0, 0);
+            quick.Add(QuickTile("📚", "Collections", "#92B8E0", async () => await Nav.Push(() => new CollectionsListPage())), 1, 0);
+            quick.Add(QuickTile("🎲", "Surprise Me", "#8FCBB8", async () => await OpenSurprise()), 2, 0);
             stack.Add(quick);
 
             // Fun fact at the bottom.
@@ -421,32 +405,31 @@ namespace dinospace.Views
         }
 
         // ----- play tiles -----
-        // Two-tone colour tiles with a vector icon — friendly without being
-        // babyish. The colours are muted a step from the Playful worlds so the
-        // grid reads game-like, not preschool.
+        // Native keeps these quiet: plain theme cards with a tinted icon chip
+        // and ink text — the colour parameters are ignored so the grid reads
+        // editorial, never candy. (Playful's home has its own pastel tiles.)
         private View PlayTile(string icon, string title, string sub, string c1, string c2, Func<System.Threading.Tasks.Task> onTap)
         {
             var col = new VerticalStackLayout { Spacing = 3, Padding = new Thickness(14, 14, 14, 13) };
             var iconWrap = new Border
             {
                 WidthRequest = 40, HeightRequest = 40,
-                BackgroundColor = Colors.White.WithAlpha(0.22f),
+                BackgroundColor = Theme.AccentSoft,
                 Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 13 },
-                Content = Ui.Icon(icon, 22, Colors.White),
+                StrokeShape = new RoundRectangle { CornerRadius = 12 },
+                Content = Ui.Icon(icon, 22, Theme.Accent),
                 Margin = new Thickness(0, 0, 0, 7)
             };
             col.Add(iconWrap);
-            col.Add(new Label { Text = title, FontFamily = Ui.Display, FontSize = Ui.S(17), TextColor = Colors.White, LineHeight = 1.0 });
-            col.Add(new Label { Text = sub, FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), TextColor = Colors.White.WithAlpha(0.88f), LineHeight = 1.2 });
+            col.Add(new Label { Text = title, FontFamily = Ui.Display, FontSize = Ui.S(17), TextColor = Theme.TextPrimary, LineHeight = 1.0 });
+            col.Add(new Label { Text = sub, FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), TextColor = Theme.TextSecondary, LineHeight = 1.2 });
 
             var tile = new Border
             {
                 Content = col,
-                Background = new LinearGradientBrush(
-                    new GradientStopCollection { new GradientStop(Color.FromArgb(c1), 0), new GradientStop(Color.FromArgb(c2), 1) },
-                    new Point(0, 0), new Point(1, 1)),
-                Stroke = Colors.Transparent,
+                BackgroundColor = Theme.Surface,
+                Stroke = Theme.CardStroke,
+                StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = AppLayout.CardRadius },
                 Shadow = Theme.CardShadow()
             };

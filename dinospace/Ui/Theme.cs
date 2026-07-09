@@ -137,6 +137,34 @@ namespace dinospace
             ShadowAlpha = 0f
         };
 
+        // theme6 — "Dino Meadow": the storybook pastel look. Pale sage fields,
+        // cream cards, deep-moss ink — the palette of a picture-book meadow
+        // where the little dinosaurs live. Made for the Playful layout but
+        // lovely in Native too.
+        private static readonly Palette MeadowP = new()
+        {
+            Bg = Color.FromArgb("#E4EEDF"),
+            BgRaised = Color.FromArgb("#F7FAF2"),
+            Surface = Color.FromArgb("#FCFDF8"),
+            SurfaceAlt = Color.FromArgb("#DCE9D3"),
+            SurfaceSunken = Color.FromArgb("#DAE6D2"),
+            Hairline = Color.FromArgb("#C4D8BA"),
+            HairlineSoft = Color.FromArgb("#D4E2CB"),
+            TextPrimary = Color.FromArgb("#37462F"),
+            TextSecondary = Color.FromArgb("#65785C"),
+            TextHint = Color.FromArgb("#8FA385"),
+            TextOnAccent = Color.FromArgb("#FBFDF7"),
+            Accent = Color.FromArgb("#5E8C5E"),
+            AccentSoft = Color.FromArgb("#DCEBD5"),
+            Success = Color.FromArgb("#2E7D32"),
+            Danger = Color.FromArgb("#C05B4D"),
+            ChipBg = Color.FromArgb("#DCE9D3"),
+            ChipText = Color.FromArgb("#4C6045"),
+            ImgPlaceholder = Color.FromArgb("#DFEAD6"),
+            CardStroke = Colors.Transparent,
+            ShadowAlpha = 0.10f
+        };
+
         private static readonly Palette FossilP = new()
         {
             Bg = Color.FromArgb("#F6EFE2"),
@@ -170,6 +198,7 @@ namespace dinospace
             new() { Id = "theme3", Name = "Starry Midnight", Blurb = "A calm, star-filled deep blue", Wallpaper = "theme3.png", Dark = true, P = MidnightP },
             new() { Id = "theme4", Name = "Nebula", Blurb = "Soft violet clouds where stars are born", Wallpaper = "theme4.png", Dark = true, P = NebulaP },
             new() { Id = "theme5", Name = "DinoSpace", Blurb = "The app's own painted twilight, dinosaurs and all", Wallpaper = "theme5.png", Dark = true, P = DinoP },
+            new() { Id = "theme6", Name = "Dino Meadow", Blurb = "Soft pastel sage where the little dinos live", Wallpaper = "theme6.png", Dark = false, P = MeadowP },
         };
 
         private static Palette _p = FossilP;
@@ -186,7 +215,6 @@ namespace dinospace
             id = id switch
             {
                 "classic" => Services.AppSettings.DarkMode ? "theme2" : "theme1",
-                "theme6" => "theme4",   // old nebula slot
                 "theme7" => "theme5",   // old dinospace slot
                 _ => id,
             };
