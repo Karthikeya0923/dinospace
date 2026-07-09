@@ -83,6 +83,7 @@ namespace dinospace.Views
         private void ShowQuestion()
         {
             _answered = false;
+            _answerBtns.Clear();
             var q = _questions[_index];
             _counter.Text = $"Question {_index + 1} of {_questions.Count}";
             _scoreLabel.Text = $"Score {_score}";
@@ -102,18 +103,22 @@ namespace dinospace.Views
 
             if (q.IsTrueFalse)
             {
-                _body.Add(AnswerButton("True", () => Answer(true == q.TrueFalseAnswer, q)));
-                _body.Add(AnswerButton("False", () => Answer(false == q.TrueFalseAnswer, q)));
+                _body.Add(AnswerButton("True", true == q.TrueFalseAnswer, q));
+                _body.Add(AnswerButton("False", false == q.TrueFalseAnswer, q));
             }
             else
             {
                 foreach (var (letter, text) in new[] { ("A", q.OptionA), ("B", q.OptionB), ("C", q.OptionC), ("D", q.OptionD) })
                     if (!string.IsNullOrEmpty(text))
-                        _body.Add(AnswerButton(text, () => Answer(letter == q.Correct, q), letter));
+                        _body.Add(AnswerButton(text, letter == q.Correct, q, letter));
             }
         }
 
-        private Border AnswerButton(string text, Action onTap, string? letter = null)
+        // Every answer button this question, with whether it's the right one —
+        // so the reveal can paint the truth onto the buttons themselves.
+        private readonly List<(Border btn, bool right)> _answerBtns = new();
+
+        private Border AnswerButton(string text, bool isRight, QuizQuestion q, string? letter = null)
         {
             var label = new Label { Text = text, FontFamily = Ui.Fonts, FontSize = Ui.S(15.5), TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center };
             View content = label;
@@ -139,18 +144,38 @@ namespace dinospace.Views
                 BackgroundColor = Theme.Surface, Stroke = Theme.HairlineSoft, StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 }, Padding = new Thickness(16, 14)
             };
-            Ui.OnTap(border, (_, _) => { if (!_answered) onTap(); });
+            _answerBtns.Add((border, isRight));
+            Ui.OnTap(border, (_, _) => { if (!_answered) Answer(isRight, q, border); });
             return border;
         }
 
-        private void Answer(bool correct, QuizQuestion q)
+        private void Answer(bool correct, QuizQuestion q, Border chosen)
         {
             _answered = true;
             if (correct) { _score++; AppSettings.Tap(); } else AppSettings.LongPress();
             _scoreLabel.Text = $"Score {_score}";
 
-            // recolour buttons: mark chosen correctness
-            HighlightButtons(correct, q);
+            // Paint the reveal onto the buttons: the right answer always goes
+            // green; a wrong pick goes red, so the eye gets both facts at once.
+            foreach (var (btn, right) in _answerBtns)
+            {
+                if (right)
+                {
+                    btn.BackgroundColor = Ui.MultiplyAlpha(Theme.Success, 0.16f);
+                    btn.Stroke = Theme.Success;
+                    btn.StrokeThickness = 2;
+                }
+                else if (btn == chosen)
+                {
+                    btn.BackgroundColor = Ui.MultiplyAlpha(Theme.Danger, 0.14f);
+                    btn.Stroke = Theme.Danger;
+                    btn.StrokeThickness = 2;
+                }
+                else
+                {
+                    btn.Opacity = 0.55;
+                }
+            }
 
             // explanation card
             var head = new Label
@@ -179,12 +204,6 @@ namespace dinospace.Views
             };
             Ui.OnTap(next, (_, _) => { if (last) ShowResults(); else { _index++; ShowQuestion(); } });
             _body.Add(next);
-        }
-
-        private void HighlightButtons(bool correct, QuizQuestion q)
-        {
-            // Disable further taps by rebuilding is heavy; instead we just add
-            // the explanation. Buttons stay but are guarded by _answered.
         }
 
         private void ShowResults()

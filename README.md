@@ -19,7 +19,7 @@ DinoSpace blends the two things every kid (and plenty of adults) can't get enoug
 33 dinosaurs and prehistoric creatures, 23 space objects — every entry hand-written and fact-checked against sources like NASA and published paleontology research. Stats, fun facts, behaviour, habitat, era, and full-page write-ups, with search, category filters, bookmarks, and curated ranked collections.
 
 ### 🔭 Scan Sky — point your phone at the sky
-Hold your phone up and the live camera fills the screen, with stars, constellation stick-figures, planets and the moon drawn over the real sky in clean white lines exactly where they are — the page flips into landscape automatically for a natural two-hands grip. Aim the crosshair at anything and a card names it, links into the encyclopedia, and offers **Ask NovaSaur** for whatever's under the crosshair. No camera (or no permission) falls back to a rendered sky, and drag-to-explore works with no sensors at all.
+Hold your phone up and the live camera fills the screen, with the whole naked-eye sky drawn over reality exactly where it is: **1,700 catalogue stars** with their true colours and a gentle twinkle, the **Milky Way's band** brightening toward its real core, constellation stick-figures, planets drawn with their signature looks (Saturn's rings, Jupiter's cloud belts, Mars' polar cap), a **phase-correct moon with its maria**, and the complete **Messier + Caldwell deep-sky catalogues** — 219 nebulae, clusters and galaxies, each with a one-line story. Shooting stars streak away from the radiant whenever a real meteor shower is active. A **time-travel slider** scrubs the sky up to 12 hours either way (bring the sun up, watch tonight's planets rise), and a **sky-darkness toggle** shows the honest star count for a city, suburb or dark-site sky. The page flips into landscape automatically; aim the crosshair at anything and a card names it, links into the encyclopedia, and offers **Ask NovaSaur** for whatever's under the crosshair. No camera falls back to a twilight-aware painted sky, and drag-to-explore works with no sensors at all.
 
 ### 🌙 Sky Tonight
 Open the app and it tells you what's above you *right now*: the moon's phase (drawn with the real terminator curve), moonrise and moonset, which planets are visible and where to look, the constellations overhead, sunset/sunrise, the moment the sky gets *properly* dark, and the next meteor shower with a moonlight forecast. All of it is computed on-device by [SkyScanner](https://github.com/Karthikeya0923/SkyScanner), an astronomy engine verified against NASA JPL's Horizons ephemeris to within a few hundredths of a degree. Location is optional — say no and you still get a general Northern-sky view. A built-in "Learn the sky" page explains every moon phase and how to tell a planet from a star.
@@ -34,7 +34,7 @@ A proper little paint studio: real finger-drag freehand with five brushes (penci
 Quizzes (5 to 100 questions, dinosaurs / space / mixed), Dino Battles with stat-driven verdicts that argue each matchup like a sports column, daily featured creatures, a **Surprise Me** button that pulls a creature or world you haven't met yet, and streak + discovery counters to keep explorers coming back.
 
 ### 🪄 Two layouts, one app
-A whole second look you can switch to instantly, with the same seamless cross-fade the themes use. **Native** is the grown-up editorial style — elegant serif headlines, a flat tab bar, magazine-style lists. **Playful** is a ground-up redesign for 5-to-10-year-olds: rounded Baloo headlines, a home screen of big colourful gradient "worlds" to tap into, chunky buttons, and a bubbly tab bar. Same features, a completely different app. Choose it under Settings → Choose a layout. Five full themes sit alongside, under Choose a theme.
+A whole second look you can switch to instantly, with the same seamless cross-fade the themes use. **Native** is the grown-up editorial style — elegant serif headlines, a flat tab bar, quiet monochrome cards, magazine-style lists. **Playful** is a ground-up redesign for 5-to-10-year-olds in soft storybook pastels — sage, powder blue, blush — with rounded Baloo headlines, a home screen of gentle pastel "worlds" to tap into, chunky buttons, and a bubbly tab bar. Same features, a completely different app. Choose it under Settings → Choose a layout. Six full themes sit alongside under Choose a theme, including **Dino Meadow**, a pale-sage picture-book world made for the Playful layout.
 
 ---
 
@@ -73,8 +73,11 @@ Tracked in detail on the [project board →](https://github.com/users/Karthikeya
 - [x] Sky Tonight — live moon phase, visible planets & constellations, NASA-verified math
 - [x] Learn the Sky — every moon phase and sky-watching basics, explained for kids
 - [x] Custom lists — build and mix your own dino/space collections (your creations included)
-- [x] Scan Sky — camera passthrough with a live white star overlay, automatic landscape, all 88 constellations, target card with Learn More & Ask NovaSaur
-- [x] Streaming AI answers + 70-topic knowledge base, verified by a 160+-question harness
+- [x] Scan Sky — camera passthrough with a live overlay, automatic landscape, all 88 constellations, target card with Learn More & Ask NovaSaur
+- [x] Scan Sky, the full planetarium: 1,700-star catalogue with true colours, the Milky Way band, all 110 Messier + 109 Caldwell objects, textured moon & planets, radiant-aware shooting stars
+- [x] Time-travel slider (±12 h) and a city/suburb/dark-sky darkness toggle in Scan Sky
+- [x] True-north sensor pointing — the overlay tracks the real compass, so the moon is drawn where the moon is
+- [x] Streaming AI answers + 80-topic knowledge base, verified by an 800+-question harness
 - [x] Reset-per-question AI: one question at a time, a clean engine before every answer, no long-session decay, and no topic wall
 - [x] Your Creations — a drawing studio with full stats, its own gallery, custom-list support, and a Dino Battle "Include my creatures" toggle
 - [x] Two switchable layouts — grown-up **Native** and kid-first **Playful** — with a seamless cross-fade
@@ -82,7 +85,8 @@ Tracked in detail on the [project board →](https://github.com/users/Karthikeya
 - [x] Meteor showers on Sky Tonight — active shower, next peak, moonlight forecast
 - [x] Moonrise/moonset and true astronomical-dark times
 - [x] Surprise Me discovery, daily streak & discovery counters
-- [x] Five full themes with wallpapers, switched with a seamless cross-fade
+- [x] Six full themes with wallpapers — including the pastel Dino Meadow — switched with a seamless cross-fade
+- [x] Playful layout in storybook pastels; Native layout kept quiet and editorial
 - [x] True edge-to-edge UI, haptic strength control, adjustable text size
 - [x] In-app AI model manager — download / pause / resume / remove, in the chat and in Settings
 - [x] Drawings always display whole — letterboxed on their canvas colour in the gallery, entries, battles, and thumbnails
