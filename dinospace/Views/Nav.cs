@@ -77,7 +77,7 @@ namespace dinospace.Views
             if (!string.IsNullOrEmpty(title))
                 bar.Add(new Label
                 {
-                    Text = title,
+                    Text = Ui.T(title),
                     FontFamily = Ui.Display,
                     FontSize = 19,
                     TextColor = Theme.TextPrimary,

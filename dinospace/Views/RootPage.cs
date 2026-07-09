@@ -60,15 +60,25 @@ namespace dinospace.Views
         public RootPage()
         {
             Current = this;
-            var home = new HomeView(GoToTab);
-            var search = new SearchView();
-            var saved = new SavedView();
-            var settings = new SettingsView();
 
-            _tabs.Add(("Home", Ui.IconHome, home));
-            _tabs.Add(("Search", Ui.IconSearch, search));
-            _tabs.Add(("Saved", Ui.IconSaved, saved));
-            _tabs.Add(("Settings", Ui.IconSettings, settings));
+            if (AppLayout.Playful)
+            {
+                // The storybook layout's own five destinations, exactly like
+                // its design sheet: home, encyclopedia, battles, collection,
+                // more — all lowercase, all line icons.
+                _tabs.Add(("home", Ui.IconHome, new HomeView(GoToTab)));
+                _tabs.Add(("encyclopedia", Ui.IconBook, new SearchView()));
+                _tabs.Add(("battles", Ui.IconSwords, new BattleView()));
+                _tabs.Add(("collection", Ui.IconSaved, new SavedView()));
+                _tabs.Add(("more", Ui.IconMore, new MoreView()));
+            }
+            else
+            {
+                _tabs.Add(("Home", Ui.IconHome, new HomeView(GoToTab)));
+                _tabs.Add(("Search", Ui.IconSearch, new SearchView()));
+                _tabs.Add(("Saved", Ui.IconSaved, new SavedView()));
+                _tabs.Add(("Settings", Ui.IconSettings, new SettingsView()));
+            }
 
             Build();
             GoToTab(LastTab >= 0 && LastTab < _tabs.Count ? LastTab : 0);
@@ -105,20 +115,18 @@ namespace dinospace.Views
             Content = root;
         }
 
-        // The active-tab bubble backings (Playful only). Native leaves them
-        // transparent so the bar stays flat and editorial.
         private readonly List<Border> _navCells = new();
 
         // ----- tab bar -----
-        // Native: a flat white bar with a thin top rule, small icons + labels.
-        // Playful: a chunkier bar with big icons and a rounded accent bubble
-        // that sits behind whichever tab is selected.
+        // A flat bar in both layouts, exactly like the design sheets: a thin
+        // top rule, small line icons and quiet labels. Playful writes its
+        // labels in lowercase Baloo; Native keeps the editorial sans.
         private View BuildNav()
         {
-            bool playful = AppLayout.BubbleTabs;
-            double iconSize = playful ? 28 : 26;
+            bool playful = AppLayout.Playful;
+            double iconSize = playful ? 24 : 26;
 
-            var grid = new Grid { Padding = new Thickness(playful ? 10 : 6, playful ? 10 : 8, playful ? 10 : 6, playful ? 8 : 6), ColumnSpacing = playful ? 4 : 0 };
+            var grid = new Grid { Padding = new Thickness(6, 8, 6, 6), ColumnSpacing = 0 };
             for (int i = 0; i < _tabs.Count; i++)
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
 
@@ -131,19 +139,18 @@ namespace dinospace.Views
                 {
                     Text = _tabs[i].label,
                     FontFamily = playful ? Ui.Display : Ui.Fonts,
-                    FontSize = playful ? 12 : 11.5,
+                    FontSize = playful ? 11 : 11.5,
                     TextColor = Theme.TextHint,
-                    HorizontalTextAlignment = TextAlignment.Center
+                    HorizontalTextAlignment = TextAlignment.Center,
+                    LineBreakMode = LineBreakMode.NoWrap
                 };
                 _navIcons.Add(icon);
                 _navLabels.Add(label);
 
-                var cell = new VerticalStackLayout { Spacing = playful ? 2 : 3, Padding = new Thickness(0, playful ? 8 : 4) };
+                var cell = new VerticalStackLayout { Spacing = 3, Padding = new Thickness(0, 4) };
                 cell.Add(icon);
                 cell.Add(label);
 
-                // In Playful each tab sits inside a rounded bubble that lights up
-                // when active; in Native the bubble is invisible.
                 var bubble = new Border
                 {
                     Content = cell,
@@ -163,8 +170,7 @@ namespace dinospace.Views
                 BackgroundColor = Theme.BgRaised,
                 Padding = new Thickness(0, 0, 0, _bottomInset),
             };
-            if (!playful)
-                _navBar.Children.Add(new BoxView { HeightRequest = 1, Color = Theme.Hairline });
+            _navBar.Children.Add(new BoxView { HeightRequest = 1, Color = playful ? Theme.HairlineSoft : Theme.Hairline });
             _navBar.Children.Add(grid);
             return _navBar;
         }
@@ -187,31 +193,21 @@ namespace dinospace.Views
 
         private void SyncNav()
         {
-            bool playful = AppLayout.BubbleTabs;
+            // Playful marks the active tab in its deep-olive ink (the bar
+            // stays flat, like the design sheet); Native tints it with the
+            // theme accent.
+            bool playful = AppLayout.Playful;
             for (int i = 0; i < _tabs.Count; i++)
             {
                 bool on = i == _current;
-                string icon = on && i == 2 ? Ui.IconSavedFill : _tabs[i].icon;
+                string icon = on && _tabs[i].icon == Ui.IconSaved ? Ui.IconSavedFill : _tabs[i].icon;
+                Color active = playful ? Theme.TextPrimary : Theme.Accent;
 
-                if (playful)
-                {
-                    // Each active tab lights up in its own bright colour with a
-                    // solid rounded bubble — cheerful and easy for a kid to read.
-                    Color tabHue = PlayfulKit.Tab(i);
-                    Ui.SetIcon(_navIcons[i], icon, on ? Colors.White : Theme.TextHint);
-                    _navLabels[i].TextColor = on ? Colors.White : Theme.TextHint;
-                    _navLabels[i].FontAttributes = FontAttributes.Bold;
-                    if (i < _navCells.Count)
-                        _navCells[i].BackgroundColor = on ? tabHue : Colors.Transparent;
-                }
-                else
-                {
-                    Ui.SetIcon(_navIcons[i], icon, on ? Theme.Accent : Theme.TextHint);
-                    _navLabels[i].TextColor = on ? Theme.Accent : Theme.TextHint;
-                    _navLabels[i].FontAttributes = on ? FontAttributes.Bold : FontAttributes.None;
-                    if (i < _navCells.Count)
-                        _navCells[i].BackgroundColor = Colors.Transparent;
-                }
+                Ui.SetIcon(_navIcons[i], icon, on ? active : Theme.TextHint);
+                _navLabels[i].TextColor = on ? active : Theme.TextHint;
+                _navLabels[i].FontAttributes = on ? FontAttributes.Bold : FontAttributes.None;
+                if (i < _navCells.Count)
+                    _navCells[i].BackgroundColor = Colors.Transparent;
             }
         }
 

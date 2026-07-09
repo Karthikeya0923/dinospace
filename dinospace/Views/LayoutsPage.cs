@@ -171,9 +171,11 @@ namespace dinospace.Views
 
             AppSettings.LayoutId = id;
             AppLayout.ApplyCurrent();
+            Theme.ApplyCurrent();     // Playful locks to its storybook look
             NovaPage.ResetShared();
 
-            RootPage.LastTab = 3;
+            // Native's Settings tab is index 3; Playful's "more" tab is 4.
+            RootPage.LastTab = AppLayout.Playful ? 4 : 3;
             RootPage.HoldThemeCoverOnce = true;
             var window = Application.Current?.Windows.FirstOrDefault();
             if (window != null) window.Page = new AppShell();

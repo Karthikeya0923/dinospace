@@ -8,10 +8,22 @@ using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
+    // Hosts the battle as a pushed page (from detail pages and the Native
+    // layout); the Playful layout embeds the same BattleView as its own tab.
+    public class BattlePage : ContentPage
+    {
+        public BattlePage(Dinosaur? preselect)
+        {
+            var content = Nav.DetailScaffoldFixed("", new BattleView(preselect));
+            Content = Ui.PageRoot(content);
+            SwipeBack.Attach(this);
+        }
+    }
+
     // Dino Battle: pick two creatures (via a searchable list) and reveal a
     // winner from a composite of size, weight, bite force, and speed. Filled
     // slots are just images; use Reset to choose again.
-    public class BattlePage : ContentPage
+    public class BattleView : ContentView, ITabView
     {
         private Dinosaur? _a;
         private Dinosaur? _b;
@@ -21,7 +33,7 @@ namespace dinospace.Views
         private VerticalStackLayout _resultArea = null!;
         private bool _includeMine;
 
-        public BattlePage(Dinosaur? preselect)
+        public BattleView(Dinosaur? preselect = null)
         {
             _a = preselect;
             // If you launched the battle from one of your own creations, that
@@ -30,10 +42,12 @@ namespace dinospace.Views
             Build();
         }
 
+        public void OnSelected() { }
+
         private void Build()
         {
             var stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(16, 4, 16, 24) };
-            stack.Add(new Label { Text = "Dino Battle", FontFamily = Ui.Display, FontSize = Ui.S(26), TextColor = Theme.TextPrimary });
+            stack.Add(new Label { Text = Ui.T("Dino Battle"), FontFamily = Ui.Display, FontSize = Ui.S(26), TextColor = Theme.TextPrimary });
             stack.Add(new Label { Text = "Choose two creatures and see who would come out on top.", FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), TextColor = Theme.TextSecondary });
 
             _arena = new Grid { ColumnSpacing = 10, Margin = new Thickness(0, 6) };
@@ -69,10 +83,8 @@ namespace dinospace.Views
             _resultArea = new VerticalStackLayout { Spacing = 12 };
             stack.Add(_resultArea);
 
-            var content = Nav.DetailScaffoldFixed("", new ScrollView { Content = stack });
-            Content = Ui.PageRoot(content);
+            Content = new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
             RefreshArena();
-            SwipeBack.Attach(this);
         }
 
         // A tappable checkbox row: "Include my creatures". When on, the picker

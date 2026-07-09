@@ -25,7 +25,7 @@ namespace dinospace.Views
 
             stack.Add(new Label
             {
-                Text = "Settings",
+                Text = Ui.T("Settings"),
                 FontFamily = Ui.Display,
                 FontSize = Ui.S(28),
                 TextColor = Theme.TextPrimary,

@@ -32,13 +32,28 @@ namespace dinospace.Views
         {
             var stack = new VerticalStackLayout { Spacing = 12, Padding = new Thickness(18, 4, 18, 28) };
 
-            stack.Add(new Label { Text = "App themes", FontFamily = Ui.Display, FontSize = Ui.S(30), TextColor = Theme.TextPrimary });
+            stack.Add(new Label { Text = Ui.T("App themes"), FontFamily = Ui.Display, FontSize = Ui.S(30), TextColor = Theme.TextPrimary });
             stack.Add(new Label
             {
                 Text = "Pick a look for every page of DinoSpace — wallpaper, colours, the lot.",
                 FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), LineHeight = 1.4, TextColor = Theme.TextSecondary,
                 Margin = new Thickness(0, 0, 0, 6)
             });
+
+            // The Playful layout always wears its own storybook page — theme
+            // picks are saved here and come back when the layout is Native.
+            if (AppLayout.Playful)
+                stack.Add(new Border
+                {
+                    Content = new Label
+                    {
+                        Text = "the playful layout keeps its storybook look. these themes dress the native layout.",
+                        FontFamily = Ui.Fonts, FontSize = Ui.S(13), LineHeight = 1.4, TextColor = Theme.ChipText
+                    },
+                    BackgroundColor = Theme.AccentSoft, Stroke = Colors.Transparent,
+                    StrokeShape = new RoundRectangle { CornerRadius = 14 },
+                    Padding = new Thickness(14, 10), Margin = new Thickness(0, 0, 0, 6)
+                });
 
             foreach (var spec in Theme.Wallpapers)
                 stack.Add(WallpaperCard(spec));

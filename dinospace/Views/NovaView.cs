@@ -159,10 +159,10 @@ namespace dinospace.Views
                 Content = new Label { Text = "🦕", FontSize = AppLayout.Playful ? 24 : 20, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
             };
             var title = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
-            title.Add(new Label { Text = "NovaSaur", FontFamily = Ui.Display, FontSize = AppLayout.Playful ? 21 : 19, TextColor = Theme.TextPrimary });
-            title.Add(new Label { Text = "Your dino & space buddy", FontFamily = Ui.Fonts, FontSize = 11.5, TextColor = Theme.TextSecondary });
+            title.Add(new Label { Text = AppLayout.Playful ? "ask dino" : "NovaSaur", FontFamily = Ui.Display, FontSize = AppLayout.Playful ? 21 : 19, TextColor = Theme.TextPrimary });
+            title.Add(new Label { Text = Ui.T("Your dino & space buddy"), FontFamily = Ui.Fonts, FontSize = 11.5, TextColor = Theme.TextSecondary });
 
-            var clear = new Label { Text = "Clear", FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.Center };
+            var clear = new Label { Text = Ui.T("Clear"), FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.Center };
             Ui.OnTap(clear, (_, _) => ClearChat());
 
             var grid = new Grid { Padding = new Thickness(10, 14, 16, 8), ColumnSpacing = 10 };
@@ -176,7 +176,7 @@ namespace dinospace.Views
 
         private Grid BuildInput()
         {
-            _entry = new Entry { Placeholder = "Ask me anything…", BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Send };
+            _entry = new Entry { Placeholder = Ui.T("Ask me anything…"), BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Send };
             _entry.Completed += (_, _) => OnSend();
             var entryWrap = new Border
             {

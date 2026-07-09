@@ -54,13 +54,21 @@ namespace dinospace.Views
         {
             var header = new VerticalStackLayout { Spacing = 14, Padding = new Thickness(18, 16, 18, 8) };
 
-            header.Add(new Label
-            {
-                Text = "Every creature and cosmos,\nall right here.",
-                FontFamily = Ui.Display, FontSize = Ui.S(26), LineHeight = 1.12, TextColor = Theme.TextSecondary
-            });
+            if (AppLayout.Playful)
+                header.Add(new Label
+                {
+                    Text = "encyclopedia",
+                    FontFamily = Ui.Display, FontSize = Ui.S(24), TextColor = Theme.TextPrimary,
+                    HorizontalOptions = LayoutOptions.Center, Margin = new Thickness(0, 2, 0, 0)
+                });
+            else
+                header.Add(new Label
+                {
+                    Text = "Every creature and cosmos,\nall right here.",
+                    FontFamily = Ui.Display, FontSize = Ui.S(26), LineHeight = 1.12, TextColor = Theme.TextSecondary
+                });
 
-            _entry = new Entry { Placeholder = "Search dinosaurs, planets, stars…", BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Search };
+            _entry = new Entry { Placeholder = Ui.T("Search dinosaurs, planets, stars…"), BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Search };
             _entry.TextChanged += (_, e) => { _query = e.NewTextValue ?? ""; Refresh(); };
             var glass = Ui.Icon(Ui.IconSearch, 22, Theme.TextHint);
             glass.VerticalOptions = LayoutOptions.Center;
@@ -76,9 +84,9 @@ namespace dinospace.Views
             });
 
             _segments = new HorizontalStackLayout { Spacing = AppLayout.Playful ? 8 : 22 };
-            _segments.Add(SegItem("All", 0));
-            _segments.Add(SegItem("Dinosaurs", 1));
-            _segments.Add(SegItem("Space", 2));
+            _segments.Add(SegItem(Ui.T("All"), 0));
+            _segments.Add(SegItem(Ui.T("Dinosaurs"), 1));
+            _segments.Add(SegItem(Ui.T("Space"), 2));
             header.Add(_segments);
 
             _count = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint };
@@ -147,8 +155,8 @@ namespace dinospace.Views
                     bool on = t.Item3 == _segment;
                     if (t.Item4) // playful pill
                     {
-                        ((Border)t.Item2).BackgroundColor = on ? PlayfulKit.Tab(1) : Theme.ChipBg;
-                        t.Item1.TextColor = on ? Colors.White : Theme.ChipText;
+                        ((Border)t.Item2).BackgroundColor = on ? Theme.Accent : Theme.ChipBg;
+                        t.Item1.TextColor = on ? Theme.TextOnAccent : Theme.ChipText;
                     }
                     else
                     {

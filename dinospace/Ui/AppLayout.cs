@@ -45,9 +45,5 @@ namespace dinospace
         // Playful: chunky title + accent underline headers.
         // Native: tight ALL-CAPS with a hairline rule — plain and grown-up.
         public static bool FriendlyHeaders => Playful;
-
-        // The rounded colour bubble behind the active tab is a Playful thing;
-        // Native keeps a flat bar where only the tint marks the selection.
-        public static bool BubbleTabs => Playful;
     }
 }

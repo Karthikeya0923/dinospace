@@ -137,32 +137,32 @@ namespace dinospace
             ShadowAlpha = 0f
         };
 
-        // theme6 — "Dino Meadow": the storybook pastel look. Pale sage fields,
-        // cream cards, deep-moss ink — the palette of a picture-book meadow
-        // where the little dinosaurs live. Made for the Playful layout but
-        // lovely in Native too.
-        private static readonly Palette MeadowP = new()
+        // The Playful layout's one and only look: the storybook page. Warm
+        // cream paper scattered with little stars (playfultheme.png), soft
+        // sage cards with a fine olive outline, deep-olive ink. The Playful
+        // layout is locked to this — picking themes is a Native thing.
+        private static readonly Palette PlayfulP = new()
         {
-            Bg = Color.FromArgb("#E4EEDF"),
-            BgRaised = Color.FromArgb("#F7FAF2"),
-            Surface = Color.FromArgb("#FCFDF8"),
-            SurfaceAlt = Color.FromArgb("#DCE9D3"),
-            SurfaceSunken = Color.FromArgb("#DAE6D2"),
-            Hairline = Color.FromArgb("#C4D8BA"),
-            HairlineSoft = Color.FromArgb("#D4E2CB"),
-            TextPrimary = Color.FromArgb("#37462F"),
-            TextSecondary = Color.FromArgb("#65785C"),
-            TextHint = Color.FromArgb("#8FA385"),
-            TextOnAccent = Color.FromArgb("#FBFDF7"),
-            Accent = Color.FromArgb("#5E8C5E"),
-            AccentSoft = Color.FromArgb("#DCEBD5"),
-            Success = Color.FromArgb("#2E7D32"),
+            Bg = Color.FromArgb("#EEF1E2"),
+            BgRaised = Color.FromArgb("#F5F7EA"),
+            Surface = Color.FromArgb("#FAFBF1"),
+            SurfaceAlt = Color.FromArgb("#E2E9D0"),
+            SurfaceSunken = Color.FromArgb("#E6EBD7"),
+            Hairline = Color.FromArgb("#B9C4A4"),
+            HairlineSoft = Color.FromArgb("#D3DCBF"),
+            TextPrimary = Color.FromArgb("#48523C"),
+            TextSecondary = Color.FromArgb("#75806A"),
+            TextHint = Color.FromArgb("#97A288"),
+            TextOnAccent = Color.FromArgb("#FBFDF4"),
+            Accent = Color.FromArgb("#6B8A5E"),
+            AccentSoft = Color.FromArgb("#DFE8CD"),
+            Success = Color.FromArgb("#4C8A4F"),
             Danger = Color.FromArgb("#C05B4D"),
-            ChipBg = Color.FromArgb("#DCE9D3"),
-            ChipText = Color.FromArgb("#4C6045"),
-            ImgPlaceholder = Color.FromArgb("#DFEAD6"),
-            CardStroke = Colors.Transparent,
-            ShadowAlpha = 0.10f
+            ChipBg = Color.FromArgb("#E2E9D0"),
+            ChipText = Color.FromArgb("#55614A"),
+            ImgPlaceholder = Color.FromArgb("#E5EBD6"),
+            CardStroke = Color.FromArgb("#C2CCAD"),
+            ShadowAlpha = 0.07f
         };
 
         private static readonly Palette FossilP = new()
@@ -189,8 +189,8 @@ namespace dinospace
             ShadowAlpha = 0.14f
         };
 
-        // Every look the app offers, in display order. Fossil is the default;
-        // theme5 is the app's own painted artwork.
+        // Every look the Native layout offers, in display order. Fossil is
+        // the default; theme5 is the app's own painted artwork.
         public static readonly IReadOnlyList<Spec> Wallpapers = new List<Spec>
         {
             new() { Id = "theme1", Name = "Fossil", Blurb = "Warm parchment, light and easy to read", Wallpaper = "theme1.png", Dark = false, P = FossilP },
@@ -198,7 +198,6 @@ namespace dinospace
             new() { Id = "theme3", Name = "Starry Midnight", Blurb = "A calm, star-filled deep blue", Wallpaper = "theme3.png", Dark = true, P = MidnightP },
             new() { Id = "theme4", Name = "Nebula", Blurb = "Soft violet clouds where stars are born", Wallpaper = "theme4.png", Dark = true, P = NebulaP },
             new() { Id = "theme5", Name = "DinoSpace", Blurb = "The app's own painted twilight, dinosaurs and all", Wallpaper = "theme5.png", Dark = true, P = DinoP },
-            new() { Id = "theme6", Name = "Dino Meadow", Blurb = "Soft pastel sage where the little dinos live", Wallpaper = "theme6.png", Dark = false, P = MeadowP },
         };
 
         private static Palette _p = FossilP;
@@ -207,15 +206,27 @@ namespace dinospace
         public static string? Wallpaper { get; private set; }
 
         // Applies whatever the user last chose. Ids from older builds (the
-        // "classic" pair and the retired ember/aurora slots) map onto the
-        // closest current look.
+        // "classic" pair and the retired meadow/ember/aurora slots) map onto
+        // the closest current look.
         public static void ApplyCurrent()
         {
+            // The Playful layout is locked to its storybook page: the starred
+            // cream wallpaper and the sage palette, always. Theme choices are
+            // remembered and come back when the layout returns to Native.
+            if (Services.AppSettings.LayoutId == "playful")
+            {
+                CurrentId = "playful";
+                Wallpaper = "playfultheme.png";
+                SetPalette(PlayfulP, dark: false);
+                return;
+            }
+
             string id = Services.AppSettings.ThemeId;
             id = id switch
             {
                 "classic" => Services.AppSettings.DarkMode ? "theme2" : "theme1",
                 "theme7" => "theme5",   // old dinospace slot
+                "theme6" => "theme1",   // retired meadow slot
                 _ => id,
             };
 
@@ -271,6 +282,7 @@ namespace dinospace
             "theme5" => Bg.WithAlpha(0.72f),   // hand-painted art: calm it right down
             "theme4" => Bg.WithAlpha(0.45f),
             "theme3" => Bg.WithAlpha(0.38f),
+            "playful" => Bg.WithAlpha(0.06f),  // the starred paper IS the design
             _ => Bg.WithAlpha(0.30f),
         };
 

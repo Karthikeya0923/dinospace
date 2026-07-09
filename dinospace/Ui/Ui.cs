@@ -36,9 +36,20 @@ namespace dinospace
         public const string IconBrush = "brush";
         public const string IconSend = "send";
         public const string IconStop = "stop";
+        public const string IconBook = "book";
+        public const string IconSwords = "swords";
+        public const string IconCollection = "collection";
+        public const string IconMore = "more";
+        public const string IconTelescope = "telescope";
+        public const string IconPencil = "pencil";
 
         public static double Scale => AppSettings.FontScale;
         public static double S(double size) => size * Scale;
+
+        // Display-case for labels: the Playful layout writes everything in
+        // friendly lowercase (like its storybook wordmark); Native keeps the
+        // text exactly as authored.
+        public static string T(string text) => AppLayout.Playful ? text.ToLowerInvariant() : text;
 
         // ---------- type ----------
 
@@ -118,6 +129,12 @@ namespace dinospace
             "brush" => "M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z",
             "send" => "M2.01 21L23 12 2.01 3 2 10l15 2-15 2z",
             "stop" => "M6 6h12v12H6z",
+            "book" => "M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z",
+            "swords" => "M3 4.2 4.2 3 20 18.8 18.8 20 Z M19.8 3 21 4.2 5.2 20 4 18.8 Z M15.9 20.1 20.1 15.9 21.3 17.1 17.1 21.3 Z M2.7 17.1 3.9 15.9 8.1 20.1 6.9 21.3 Z",
+            "collection" => "M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2zm-5 12H9v-2h6v2zm5-7H4V4h16v3z",
+            "more" => "M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z",
+            "telescope" => "M2.2 11.2 15.1 4.1c.5-.3 1.1-.1 1.4.4l1.5 2.7c.3.5.1 1.1-.4 1.4L4.7 15.7c-.5.3-1.1.1-1.4-.4l-1.5-2.7c-.3-.5-.1-1.1.4-1.4z M18.6 4.7l1.9-1c.4-.2.9-.1 1.1.3l1.1 2c.2.4.1.9-.3 1.1l-1.9 1c-.4.2-.9.1-1.1-.3l-1.1-2c-.2-.4 0-.9.3-1.1z M11.1 14.6l1.9-1 .9 1.6-4.6 6.6c-.2.3-.6.4-.9.2l-.5-.3c-.3-.2-.4-.6-.2-.9l3.4-6.2z M13.6 15.9l1.4-.8 3.6 6.1c.2.3.1.7-.2.9l-.5.3c-.3.2-.7.1-.9-.2l-3.4-6.3z",
+            "pencil" => "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z",
             _ => "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z",
         };
 
@@ -167,7 +184,7 @@ namespace dinospace
         {
             var head = new Label
             {
-                Text = title,
+                Text = T(title),
                 FontFamily = Display,
                 FontSize = S(20),
                 TextColor = Theme.TextPrimary,

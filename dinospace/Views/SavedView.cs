@@ -17,14 +17,22 @@ namespace dinospace.Views
         {
             var stack = new VerticalStackLayout { Spacing = 14, Padding = new Thickness(18, 16, 18, 8) };
 
-            stack.Add(new Label
-            {
-                Text = "Your favourites are\nall right here.",
-                FontFamily = Ui.Display,
-                FontSize = Ui.S(26),
-                LineHeight = 1.12,
-                TextColor = Theme.TextSecondary
-            });
+            if (AppLayout.Playful)
+                stack.Add(new Label
+                {
+                    Text = "saved",
+                    FontFamily = Ui.Display, FontSize = Ui.S(24), TextColor = Theme.TextPrimary,
+                    HorizontalOptions = LayoutOptions.Center, Margin = new Thickness(0, 2, 0, 0)
+                });
+            else
+                stack.Add(new Label
+                {
+                    Text = "Your favourites are\nall right here.",
+                    FontFamily = Ui.Display,
+                    FontSize = Ui.S(26),
+                    LineHeight = 1.12,
+                    TextColor = Theme.TextSecondary
+                });
 
             _list = new VerticalStackLayout { Spacing = 0, Padding = new Thickness(18, 4, 18, 20) };
 
