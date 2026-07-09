@@ -25,6 +25,11 @@ namespace dinospace.Services
         // (altitude deg, azimuth-from-true-north deg), sensor rate.
         public event Action<double, double>? Reading;
 
+        // True while the magnetometer reports poor calibration. A drifting or
+        // plain wrong heading is almost always this — the fix is waving the
+        // phone in a figure-8, so the page shows that hint while it's true.
+        public bool NeedsCalibration { get; private set; }
+
 #if ANDROID
         private SensorManager? _sm;
         private Sensor? _sensor;
@@ -52,7 +57,8 @@ namespace dinospace.Services
             try { _sm?.UnregisterListener(this); } catch { }
         }
 
-        public void OnAccuracyChanged(Sensor? sensor, [GeneratedEnum] SensorStatus accuracy) { }
+        public void OnAccuracyChanged(Sensor? sensor, [GeneratedEnum] SensorStatus accuracy)
+            => NeedsCalibration = accuracy is SensorStatus.Unreliable or SensorStatus.AccuracyLow;
 
         public void OnSensorChanged(SensorEvent? e)
         {

@@ -40,14 +40,6 @@ namespace dinospace.Services
             set => Preferences.Set("set_layout", value);
         }
 
-        // How dark the user's real sky is, for Scan Sky's star count:
-        // 0 = City (bright), 1 = Suburbs (default), 2 = Dark sky site.
-        public static int SkyDarkness
-        {
-            get => Preferences.Get("set_skydarkness", 1);
-            set => Preferences.Set("set_skydarkness", value);
-        }
-
         // 0 = Small, 1 = Default, 2 = Large, 3 = Extra large.
         public static int TextSizeIndex
         {

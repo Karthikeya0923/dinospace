@@ -17,13 +17,12 @@ namespace dinospace.Views
     // 1,700 catalogue stars, the Milky Way band, constellation figures, the
     // full Messier + Caldwell deep-sky catalogues, planets with their real
     // looks, a phase-correct moon, and shooting stars that follow tonight's
-    // active meteor shower. A target card names whatever's under the
-    // crosshair; a time slider scrubs the sky up to 12 hours either way; a
-    // sky-darkness toggle shows the honest star count for city, suburb or
-    // dark-site skies. No camera? A painted twilight-aware sky stands in.
+    // active meteor shower. A target card at the top names whatever's under
+    // the crosshair; a time slider scrubs the sky up to 12 hours either way.
+    // No camera? A painted twilight-aware sky stands in.
     public class SkyViewPage : ContentPage
     {
-        private readonly double _lat, _lon;
+        private double _lat, _lon;
         private readonly SkyViewDrawable _drawable;
         private GraphicsView _view = null!;
         private CameraView? _camera;
@@ -32,7 +31,7 @@ namespace dinospace.Views
         // chrome
         private Label _targetName = null!, _targetKind = null!, _targetBlurb = null!;
         private Border _targetCard = null!, _learnBtn = null!, _askBtn = null!;
-        private Label _hint = null!, _timeLabel = null!, _darknessLabel = null!;
+        private Label _hint = null!, _timeLabel = null!;
         private Slider _timeSlider = null!;
         private GraphicsView _compass = null!;
         private readonly CompassRoseDrawable _rose = new();
@@ -53,7 +52,12 @@ namespace dinospace.Views
             var where = SkyService.Cached;
             _lat = where.Lat; _lon = where.Lon;
             _drawable = new SkyViewDrawable { Lat = _lat, Lon = _lon };
-            ApplyDarkness(Services.AppSettings.SkyDarkness);
+            // Always the full dark-site sky: every catalogue star, the Milky
+            // Way, all the deep-sky objects. The old city/suburb/dark toggle
+            // only ever hid stars and confused people.
+            _drawable.LimitMag = 5.6f;
+            _drawable.DsoLimitMag = 8.2f;
+            _drawable.MilkyWayStrength = 0.85f;
             Build();
         }
 
@@ -91,36 +95,11 @@ namespace dinospace.Views
                 HorizontalOptions = LayoutOptions.Start, VerticalOptions = LayoutOptions.Center
             };
 
-            // Sky-darkness chip: how many stars your real sky lets through.
-            _darknessLabel = new Label
-            {
-                FontFamily = Ui.Fonts, FontSize = Ui.S(12), FontAttributes = FontAttributes.Bold,
-                TextColor = Colors.White, VerticalOptions = LayoutOptions.Center
-            };
-            var darknessChip = new Border
-            {
-                Content = _darknessLabel,
-                BackgroundColor = Color.FromArgb("#4D000000"),
-                Stroke = Color.FromArgb("#33FFFFFF"), StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 16 },
-                Padding = new Thickness(12, 7),
-                VerticalOptions = LayoutOptions.Center, HorizontalOptions = LayoutOptions.End
-            };
-            Ui.OnTap(darknessChip, (_, _) =>
-            {
-                int next = (Services.AppSettings.SkyDarkness + 1) % 3;
-                Services.AppSettings.SkyDarkness = next;
-                ApplyDarkness(next);
-            });
-            Ui.Describe(darknessChip, "Switch sky darkness: city, suburbs or dark sky");
-
             var topBar = new Grid { Padding = new Thickness(14, 14, 14, 0), ColumnSpacing = 10, VerticalOptions = LayoutOptions.Start };
             topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            topBar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             topBar.Add(close, 0, 0);
             topBar.Add(title, 1, 0);
-            topBar.Add(darknessChip, 2, 0);
 
             // ----- target card (top-right, under the bar) -----
             _targetName = new Label { FontFamily = Ui.Display, FontSize = Ui.S(19), TextColor = Colors.White };
@@ -164,6 +143,9 @@ namespace dinospace.Views
             });
             Ui.Describe(_askBtn, "Ask NovaSaur about this object");
 
+            // The card sits front and centre at the top of the screen, right
+            // under the title bar, so what you're aiming at is always the
+            // first thing you read.
             var targetBtns = new HorizontalStackLayout { Spacing = 8, Children = { _learnBtn, _askBtn } };
             var targetCol = new VerticalStackLayout { Spacing = 3, Children = { _targetName, _targetKind, _targetBlurb, targetBtns } };
             _targetCard = new Border
@@ -173,9 +155,9 @@ namespace dinospace.Views
                 Stroke = Color.FromArgb("#443C5C80"), StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 16 },
                 Padding = new Thickness(14, 12),
-                MaximumWidthRequest = 250,
-                HorizontalOptions = LayoutOptions.End, VerticalOptions = LayoutOptions.Start,
-                Margin = new Thickness(0, 68, 14, 0),
+                MaximumWidthRequest = 320,
+                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Start,
+                Margin = new Thickness(14, 64, 14, 0),
                 IsVisible = false
             };
 
@@ -276,20 +258,6 @@ namespace dinospace.Views
             Shell.SetNavBarIsVisible(this, false);
         }
 
-        private void ApplyDarkness(int level)
-        {
-            // Honest simulation: a city sky really does hide all but ~400
-            // stars; a dark site shows every one of the catalogue's 1,700+.
-            (_drawable.LimitMag, _drawable.DsoLimitMag, _drawable.MilkyWayStrength) = level switch
-            {
-                0 => (4.2f, 4.6f, 0f),      // city
-                2 => (5.6f, 8.2f, 0.85f),   // dark site
-                _ => (5.05f, 6.6f, 0.4f),   // suburbs
-            };
-            if (_darknessLabel != null)
-                _darknessLabel.Text = level switch { 0 => "City sky", 2 => "Dark sky", _ => "Suburb sky" };
-        }
-
         private static Border ChromeButton(View inner) => new()
         {
             Content = inner,
@@ -304,6 +272,13 @@ namespace dinospace.Views
             base.OnAppearing();
             SetLandscape(true);
             StartSensor();
+
+            // The sky HAS to be computed for where the phone really is. The
+            // cached fallback (latitude 45°, longitude guessed from the time
+            // zone) can be thousands of kilometres off — far enough to put
+            // the moon on the wrong side of the sky and name the wrong star
+            // under the crosshair. Ask once, then re-anchor everything.
+            _ = RefreshLocationAsync();
 
             // The timer gets exactly one Tick handler for the page's lifetime.
             // OnAppearing runs again every time a pushed page (Learn More) pops
@@ -321,6 +296,13 @@ namespace dinospace.Views
                     _view.Invalidate();          // continuous: twinkle + meteors
                     _compass.Invalidate();
                     if (++_tick % 6 == 0) UpdateTarget();   // naming can be lazier
+
+                    // A drifting or offset overlay is nearly always a compass
+                    // that wants calibrating — tell the user how to fix it.
+                    if (_tick % 20 == 0 && _sensorMode)
+                        _hint.Text = _pointing?.NeedsCalibration == true
+                            ? "Compass needs calibrating — wave your phone in a big figure-8"
+                            : "Point your phone at the sky — names appear as you aim";
                 };
             }
             _timer.Start();
@@ -341,6 +323,21 @@ namespace dinospace.Views
             StopSensor();
             StopCamera();
             SetLandscape(false);
+        }
+
+        private bool _locationTried;
+        private async System.Threading.Tasks.Task RefreshLocationAsync()
+        {
+            if (_locationTried) return;
+            _locationTried = true;
+            var loc = await SkyService.RequestDeviceLocationAsync();
+            if (loc == null) return;
+            if (Math.Abs(loc.Lat - _lat) < 0.05 && Math.Abs(loc.Lon - _lon) < 0.05) return;
+            _lat = loc.Lat; _lon = loc.Lon;
+            _drawable.Lat = _lat; _drawable.Lon = _lon;
+            // Magnetic declination depends on where you are — restart the
+            // pointing sensor so azimuths are true-north for the new spot.
+            if (_sensorMode) { StopSensor(); StartSensor(); }
         }
 
         // Scanning the sky is a two-hands, phone-up activity — landscape gives
@@ -508,66 +505,74 @@ namespace dinospace.Views
 
             string? name = null, kind = null, blurb = null;
             SpaceObject? entry = null;
-            double best = 8;
+
+            // Candidates compete on angular distance minus a priority bonus:
+            // the moon and planets are what people actually point phones at,
+            // so they win unless something else is clearly closer. Anonymous
+            // faint stars used to claim an 8° radius each, which made half
+            // the sky read "A distant sun" — now they only speak up when the
+            // crosshair is basically on top of one.
+            double bestScore = double.MaxValue;
+            void Consider(double sep, double maxSep, double bonus, string n, string k, string? b, SpaceObject? e)
+            {
+                if (sep > maxSep) return;
+                double score = sep - bonus;
+                if (score >= bestScore) return;
+                bestScore = score;
+                name = n; kind = k; blurb = b; entry = e;
+            }
+
+            // the moon — by far the most prominent thing in the night sky
+            var (mra, mdec) = SkyCalc.MoonRaDec(jd);
+            var (mAlt, mAz) = SkyCalc.AltAz(mra, mdec, _lat, _lon, utc);
+            if (mAlt > -5)
+            {
+                var e = SpaceData.ByName("Moon");
+                Consider(SkyMap.Separation(mAlt, mAz, _alt, _az), 8, 3.0,
+                         "Moon", "Earth's moon", e?.ShortDescription, e);
+            }
 
             // planets
             foreach (var b in Enum.GetValues<SkyCalc.Body>())
             {
                 var (ra, dec, _) = SkyCalc.PlanetRaDec(b, jd);
                 var (alt, az) = SkyCalc.AltAz(ra, dec, _lat, _lon, utc);
-                double sep = SkyMap.Separation(alt, az, _alt, _az);
-                if (alt > -5 && sep < best)
-                {
-                    best = sep; name = b.ToString(); kind = "Planet";
-                    entry = SpaceData.ByName(name);
-                    blurb = entry?.ShortDescription;
-                }
-            }
-
-            // the moon
-            var (mra, mdec) = SkyCalc.MoonRaDec(jd);
-            var (mAlt, mAz) = SkyCalc.AltAz(mra, mdec, _lat, _lon, utc);
-            if (mAlt > -5 && SkyMap.Separation(mAlt, mAz, _alt, _az) < best)
-            {
-                best = SkyMap.Separation(mAlt, mAz, _alt, _az);
-                name = "Moon"; kind = "Earth's moon";
-                entry = SpaceData.ByName("Moon"); blurb = entry?.ShortDescription;
+                if (alt <= -5) continue;
+                var e = SpaceData.ByName(b.ToString());
+                Consider(SkyMap.Separation(alt, az, _alt, _az), 6, 1.5,
+                         b.ToString(), "Planet", e?.ShortDescription, e);
             }
 
             // the sun (matters when the time slider drags the view into day)
             var (sra, sdec) = SkyCalc.SunRaDec(jd);
             var (sAlt, sAz) = SkyCalc.AltAz(sra, sdec, _lat, _lon, utc);
-            if (sAlt > -2 && SkyMap.Separation(sAlt, sAz, _alt, _az) < best)
+            if (sAlt > -2)
             {
-                best = SkyMap.Separation(sAlt, sAz, _alt, _az);
-                name = "Sun"; kind = "Our star";
-                entry = SpaceData.ByName("Sun"); blurb = entry?.ShortDescription;
+                var e = SpaceData.ByName("Sun");
+                Consider(SkyMap.Separation(sAlt, sAz, _alt, _az), 8, 3.0,
+                         "Sun", "Our star", e?.ShortDescription, e);
             }
 
-            // catalogue stars: named ones any brightness, anonymous to mag 4
+            // catalogue stars: named ones within 3°, anonymous only when the
+            // crosshair is right on them (1.2°) and they're reasonably bright
             var stars = SkyCatalog.Stars;
             var sv = SkyMap.StarVectors;
-            double bestStarScore = double.MaxValue;
             for (int i = 0; i < stars.Length; i++)
             {
                 var s = stars[i];
-                if (s.Mag > 4.6 && s.Name.Length == 0) continue;
                 if (s.Mag > _drawable.LimitMag) break;      // sorted by brightness
+                bool named = s.Name.Length > 0;
+                if (!named && s.Mag > 4.0) continue;
                 var (n, e, u) = frame.Horizon(sv[i * 3], sv[i * 3 + 1], sv[i * 3 + 2]);
                 if (u < -0.09) continue;
                 double sep = SepTo(n, e, u);
-                if (sep > best) continue;
-                double score = sep + s.Mag * 0.3;
-                if (score < bestStarScore)
-                {
-                    bestStarScore = score; best = Math.Min(best, sep + 0.001);
-                    name = s.Name.Length > 0 ? s.Name : "A distant sun";
-                    kind = $"Star · {s.Colour()}";
-                    blurb = s.Name.Length > 0
-                        ? $"Magnitude {s.Mag:0.0#} — one of the stars bright enough to carry a name."
-                        : $"Magnitude {s.Mag:0.0#} — a sun many light-years away.";
-                    entry = null;
-                }
+                Consider(sep, named ? 3.0 : 1.2, named ? -s.Mag * 0.15 : -0.6,
+                         named ? s.Name : "A distant sun",
+                         $"Star · {s.Colour()}",
+                         named
+                             ? $"Magnitude {s.Mag:0.0#} — one of the stars bright enough to carry a name."
+                             : $"Magnitude {s.Mag:0.0#} — a sun many light-years away.",
+                         null);
             }
 
             // deep sky: the full Messier + Caldwell catalogues
@@ -580,14 +585,8 @@ namespace dinospace.Views
                 if (d.Mag >= 90 && _drawable.DsoLimitMag < 7) continue;   // dark nebulae need dark skies
                 var (n, e, u) = frame.Horizon(dv[i * 3], dv[i * 3 + 1], dv[i * 3 + 2]);
                 if (u < 0.03) continue;
-                double sep = SepTo(n, e, u);
-                if (sep < Math.Min(best, 3.5))
-                {
-                    best = sep;
-                    name = d.Name; kind = d.Kind; blurb = d.Blurb;
-                    string bare = d.Name.Split(" (")[0];
-                    entry = SpaceData.ByName(bare);
-                }
+                Consider(SepTo(n, e, u), 2.5, -0.3,
+                         d.Name, d.Kind, d.Blurb, SpaceData.ByName(d.Name.Split(" (")[0]));
             }
 
             // fall back to the constellation region (all 88, not just figures)
