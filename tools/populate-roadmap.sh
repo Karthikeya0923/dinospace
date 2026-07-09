@@ -47,14 +47,15 @@ add "Search, category filters, bookmarks & curated collections" "Typo-tolerant s
 
 # ---- Phase 2 · On-device intelligence ----
 add "NovaSaur: on-device LLM engine (LiteRT-LM, Kotlin) + .NET binding" "Gemma running fully offline; 2.4 GB model via Play Asset Delivery with a resumable in-app download fallback." "Done"
-add "Instant-first answer pipeline" "Encyclopedia + 80-topic knowledge base + live-sky math answer first; the model only sees genuinely open questions. Verified by an 800+-question harness in CI-style runs." "Done"
+add "Instant-first answer pipeline" "Encyclopedia + 80-topic knowledge base + live-sky math answer first; the model only sees genuinely open questions. Verified by a 1,300+-question harness in CI-style runs." "Done"
+add "Ranking & list answers" "Top-5 strongest, planets in order, biggest planets, most moons, counts and name-some lists — sorted straight from the encyclopedia, instantly." "Done"
 add "Live sky answers in chat" "\"Where is Jupiter right now?\" answered from tonight's actual sky, computed on-device." "Done"
 
 # ---- Phase 3 · The sky ----
 add "SkyScanner: NASA-verified astronomy engine" "Moon/planets vs JPL Horizons to hundredths of a degree; eclipses, conjunctions, ISS passes via SGP4; 80 green tests." "Done"
 add "Scan Sky AR overlay with true-north pointing" "Camera passthrough + rotation-vector sensor fused to true north; the moon is drawn where the moon is." "Done"
 add "Full deep-sky catalogues in Scan Sky" "All 110 Messier + 109 Caldwell objects with stories, 1,700-star catalogue with true colours, the Milky Way band, textured moon & planets, radiant-aware shooting stars." "Done"
-add "Time travel & sky darkness in Scan Sky" "Scrub the sky ±12 hours; city / suburb / dark-site modes show an honest star count." "Done"
+add "Time travel in Scan Sky" "Scrub the sky ±12 hours either way; the whole overlay recomputes live." "Done"
 add "Sky Tonight & Learn the Sky" "Live moon phase card, visible planets, meteor showers with moonlight forecasts, moonrise/set, twilight times." "Done"
 
 # ---- Phase 4 · Play ----
@@ -64,8 +65,8 @@ add "Your Creations drawing studio" "Five brushes, fill bucket, undo/redo, full 
 add "Streaks, discovery counters & Surprise Me" "Daily comeback loop weighted toward unseen entries." "Done"
 
 # ---- Phase 5 · Polish & release ----
-add "Playful layout redesign — storybook pastels" "Sage/powder/blush world tiles, bubbly tabs, rounded type; Native stays quiet and editorial." "Done"
-add "Dino Meadow theme" "Pale-sage picture-book wallpaper + palette, made for the Playful layout." "Done"
+add "Playful layout redesign — the storybook page" "Starred cream paper, mascot cover with scan sky / ask dino pills, five lowercase tabs (home, encyclopedia, battles, collection, more); Native stays quiet and editorial." "Done"
+add "Locked storybook look for Playful" "The Playful layout always wears its own starred-paper wallpaper and sage palette; themes dress Native." "Done"
 add "Final artwork for all encyclopedia entries" "Consistent 2D art set across all 56 entries." "In Progress"
 add "Play Store assets & listing" "Icon, feature graphic, screenshots, store copy, content rating." "In Progress"
 add "Google Play closed testing" "Internal track first, then a closed cohort of families." "Todo"
