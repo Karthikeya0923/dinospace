@@ -143,9 +143,8 @@ namespace dinospace.Views
             });
             Ui.Describe(_askBtn, "Ask NovaSaur about this object");
 
-            // The card sits front and centre at the top of the screen, right
-            // under the title bar, so what you're aiming at is always the
-            // first thing you read.
+            // The card tucks into the top-right corner, out of the sky's way —
+            // the crosshair and the stars stay unblocked in the middle.
             var targetBtns = new HorizontalStackLayout { Spacing = 8, Children = { _learnBtn, _askBtn } };
             var targetCol = new VerticalStackLayout { Spacing = 3, Children = { _targetName, _targetKind, _targetBlurb, targetBtns } };
             _targetCard = new Border
@@ -155,39 +154,11 @@ namespace dinospace.Views
                 Stroke = Color.FromArgb("#443C5C80"), StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 16 },
                 Padding = new Thickness(14, 12),
-                MaximumWidthRequest = 320,
-                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Start,
-                Margin = new Thickness(14, 64, 14, 0),
+                MaximumWidthRequest = 280,
+                HorizontalOptions = LayoutOptions.End, VerticalOptions = LayoutOptions.Start,
+                Margin = new Thickness(14, 12, 14, 0),
                 IsVisible = false
             };
-
-            // ----- moon phase card (bottom-right) -----
-            var moon = SkyCalc.Moon(DateTime.UtcNow);
-            var moonCol = new VerticalStackLayout { Spacing = 2 };
-            moonCol.Add(new Label { Text = "Moon Phase", FontFamily = Ui.Display, FontSize = Ui.S(15), TextColor = Colors.White });
-            moonCol.Add(new Label { Text = moon.PhaseName, FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), TextColor = Color.FromArgb("#D5DAE8") });
-            moonCol.Add(new Label { Text = $"Illumination: {moon.Illumination * 100:0}%", FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), TextColor = Color.FromArgb("#B9BDD1") });
-            var moonRow = new HorizontalStackLayout
-            {
-                Spacing = 10,
-                Children =
-                {
-                    new GraphicsView { Drawable = new MoonPhaseDrawable { ElongationDeg = moon.ElongationDeg }, WidthRequest = 44, HeightRequest = 44, InputTransparent = true },
-                    moonCol
-                }
-            };
-            var moonCard = new Border
-            {
-                Content = moonRow,
-                BackgroundColor = Color.FromArgb("#B3141024"),
-                Stroke = Color.FromArgb("#443C5C80"), StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 16 },
-                Padding = new Thickness(12, 10),
-                HorizontalOptions = LayoutOptions.End, VerticalOptions = LayoutOptions.End,
-                Margin = new Thickness(0, 0, 14, 86)
-            };
-            var moonEntry = SpaceData.ByName("Moon");
-            if (moonEntry != null) Ui.OnTap(moonCard, async (_, _) => await Nav.OpenSpace(moonEntry));
 
             // ----- compass rose (bottom-left) -----
             _compass = new GraphicsView { Drawable = _rose, WidthRequest = 76, HeightRequest = 76, InputTransparent = true, HorizontalOptions = LayoutOptions.Start, VerticalOptions = LayoutOptions.End, Margin = new Thickness(16, 0, 0, 86) };
@@ -217,11 +188,7 @@ namespace dinospace.Views
             var timeRow = new HorizontalStackLayout
             {
                 Spacing = 4,
-                Children =
-                {
-                    new Label { Text = "⏱", FontSize = Ui.S(14), TextColor = Colors.White, VerticalOptions = LayoutOptions.Center },
-                    _timeSlider, _timeLabel
-                }
+                Children = { _timeSlider, _timeLabel }
             };
             var timeCard = new Border
             {
@@ -250,7 +217,6 @@ namespace dinospace.Views
             _root.Add(_view);
             _root.Add(topBar);
             _root.Add(_targetCard);
-            _root.Add(moonCard);
             _root.Add(_compass);
             _root.Add(timeCard);
             _root.Add(_hint);
@@ -522,13 +488,15 @@ namespace dinospace.Views
                 name = n; kind = k; blurb = b; entry = e;
             }
 
-            // the moon — by far the most prominent thing in the night sky
+            // the moon — by far the most prominent thing in the night sky, and
+            // the thing people actually point phones at: give it a wide net so
+            // ordinary compass slop still names it correctly
             var (mra, mdec) = SkyCalc.MoonRaDec(jd);
             var (mAlt, mAz) = SkyCalc.AltAz(mra, mdec, _lat, _lon, utc);
             if (mAlt > -5)
             {
                 var e = SpaceData.ByName("Moon");
-                Consider(SkyMap.Separation(mAlt, mAz, _alt, _az), 8, 3.0,
+                Consider(SkyMap.Separation(mAlt, mAz, _alt, _az), 10, 4.0,
                          "Moon", "Earth's moon", e?.ShortDescription, e);
             }
 
@@ -589,10 +557,12 @@ namespace dinospace.Views
                          d.Name, d.Kind, d.Blurb, SpaceData.ByName(d.Name.Split(" (")[0]));
             }
 
-            // fall back to the constellation region (all 88, not just figures)
+            // fall back to the constellation region (all 88, not just figures).
+            // Kept tight: naming a constellation 25° away is how the moon got
+            // called "Aries" — better to say nothing than the wrong thing.
             if (name == null)
             {
-                Constellation? nearest = null; double bestSep = 26;
+                Constellation? nearest = null; double bestSep = 15;
                 foreach (var c in SkyData.All)
                 {
                     var (alt, az) = SkyCalc.AltAz(c.RaHours * 15.0, c.DecDeg, _lat, _lon, utc);

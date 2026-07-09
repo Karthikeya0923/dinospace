@@ -31,7 +31,7 @@ namespace dinospace.Views
         private const int MaxSaved = 60;
 
         private const string Welcome =
-            "Hi, I'm NovaSaur! 🦕✨ Ask me anything about dinosaurs or space — how big a T. Rex was, why Mars is red, or even for a joke or a story. I work right here on your device, no internet needed!";
+            "Hi, I'm NovaSaur! Ask me anything about prehistoric creatures or space — how big a T. Rex was, why Mars is red, or even for a joke or a story. I work right here on your device, no internet needed!";
 
         // A detail page can queue a question and switch to this tab.
         private static string? _pending;
@@ -150,16 +150,18 @@ namespace dinospace.Views
             });
             Ui.Describe(back, "Go back");
 
-            double dotSize = AppLayout.Playful ? 46 : 40;
+            // NovaSaur's face — the mascot art when it lands, a chat-bubble
+            // sticker until then.
+            double dotSize = 46;
             var dot = new Border
             {
                 WidthRequest = dotSize, HeightRequest = dotSize,
                 BackgroundColor = Ui.MultiplyAlpha(Theme.AccentNova, 0.18f),
                 Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = dotSize / 2 },
-                Content = new Label { Text = "🦕", FontSize = AppLayout.Playful ? 24 : 20, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
+                Content = Ui.Mascot("mascot_ask", 28, "st_bub_green_dots.png")
             };
             var title = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
-            title.Add(new Label { Text = AppLayout.Playful ? "ask dino" : "NovaSaur", FontFamily = Ui.Display, FontSize = AppLayout.Playful ? 21 : 19, TextColor = Theme.TextPrimary });
+            title.Add(new Label { Text = "ask novasaur", FontFamily = Ui.Display, FontSize = 21, TextColor = Theme.TextPrimary });
             title.Add(new Label { Text = Ui.T("Your dino & space buddy"), FontFamily = Ui.Fonts, FontSize = 11.5, TextColor = Theme.TextSecondary });
 
             var clear = new Label { Text = Ui.T("Clear"), FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.Center };

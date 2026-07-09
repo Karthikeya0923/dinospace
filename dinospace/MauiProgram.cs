@@ -14,12 +14,8 @@ namespace dinospace
                 .UseMauiCommunityToolkitCamera()
                 .ConfigureFonts(fonts =>
                 {
-                    // DM Serif Display -> editorial headlines; Nunito -> body;
-                    // Material Icons -> tab bar and buttons.
+                    // Baloo -> rounded storybook headlines; Nunito -> body.
                     fonts.AddFont("Nunito-Regular.ttf", "Nunito");
-                    fonts.AddFont("DMSerifDisplay-Regular.ttf", "Serif");
-                    fonts.AddFont("DMSerifDisplay-Italic.ttf", "SerifItalic");
-                    fonts.AddFont("MaterialIcons-Regular.ttf", "Icons");
                     fonts.AddFont("Baloo2-Bold.ttf", "Baloo");
                 });
 

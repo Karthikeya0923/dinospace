@@ -131,7 +131,37 @@ namespace dinospace.Views
             var col = new VerticalStackLayout { Spacing = 12 };
             col.Add(Ui.SectionHeader("Fun facts"));
 
-            foreach (var raw in funFacts.Split('\n'))
+            var lines = funFacts.Split('\n');
+
+            // When the hand-drawn mascot lands (mascot_fact.png), it tells the
+            // first fun fact itself from a little speech bubble; the rest stay
+            // in the dotted list below.
+            int start = 0;
+            if (Ui.HasImage("mascot_fact"))
+            {
+                string first = lines[0].TrimStart('•', ' ').Trim();
+                if (first.Length > 0)
+                {
+                    start = 1;
+                    var bubble = new Border
+                    {
+                        Content = new Label { Text = first, FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), LineHeight = 1.4, TextColor = Theme.TextPrimary },
+                        BackgroundColor = Theme.Surface,
+                        Stroke = Theme.CardStroke, StrokeThickness = 1.2,
+                        StrokeShape = new RoundRectangle { CornerRadius = 18 },
+                        Padding = new Thickness(14, 10),
+                        VerticalOptions = LayoutOptions.Center
+                    };
+                    var row = new Grid { ColumnSpacing = 10 };
+                    row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                    row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+                    row.Add(Ui.Mascot("mascot_fact", 84), 0, 0);
+                    row.Add(bubble, 1, 0);
+                    col.Add(row);
+                }
+            }
+
+            foreach (var raw in lines[start..])
             {
                 var line = raw.TrimStart('•', ' ').Trim();
                 if (line.Length == 0) continue;

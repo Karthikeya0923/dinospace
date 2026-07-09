@@ -60,7 +60,7 @@ namespace dinospace.Views
             if (CreationStore.Dinos().Count > 0)
                 stack.Add(MyCreaturesToggle());
 
-            var fightLabel = new Label { Text = "⚔  Battle!", FontFamily = Ui.Fonts, FontSize = Ui.S(16), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center };
+            var fightLabel = new Label { Text = "battle!", FontFamily = Ui.Display, FontSize = Ui.S(16), TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center };
             _fightBtn = new Border
             {
                 Content = fightLabel,
@@ -70,7 +70,7 @@ namespace dinospace.Views
             Ui.OnTap(_fightBtn, (_, _) => Fight());
             stack.Add(_fightBtn);
 
-            var resetLabel = new Label { Text = "↺  Reset picks", FontFamily = Ui.Fonts, FontSize = Ui.S(14), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center };
+            var resetLabel = new Label { Text = "reset picks", FontFamily = Ui.Display, FontSize = Ui.S(14), TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center };
             _resetBtn = new Border
             {
                 Content = resetLabel,
@@ -207,14 +207,27 @@ namespace dinospace.Views
             var winner = Power(_a) >= Power(_b) ? _a : _b;
 
             _resultArea.Children.Clear();
+
+            // Winner banner — a gold sticker star beside the name, exactly the
+            // storybook treatment (no emoji).
+            var bannerRow = new HorizontalStackLayout
+            {
+                Spacing = 10,
+                HorizontalOptions = LayoutOptions.Center,
+                Children =
+                {
+                    Ui.Sticker("st_icon_star.png", 24),
+                    new Label
+                    {
+                        Text = $"{winner.Name} wins!",
+                        FontFamily = Ui.Display, FontSize = Ui.S(20), TextColor = Theme.AccentDino,
+                        HorizontalTextAlignment = TextAlignment.Center, VerticalOptions = LayoutOptions.Center
+                    }
+                }
+            };
             _resultArea.Add(new Border
             {
-                Content = new Label
-                {
-                    Text = $"🏆  {winner.Name} wins!",
-                    FontFamily = Ui.Display, FontSize = Ui.S(20), TextColor = Theme.AccentDino,
-                    HorizontalTextAlignment = TextAlignment.Center
-                },
+                Content = bannerRow,
                 BackgroundColor = Ui.MultiplyAlpha(Theme.AccentDino, 0.14f),
                 Stroke = Ui.MultiplyAlpha(Theme.AccentDino, 0.5f), StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(16, 14)
@@ -225,7 +238,7 @@ namespace dinospace.Views
                 Spacing = 12,
                 Children =
                 {
-                    DetailUi.TitleRow("Tale of the tape", Theme.AccentDino),
+                    DetailUi.TitleRow("the stats", Theme.AccentDino),
                     CompareRow("Length", _a.Length, _b.Length),
                     CompareRow("Weight", _a.Weight, _b.Weight),
                     CompareRow("Top speed", _a.Speed, _b.Speed),
@@ -235,7 +248,7 @@ namespace dinospace.Views
 
             var loser = winner == _a ? _b : _a;
 
-            // The bookmakers' line: how many of 100 match-ups the winner takes.
+            // How many of 100 match-ups the winner takes.
             int odds = Odds(winner, loser);
             _resultArea.Add(new Label
             {
@@ -243,25 +256,18 @@ namespace dinospace.Views
                 FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary,
                 HorizontalTextAlignment = TextAlignment.Center
             });
-            _resultArea.Add(new Label
-            {
-                Text = $"({odds}–{100 - odds} — {(odds >= 90 ? "a mismatch" : odds >= 70 ? "a clear favourite" : "anyone's fight on the right day")})",
-                FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), TextColor = Theme.TextHint,
-                HorizontalTextAlignment = TextAlignment.Center
-            });
 
-            // How the fight actually plays out.
+            // How the fight actually plays out (the setting line says it all —
+            // no separate verdict paragraph repeating the result).
             _resultArea.Add(Ui.Card(new Label
             {
                 Text = Scenario(winner, loser),
                 FontFamily = Ui.Fonts, FontSize = Ui.S(14), LineHeight = 1.5, TextColor = Theme.TextPrimary
             }, 16, new Thickness(16, 14)));
 
-            _resultArea.Add(new Label
-            {
-                Text = Verdict(winner, loser),
-                FontFamily = Ui.Fonts, FontSize = Ui.S(14), LineHeight = 1.45, TextColor = Theme.TextSecondary
-            });
+            // The referee's corner — reserved for the hand-drawn mascot.
+            if (Ui.HasImage("mascot_battle"))
+                _resultArea.Add(Ui.Mascot("mascot_battle", 110));
         }
 
         // Win probability out of 100, from the power gap — amplified so a real
@@ -345,91 +351,6 @@ namespace dinospace.Views
             if (maxBite > 0) score += Num(d.BiteForce) / maxBite * 30;
             if (maxSpd > 0) score += Num(d.Speed) / maxSpd * 10;
             return score;
-        }
-
-        // Writes an actual argument for this specific matchup: how close it is,
-        // which stats decide it (with the numbers), and what the underdog's
-        // best shot would be. Same pairing always reads the same, but every
-        // pairing reads differently.
-        private static string Verdict(Dinosaur w, Dinosaur l)
-        {
-            // stable "randomness" per matchup, so re-running the fight doesn't reshuffle the text
-            int seed = 0;
-            foreach (char c in w.Name + "|" + l.Name) seed = seed * 31 + c;
-            seed = Math.Abs(seed);
-
-            double pw = Power(w), pl = Power(l);
-            bool blowout = pl <= 0 || pw / Math.Max(pl, 0.01) > 1.6;
-            bool close = !blowout && pw / Math.Max(pl, 0.01) < 1.2;
-
-            var sb = new StringBuilder();
-            string[] openers = close
-                ? new[]
-                {
-                    $"This one could go either way, but {w.Name} takes it by a claw.",
-                    $"An incredibly even matchup — {w.Name} just barely comes out on top.",
-                    $"Almost a coin flip. {w.Name} wins it on the fine details.",
-                }
-                : blowout
-                ? new[]
-                {
-                    $"Not much of a contest — {w.Name} dominates this one.",
-                    $"{w.Name} wins this convincingly.",
-                    $"On paper this is one-sided: {w.Name} all the way.",
-                }
-                : new[]
-                {
-                    $"{w.Name} has the edge here.",
-                    $"Most rounds of this fight go to {w.Name}.",
-                    $"{w.Name} is the favourite in this matchup.",
-                };
-            sb.Append(openers[seed % openers.Length]).Append(' ');
-
-            // gather the real advantages, biggest weapons first
-            var reasons = new List<string>();
-            double wb = Num(w.BiteForce), lb = Num(l.BiteForce);
-            double ww = Num(w.Weight), lw = Num(l.Weight);
-            double ws = Num(w.Speed), ls = Num(l.Speed);
-            double wl = Num(w.Length), ll = Num(l.Length);
-
-            if (wb > 0 && wb > lb * 1.2)
-                reasons.Add(lb > 0
-                    ? $"its {w.BiteForce} bite hits far harder than {l.Name}'s {l.BiteForce}"
-                    : $"its {w.BiteForce} bite is a weapon {l.Name} simply doesn't have");
-            if (ww > 0 && lw > 0 && ww > lw * 1.5)
-                reasons.Add(ww / lw >= 3
-                    ? $"at {w.Weight} it's roughly {Math.Round(ww / lw)} times heavier"
-                    : $"it clearly outweighs {l.Name} — {w.Weight} against {l.Weight}");
-            if (ws > 0 && ws > ls * 1.25)
-                reasons.Add($"it's quicker too ({w.Speed} vs {l.Speed}), so it picks when the fight happens");
-            if (wl > 0 && ll > 0 && wl > ll * 1.3)
-                reasons.Add($"its {w.Length} frame gives it a big reach advantage");
-
-            if (reasons.Count > 0)
-            {
-                sb.Append(char.ToUpper(reasons[0][0])).Append(reasons[0][1..]);
-                if (reasons.Count > 1) sb.Append(", and ").Append(reasons[1]);
-                sb.Append(". ");
-            }
-
-            // give the underdog its due — makes the verdict feel fair, not scripted
-            string armour = ArmourWord(l);
-            if (armour.Length > 0)
-                sb.Append($"{l.Name} isn't helpless though: one good hit from those {armour} could change everything. ");
-            else if (ls > ws && ls > 0)
-                sb.Append($"{l.Name}'s best hope is its speed — staying out of reach and waiting for a mistake. ");
-            else if (lb > wb && lb > 0)
-                sb.Append($"If {l.Name} lands its {l.BiteForce} bite first, this ends very differently. ");
-
-            string[] closers =
-            {
-                "In a real Cretaceous showdown, terrain and surprise would matter as much as size.",
-                "Of course, real animals avoid fair fights — the smart ones walk away.",
-                "That's the paper verdict; nature loved an upset.",
-                "Luck, terrain, and who strikes first could still flip it.",
-            };
-            sb.Append(closers[seed / 7 % closers.Length]);
-            return sb.ToString();
         }
 
         // What the underdog fights back with, if its entry mentions any classic

@@ -53,7 +53,7 @@ namespace dinospace.Views
             stack.Add(_entriesArea);
             RefreshEntries();
 
-            stack.Add(Ui.PrimaryButton("＋  ADD AN ENTRY", async (_, _) =>
+            stack.Add(Ui.PrimaryButton("Add an entry", async (_, _) =>
                 await Nav.Push(() => new EntryPickerPage(OnPicked), animated: false)));
 
             var delete = new Label
@@ -75,7 +75,7 @@ namespace dinospace.Views
 
             if (_list.Entries.Count == 0)
             {
-                _entriesArea.Add(Ui.Card(Ui.Muted("Nothing here yet — tap “Add an entry” and build your dream line-up. Dinosaurs and space stuff can mix!"), 16, new Thickness(16, 14)));
+                _entriesArea.Add(Ui.Card(Ui.Muted("Nothing here yet — tap “Add an entry” and build your dream line-up. Prehistoric creatures and space stuff can mix!"), 16, new Thickness(16, 14)));
                 return;
             }
 

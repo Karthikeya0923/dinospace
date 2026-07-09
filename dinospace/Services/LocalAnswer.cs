@@ -386,7 +386,14 @@ namespace dinospace.Services
                 return Stat(s, new[] { "distance", "orbit", "location", "altitude" }, v => $"{s.Name} is {LowerLead(v)}.");
 
             if (Has(q, "hot", "temperature", "temp", "cold", "warm"))
-                return Stat(s, new[] { "temp" }, v => $"{s.Name}’s surface is around {v}.");
+            {
+                var fromStats = Stat(s, new[] { "temp" }, v => $"{s.Name}’s surface is around {v}.");
+                if (fromStats != null) return fromStats;
+                // not every entry carries a temp stat — the big bodies get a
+                // built-in answer so "how hot is neptune" never wanders off
+                // into what's under the clouds instead
+                if (BodyTemps.TryGetValue(s.Name, out var t)) return $"{s.Name} {t}";
+            }
 
             if (Has(q, "moon", "moons"))
                 return Stat(s, new[] { "moon" }, v => MoonSentence(s.Name, v));
@@ -402,6 +409,23 @@ namespace dinospace.Services
 
             return null;
         }
+
+        // Average / typical temperatures for the bodies people actually ask
+        // about, used when the entry's stat chips don't include one.
+        private static readonly Dictionary<string, string> BodyTemps = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Mercury"] = "swings wildly — about 427°C in the day and −173°C at night, because it has almost no atmosphere to hold the heat.",
+            ["Venus"] = "sits around 465°C day and night — hot enough to melt lead, thanks to its runaway greenhouse atmosphere.",
+            ["Earth"] = "averages a comfy 15°C at the surface — the only planet we know with liquid-water oceans.",
+            ["Mars"] = "averages about −63°C — a warm summer day at the equator can touch 20°C, but nights plunge far below freezing.",
+            ["Jupiter"] = "is about −108°C at its cloud tops — but it gets hotter than the Sun's surface deep inside.",
+            ["Saturn"] = "is about −139°C at its cloud tops.",
+            ["Uranus"] = "is about −197°C at its cloud tops — the coldest atmosphere of any planet.",
+            ["Neptune"] = "is about −201°C at its cloud tops, even though it's warmer inside than Uranus.",
+            ["Pluto"] = "is a frigid −232°C or so — cold enough that its nitrogen air freezes onto the ground.",
+            ["Moon"] = "swings from about 127°C in full sunlight to −173°C in the dark — no atmosphere means no blanket.",
+            ["Sun"] = "is about 5,500°C at its visible surface — and around 15 million °C in the core.",
+        };
 
         private static string MoonSentence(string name, string v)
         {
@@ -514,6 +538,19 @@ namespace dinospace.Services
             // reader) never wonders who "it" was.
             if (ans.StartsWith("It ")) ans = name + ans[2..];
             else if (ans.StartsWith("Its ")) ans = name + "'s" + ans[3..];
+
+            // The matched sentence can come from mid-paragraph ("Rows of
+            // backward-curving teeth gripped slippery prey.") — a chat answer
+            // should never leave "who?" open, and a yes/no question deserves
+            // an actual yes up front.
+            string firstNameWord = name.Split(' ')[0];
+            if (!ans.Contains(firstNameWord, StringComparison.OrdinalIgnoreCase))
+            {
+                bool yesNoHave = rel.Length > 0
+                    && System.Text.RegularExpressions.Regex.IsMatch(q, @"^\s*(did|does|do|was|were|is|are)\b")
+                    && System.Text.RegularExpressions.Regex.IsMatch(q, @"\b(have|has|had|got)\b");
+                ans = yesNoHave ? $"Yes — {name} sure did! {ans}" : $"{name}? {ans}";
+            }
             return ans;
         }
 

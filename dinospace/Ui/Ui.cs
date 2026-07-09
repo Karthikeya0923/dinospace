@@ -249,12 +249,13 @@ namespace dinospace
         public static View TintChip(string text, Color accent)
             => Chip(text, Theme.AccentSoft, Theme.Accent);
 
-        // Filled red pill button, like the reference's SUBSCRIBE.
+        // Filled pill button. Text renders lowercase, like every button on the
+        // design sheet.
         public static Border PrimaryButton(string text, System.EventHandler<TappedEventArgs> onTap)
         {
             var label = new Label
             {
-                Text = text,
+                Text = T(text),
                 FontFamily = Fonts,
                 FontSize = S(15),
                 FontAttributes = FontAttributes.Bold,
@@ -279,7 +280,7 @@ namespace dinospace
         {
             var label = new Label
             {
-                Text = text,
+                Text = T(text),
                 FontFamily = Fonts,
                 FontSize = S(15),
                 FontAttributes = FontAttributes.Bold,
@@ -329,6 +330,60 @@ namespace dinospace
         }
 
         // ---------- images ----------
+
+        // A little cut-out illustration from the app's sticker sheet
+        // (st_*.png). Height fixed, width follows the art's own shape.
+        public static Image Sticker(string name, double height, double width = -1) => new()
+        {
+            Source = name,
+            HeightRequest = height,
+            WidthRequest = width > 0 ? width : -1,
+            Aspect = Aspect.AspectFit,
+            HorizontalOptions = LayoutOptions.Center,
+            VerticalOptions = LayoutOptions.Center,
+            InputTransparent = true
+        };
+
+        // ---------- mascot slots ----------
+        // Named spots reserved for the hand-drawn mascot art (mascot_*.png).
+        // Until a slot's file is dropped into Resources/Images, the space
+        // stays reserved: either empty, or showing a stand-in sticker.
+        private static readonly System.Collections.Generic.Dictionary<string, bool> _mascotCache = new();
+
+        public static bool HasImage(string baseName)
+        {
+            if (_mascotCache.TryGetValue(baseName, out bool known)) return known;
+            bool found = false;
+#if ANDROID
+            try
+            {
+                var ctx = Android.App.Application.Context;
+                found = ctx.Resources?.GetIdentifier(baseName, "drawable", ctx.PackageName) > 0;
+            }
+            catch { }
+#endif
+            _mascotCache[baseName] = found;
+            return found;
+        }
+
+        // The mascot if its art exists; otherwise the fallback sticker; if
+        // neither, an invisible box that holds the reserved space.
+        public static View Mascot(string slot, double height, string? fallbackSticker = null)
+        {
+            if (HasImage(slot))
+                return new Image
+                {
+                    Source = slot + ".png",
+                    HeightRequest = height,
+                    Aspect = Aspect.AspectFit,
+                    HorizontalOptions = LayoutOptions.Center,
+                    VerticalOptions = LayoutOptions.Center,
+                    InputTransparent = true
+                };
+            if (fallbackSticker != null)
+                return Sticker(fallbackSticker, height);
+            return new BoxView { HeightRequest = height, Color = Colors.Transparent, InputTransparent = true };
+        }
 
         public static Border Thumb(string image, double size, Color accent)
         {

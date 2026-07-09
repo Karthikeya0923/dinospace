@@ -44,10 +44,9 @@ namespace dinospace.Views
                 });
             else { _journey.Margin = new Thickness(0, 10, 0, 8); stack.Add(_journey); }
 
-            // Visuals — layout, themes and type size.
+            // Visuals — themes and type size.
             stack.Add(Ui.SectionHeader("Visuals"));
             stack.Add(Group(
-                LinkRow("Choose a layout", CurrentLayoutName(), async () => await Nav.Push(() => new LayoutsPage())),
                 LinkRow("Choose a theme", CurrentThemeName(), async () => await Nav.Push(() => new ThemesPage())),
                 TextSizeRow()));
 
@@ -125,8 +124,6 @@ namespace dinospace.Views
                 if (s.Id == Theme.CurrentId) return s.Name;
             return Theme.Wallpapers[0].Name;
         }
-
-        private static string CurrentLayoutName() => AppLayout.Playful ? "Playful" : "Native";
 
         // Off / Light / Medium / Strong — a toggle wasn't enough, people feel
         // vibration very differently phone to phone.
@@ -252,7 +249,7 @@ namespace dinospace.Views
             string mostViewed = StatsStore.MostViewedName();
 
             var sb = new System.Text.StringBuilder();
-            sb.Append($"You've explored {dinos} of {DinoData.All.Count} dinosaurs and {space} of {SpaceData.All.Count} space objects, ");
+            sb.Append($"You've explored {dinos} of {DinoData.All.Count} prehistoric creatures and {space} of {SpaceData.All.Count} space objects, ");
             sb.Append($"and saved {saved} {(saved == 1 ? "favourite" : "favourites")}. ");
             if (!string.IsNullOrEmpty(mostViewed)) sb.Append($"Your most-viewed entry is {mostViewed}. ");
             if (streak > 1) sb.Append($"You're on a {streak}-day streak — keep it going!");

@@ -54,21 +54,14 @@ namespace dinospace.Views
         {
             var header = new VerticalStackLayout { Spacing = 14, Padding = new Thickness(18, 16, 18, 8) };
 
-            if (AppLayout.Playful)
-                header.Add(new Label
-                {
-                    Text = "encyclopedia",
-                    FontFamily = Ui.Display, FontSize = Ui.S(24), TextColor = Theme.TextPrimary,
-                    HorizontalOptions = LayoutOptions.Center, Margin = new Thickness(0, 2, 0, 0)
-                });
-            else
-                header.Add(new Label
-                {
-                    Text = "Every creature and cosmos,\nall right here.",
-                    FontFamily = Ui.Display, FontSize = Ui.S(26), LineHeight = 1.12, TextColor = Theme.TextSecondary
-                });
+            header.Add(new Label
+            {
+                Text = "encyclopedia",
+                FontFamily = Ui.Display, FontSize = Ui.S(24), TextColor = Theme.TextPrimary,
+                HorizontalOptions = LayoutOptions.Center, Margin = new Thickness(0, 2, 0, 0)
+            });
 
-            _entry = new Entry { Placeholder = Ui.T("Search dinosaurs, planets, stars…"), BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Search };
+            _entry = new Entry { Placeholder = Ui.T("Search creatures, planets, stars…"), BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Search };
             _entry.TextChanged += (_, e) => { _query = e.NewTextValue ?? ""; Refresh(); };
             var glass = Ui.Icon(Ui.IconSearch, 22, Theme.TextHint);
             glass.VerticalOptions = LayoutOptions.Center;
@@ -85,7 +78,7 @@ namespace dinospace.Views
 
             _segments = new HorizontalStackLayout { Spacing = AppLayout.Playful ? 8 : 22 };
             _segments.Add(SegItem(Ui.T("All"), 0));
-            _segments.Add(SegItem(Ui.T("Dinosaurs"), 1));
+            _segments.Add(SegItem(Ui.T("Prehistoric creatures"), 1));
             _segments.Add(SegItem(Ui.T("Space"), 2));
             header.Add(_segments);
 

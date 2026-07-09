@@ -17,27 +17,13 @@ namespace dinospace.Services
 
         public static bool Haptics => HapticLevel > 0;
 
-        public static bool DarkMode
-        {
-            get => Preferences.Get("set_darkmode", false);
-            set => Preferences.Set("set_darkmode", value);
-        }
-
-        // Theme id ("theme1".."theme7"); old installs may still say "classic",
-        // which Theme.ApplyCurrent maps onto Fossil / Dark Mode.
+        // Theme id ("stars", "grid", "clouds", "night", "dinospace"); older
+        // installs may hold retired ids, which Theme.ApplyCurrent maps onto
+        // the closest current look.
         public static string ThemeId
         {
-            get => Preferences.Get("set_theme", "theme1");
+            get => Preferences.Get("set_theme", "stars");
             set => Preferences.Set("set_theme", value);
-        }
-
-        // Layout id: "native" (the editorial default) or "playful" (the big,
-        // rounded, kid-first layout). Drives fonts, shapes, the tab bar and
-        // the home screen through AppLayout.
-        public static string LayoutId
-        {
-            get => Preferences.Get("set_layout", "native");
-            set => Preferences.Set("set_layout", value);
         }
 
         // 0 = Small, 1 = Default, 2 = Large, 3 = Extra large.

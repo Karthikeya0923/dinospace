@@ -35,25 +35,10 @@ namespace dinospace.Views
             stack.Add(new Label { Text = Ui.T("App themes"), FontFamily = Ui.Display, FontSize = Ui.S(30), TextColor = Theme.TextPrimary });
             stack.Add(new Label
             {
-                Text = "Pick a look for every page of DinoSpace — wallpaper, colours, the lot.",
+                Text = "pick a page for every screen of dinospace — wallpaper, colours, the lot.",
                 FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), LineHeight = 1.4, TextColor = Theme.TextSecondary,
                 Margin = new Thickness(0, 0, 0, 6)
             });
-
-            // The Playful layout always wears its own storybook page — theme
-            // picks are saved here and come back when the layout is Native.
-            if (AppLayout.Playful)
-                stack.Add(new Border
-                {
-                    Content = new Label
-                    {
-                        Text = "the playful layout keeps its storybook look. these themes dress the native layout.",
-                        FontFamily = Ui.Fonts, FontSize = Ui.S(13), LineHeight = 1.4, TextColor = Theme.ChipText
-                    },
-                    BackgroundColor = Theme.AccentSoft, Stroke = Colors.Transparent,
-                    StrokeShape = new RoundRectangle { CornerRadius = 14 },
-                    Padding = new Thickness(14, 10), Margin = new Thickness(0, 0, 0, 6)
-                });
 
             foreach (var spec in Theme.Wallpapers)
                 stack.Add(WallpaperCard(spec));
@@ -66,17 +51,8 @@ namespace dinospace.Views
         {
             bool current = Theme.CurrentId == spec.Id;
 
-            // Wallpaper thumbnail; if the file isn't there yet (theme6 before
-            // the art is added) the theme's own colours stand in.
             var thumb = new Grid { BackgroundColor = ThemePreviewBg(spec) };
-            thumb.Add(new Label
-            {
-                Text = "✶",
-                FontSize = 24, TextColor = ThemePreviewAccent(spec),
-                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
-            });
-            if (spec.Wallpaper != null)
-                thumb.Add(new Image { Source = spec.Wallpaper, Aspect = Aspect.AspectFill });
+            thumb.Add(new Image { Source = spec.Wallpaper, Aspect = Aspect.AspectFill });
 
             var preview = new Border
             {
@@ -116,20 +92,9 @@ namespace dinospace.Views
 
         private static Color ThemePreviewBg(Theme.Spec spec) => spec.Id switch
         {
-            "theme2" => Color.FromArgb("#0A0908"),
-            "theme3" => Color.FromArgb("#070B14"),
-            "theme4" => Color.FromArgb("#120826"),
-            "theme5" => Color.FromArgb("#221338"),
-            _ => Color.FromArgb("#F6EFE2"),
-        };
-
-        private static Color ThemePreviewAccent(Theme.Spec spec) => spec.Id switch
-        {
-            "theme2" => Color.FromArgb("#E3BE55"),
-            "theme3" => Color.FromArgb("#7FB4FF"),
-            "theme4" => Color.FromArgb("#D98CFF"),
-            "theme5" => Color.FromArgb("#EDC46B"),
-            _ => Color.FromArgb("#A5652A"),
+            "night" => Color.FromArgb("#1C2733"),
+            "dinospace" => Color.FromArgb("#221338"),
+            _ => Color.FromArgb("#EEF1E2"),
         };
 
         // Same trick as the dark-mode toggle: freeze the screen, rebuild the
@@ -160,9 +125,9 @@ namespace dinospace.Views
             Theme.ApplyCurrent();
             NovaPage.ResetShared();
 
-            // Rebuild on the Settings tab and hold the freeze-frame until this
-            // page is pushed back on top.
-            RootPage.LastTab = 3;
+            // Rebuild on the "more" tab (settings lives behind it) and hold
+            // the freeze-frame until this page is pushed back on top.
+            RootPage.LastTab = 4;
             RootPage.HoldThemeCoverOnce = true;
             var window = Application.Current?.Windows.FirstOrDefault();
             if (window != null) window.Page = new AppShell();

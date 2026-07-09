@@ -1,49 +1,25 @@
 namespace dinospace
 {
-    public enum LayoutMode { Native, Playful }
-
-    // The app ships two completely different layouts on top of the same
-    // features and the same themes:
-    //
-    //  • Native  — the editorial default: DM Serif headlines, tight caps-and-
-    //              rule section headers, a flat iOS-style tab bar. Grown-up,
-    //              magazine-like.
-    //
-    //  • Playful — built for 5-to-10-year-olds: big rounded Baloo headlines,
-    //              chunky pill tabs with a highlighted bubble, a warm "Hi
-    //              explorer!" home screen, rounder cards and bigger targets.
-    //
-    // Views never check the mode directly for fonts or shapes — they read the
-    // knobs below (Ui forwards to them), so switching layouts re-skins the
-    // whole app the same way switching themes re-colours it. A handful of
-    // identity pieces (the tab bar, the home masthead) branch on Playful.
+    // The app has one layout: the storybook look from the design sheet — big
+    // rounded Baloo headlines, lowercase labels, chunky pills, generous
+    // corners. These knobs stay as the single source of truth for fonts and
+    // shapes so every view keeps reading them the same way.
     public static class AppLayout
     {
-        public static LayoutMode Mode { get; private set; } = LayoutMode.Native;
-        public static bool Playful => Mode == LayoutMode.Playful;
+        public static bool Playful => true;
 
-        public static void ApplyCurrent()
-            => Mode = Services.AppSettings.LayoutId == "playful" ? LayoutMode.Playful : LayoutMode.Native;
+        public static void ApplyCurrent() { }
 
         // ---- fonts ----
-        // Two genuinely different voices: Playful gets big rounded Baloo
-        // headlines; Native gets the quiet editorial serif. Body text is
-        // Nunito everywhere.
-        public static string DisplayFont => Playful ? "Baloo" : "Serif";
-        public static string DisplayItalicFont => Playful ? "Baloo" : "SerifItalic";
+        public static string DisplayFont => "Baloo";
+        public static string DisplayItalicFont => "Baloo";
         public static string BodyFont => "Nunito";
 
         // ---- shape & scale ----
-        // Native keeps corners tight and understated; Playful goes round.
-        public static double CardRadius => Playful ? 24 : 14;
-        public static double ButtonRadius => Playful ? 22 : 12;
-        public static double HeroRadius => Playful ? 26 : 16;
-
-        // Playful nudges headline type up a touch for a bolder, friendlier feel.
-        public static double HeadlineScale => Playful ? 1.05 : 1.0;
-
-        // Playful: chunky title + accent underline headers.
-        // Native: tight ALL-CAPS with a hairline rule — plain and grown-up.
-        public static bool FriendlyHeaders => Playful;
+        public static double CardRadius => 24;
+        public static double ButtonRadius => 22;
+        public static double HeroRadius => 26;
+        public static double HeadlineScale => 1.05;
+        public static bool FriendlyHeaders => true;
     }
 }

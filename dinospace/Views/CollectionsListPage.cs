@@ -80,7 +80,7 @@ namespace dinospace.Views
                 Padding = new Thickness(16, 16)
             };
             Ui.OnTap(makeCard, async (_, _) => await CreateList());
-            Ui.Describe(makeCard, "Make your own list of dinosaurs and space objects");
+            Ui.Describe(makeCard, "Make your own list of prehistoric creatures and space objects");
             stack.Add(makeCard);
 
             var body = Nav.DetailScaffoldFixed("", new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never });

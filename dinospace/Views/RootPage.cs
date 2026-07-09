@@ -61,24 +61,14 @@ namespace dinospace.Views
         {
             Current = this;
 
-            if (AppLayout.Playful)
-            {
-                // The storybook layout's own five destinations, exactly like
-                // its design sheet: home, encyclopedia, battles, collection,
-                // more — all lowercase, all line icons.
-                _tabs.Add(("home", Ui.IconHome, new HomeView(GoToTab)));
-                _tabs.Add(("encyclopedia", Ui.IconBook, new SearchView()));
-                _tabs.Add(("battles", Ui.IconSwords, new BattleView()));
-                _tabs.Add(("collection", Ui.IconSaved, new SavedView()));
-                _tabs.Add(("more", Ui.IconMore, new MoreView()));
-            }
-            else
-            {
-                _tabs.Add(("Home", Ui.IconHome, new HomeView(GoToTab)));
-                _tabs.Add(("Search", Ui.IconSearch, new SearchView()));
-                _tabs.Add(("Saved", Ui.IconSaved, new SavedView()));
-                _tabs.Add(("Settings", Ui.IconSettings, new SettingsView()));
-            }
+            // The storybook design sheet's five destinations: home,
+            // encyclopedia, battles, collection, more — all lowercase,
+            // all line icons.
+            _tabs.Add(("home", Ui.IconHome, new HomeView(GoToTab)));
+            _tabs.Add(("encyclopedia", Ui.IconBook, new SearchView()));
+            _tabs.Add(("battles", Ui.IconSwords, new BattleView()));
+            _tabs.Add(("collection", Ui.IconSaved, new SavedView()));
+            _tabs.Add(("more", Ui.IconMore, new MoreView()));
 
             Build();
             GoToTab(LastTab >= 0 && LastTab < _tabs.Count ? LastTab : 0);

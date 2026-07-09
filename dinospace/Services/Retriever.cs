@@ -146,7 +146,10 @@ namespace dinospace.Services
                     if (key.Length >= 5 && Math.Abs(t.Length - key.Length) <= 2)
                     {
                         int allowed = key.Length >= 7 ? 2 : 1;
-                        if ((EditDistanceAtMost(t, key, allowed) || EditDistanceAtMost(tok, key, allowed))
+                        if ((EditDistanceAtMost(t, key, allowed) || EditDistanceAtMost(tok, key, allowed)
+                             // doubled-letter typos ("neptoon", "satturn") sit
+                             // just past the edit budget — squash runs first
+                             || EditDistanceAtMost(Squash(t), Squash(key), allowed))
                             && key.Length - 1 > best) best = key.Length - 1;
                     }
                     // very short names ("sun") still deserve one slip — "the
@@ -358,6 +361,20 @@ namespace dinospace.Services
             foreach (char c in text.ToLowerInvariant())
                 sb.Append(char.IsLetterOrDigit(c) ? c : ' ');
             return string.Join(" ", sb.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        // Collapses runs of the same letter ("neptoon" -> "nepton") so a
+        // doubled-letter typo costs nothing before the edit-distance check.
+        private static string Squash(string s)
+        {
+            var sb = new StringBuilder(s.Length);
+            char prev = '\0';
+            foreach (char c in s)
+            {
+                if (c != prev) sb.Append(c);
+                prev = c;
+            }
+            return sb.ToString();
         }
 
         private static bool EditDistanceAtMost(string a, string b, int max)

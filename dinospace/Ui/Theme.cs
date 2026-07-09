@@ -4,12 +4,12 @@ using Microsoft.Maui.Graphics;
 
 namespace dinospace
 {
-    // DinoSpace design tokens. Two classic moods (warm paper / black & gold)
-    // plus a catalogue of full wallpaper themes — each one is a complete
-    // palette AND a subtle full-screen background image that every page draws
-    // behind its content. Views read Theme.X at build time; switching themes
-    // swaps the palette and rebuilds the window, so everything re-skins in
-    // one shot.
+    // DinoSpace design tokens. One storybook design language, five wallpaper
+    // themes — each one is a complete palette AND a full-screen background
+    // drawn behind every page, so text and cards always sit on colours picked
+    // for that exact wallpaper (pale ink on the dark skies, deep olive ink on
+    // the light papers). Views read Theme.X at build time; switching themes
+    // swaps the palette and rebuilds the window.
     public static class Theme
     {
         internal sealed class Palette
@@ -24,71 +24,126 @@ namespace dinospace
             public required float ShadowAlpha;
         }
 
-        // One selectable look: a palette, a mood, and (for wallpaper themes)
-        // a background image drawn behind every page.
+        // One selectable look: a palette, a wallpaper, and how heavy a wash
+        // the wallpaper needs before text sits comfortably on it.
         public sealed class Spec
         {
             public required string Id;
             public required string Name;
             public required string Blurb;
-            public string? Wallpaper;      // file in Resources/Images, null = plain colour
-            public required bool Dark;     // status-bar icon contrast
-            internal Palette P = null!;    // set by the catalogue below
+            public required string Wallpaper;  // file in Resources/Images
+            public required bool Dark;         // status-bar icon contrast
+            public required float Dim;         // readability wash strength
+            internal Palette P = null!;
         }
 
-        // Black and gold. Rich, divine. Secondary text is a warm champagne
-        // (not grey) so it stays readable and on-theme against near-black.
-        private static readonly Palette DarkP = new()
+        // The signature look: warm cream paper scattered with little gold
+        // stars, sage cards, deep-olive ink. Straight from the design sheet.
+        private static readonly Palette StarsP = new()
         {
-            Bg = Color.FromArgb("#0A0908"),
-            BgRaised = Color.FromArgb("#131110"),
-            Surface = Color.FromArgb("#18150F"),
-            SurfaceAlt = Color.FromArgb("#2A2419"),
-            SurfaceSunken = Color.FromArgb("#0E0D0A"),
-            Hairline = Color.FromArgb("#3D3524"),
-            HairlineSoft = Color.FromArgb("#2A2418"),
-            TextPrimary = Color.FromArgb("#F8F4EA"),
-            TextSecondary = Color.FromArgb("#E7DCC2"),
-            TextHint = Color.FromArgb("#C4B896"),
-            TextOnAccent = Color.FromArgb("#1A1305"),
-            Accent = Color.FromArgb("#E3BE55"),
-            AccentSoft = Color.FromArgb("#302711"),
-            Success = Color.FromArgb("#8FCB7A"),
-            Danger = Color.FromArgb("#FF5A4D"),
-            ChipBg = Color.FromArgb("#2A2419"),
-            ChipText = Color.FromArgb("#E3D8BC"),
-            ImgPlaceholder = Color.FromArgb("#1E1A12"),
-            CardStroke = Color.FromArgb("#332C1C"),
+            Bg = Color.FromArgb("#EEF1E2"),
+            BgRaised = Color.FromArgb("#F5F7EA"),
+            Surface = Color.FromArgb("#FAFBF1"),
+            SurfaceAlt = Color.FromArgb("#E2E9D0"),
+            SurfaceSunken = Color.FromArgb("#E6EBD7"),
+            Hairline = Color.FromArgb("#B9C4A4"),
+            HairlineSoft = Color.FromArgb("#D3DCBF"),
+            TextPrimary = Color.FromArgb("#48523C"),
+            TextSecondary = Color.FromArgb("#75806A"),
+            TextHint = Color.FromArgb("#97A288"),
+            TextOnAccent = Color.FromArgb("#FBFDF4"),
+            Accent = Color.FromArgb("#6B8A5E"),
+            AccentSoft = Color.FromArgb("#DFE8CD"),
+            Success = Color.FromArgb("#4C8A4F"),
+            Danger = Color.FromArgb("#C05B4D"),
+            ChipBg = Color.FromArgb("#E2E9D0"),
+            ChipText = Color.FromArgb("#55614A"),
+            ImgPlaceholder = Color.FromArgb("#E5EBD6"),
+            CardStroke = Color.FromArgb("#C2CCAD"),
+            ShadowAlpha = 0.07f
+        };
+
+        // The sage graph-paper page: a touch greener, cards go nearly white so
+        // they lift off the grid.
+        private static readonly Palette GridP = new()
+        {
+            Bg = Color.FromArgb("#E3EAD5"),
+            BgRaised = Color.FromArgb("#EEF3E2"),
+            Surface = Color.FromArgb("#FBFCF3"),
+            SurfaceAlt = Color.FromArgb("#DEE7CB"),
+            SurfaceSunken = Color.FromArgb("#DCE4CA"),
+            Hairline = Color.FromArgb("#AEBB97"),
+            HairlineSoft = Color.FromArgb("#C9D4B3"),
+            TextPrimary = Color.FromArgb("#43503A"),
+            TextSecondary = Color.FromArgb("#6F7C63"),
+            TextHint = Color.FromArgb("#8FA07E"),
+            TextOnAccent = Color.FromArgb("#FBFDF4"),
+            Accent = Color.FromArgb("#63855A"),
+            AccentSoft = Color.FromArgb("#D9E4C3"),
+            Success = Color.FromArgb("#4C8A4F"),
+            Danger = Color.FromArgb("#C05B4D"),
+            ChipBg = Color.FromArgb("#DEE7CB"),
+            ChipText = Color.FromArgb("#505D45"),
+            ImgPlaceholder = Color.FromArgb("#E0E8CE"),
+            CardStroke = Color.FromArgb("#B7C29E"),
+            ShadowAlpha = 0.07f
+        };
+
+        // The daydream page: pale cloudy paper, slightly cooler ink.
+        private static readonly Palette CloudsP = new()
+        {
+            Bg = Color.FromArgb("#EAEEE3"),
+            BgRaised = Color.FromArgb("#F2F5EB"),
+            Surface = Color.FromArgb("#FBFCF6"),
+            SurfaceAlt = Color.FromArgb("#E0E7D6"),
+            SurfaceSunken = Color.FromArgb("#E2E8D9"),
+            Hairline = Color.FromArgb("#B6C1A8"),
+            HairlineSoft = Color.FromArgb("#D2DAC5"),
+            TextPrimary = Color.FromArgb("#4A5443"),
+            TextSecondary = Color.FromArgb("#78826E"),
+            TextHint = Color.FromArgb("#99A48C"),
+            TextOnAccent = Color.FromArgb("#FBFDF4"),
+            Accent = Color.FromArgb("#6E8B63"),
+            AccentSoft = Color.FromArgb("#DFE7D2"),
+            Success = Color.FromArgb("#4C8A4F"),
+            Danger = Color.FromArgb("#C05B4D"),
+            ChipBg = Color.FromArgb("#E0E7D6"),
+            ChipText = Color.FromArgb("#57614C"),
+            ImgPlaceholder = Color.FromArgb("#E3E9DA"),
+            CardStroke = Color.FromArgb("#C0CAAF"),
+            ShadowAlpha = 0.07f
+        };
+
+        // The bedtime page: deep navy night, pale warm ink, starlight-gold
+        // accents. Everything that is olive-on-cream by day flips to
+        // cream-on-navy so nothing ever sits black-on-black.
+        private static readonly Palette NightP = new()
+        {
+            Bg = Color.FromArgb("#1C2733"),
+            BgRaised = Color.FromArgb("#22303F"),
+            Surface = Color.FromArgb("#2A3A4C"),
+            SurfaceAlt = Color.FromArgb("#35485F"),
+            SurfaceSunken = Color.FromArgb("#16202B"),
+            Hairline = Color.FromArgb("#47596D"),
+            HairlineSoft = Color.FromArgb("#38495B"),
+            TextPrimary = Color.FromArgb("#F1F3E7"),
+            TextSecondary = Color.FromArgb("#C4CFD8"),
+            TextHint = Color.FromArgb("#91A1B0"),
+            TextOnAccent = Color.FromArgb("#2A3040"),
+            Accent = Color.FromArgb("#E8CD8C"),
+            AccentSoft = Color.FromArgb("#3B4757"),
+            Success = Color.FromArgb("#9CD08A"),
+            Danger = Color.FromArgb("#FF8A76"),
+            ChipBg = Color.FromArgb("#35485F"),
+            ChipText = Color.FromArgb("#DCE4EB"),
+            ImgPlaceholder = Color.FromArgb("#22303F"),
+            CardStroke = Color.FromArgb("#47596D"),
             ShadowAlpha = 0f
         };
 
-        private static readonly Palette MidnightP = new()
-        {
-            Bg = Color.FromArgb("#070B14"),
-            BgRaised = Color.FromArgb("#0E1526"),
-            Surface = Color.FromArgb("#111A2E"),
-            SurfaceAlt = Color.FromArgb("#1B2742"),
-            SurfaceSunken = Color.FromArgb("#050810"),
-            Hairline = Color.FromArgb("#263757"),
-            HairlineSoft = Color.FromArgb("#1C2A45"),
-            TextPrimary = Color.FromArgb("#EDF2FC"),
-            TextSecondary = Color.FromArgb("#C0CDE8"),
-            TextHint = Color.FromArgb("#8FA1C7"),
-            TextOnAccent = Color.FromArgb("#071120"),
-            Accent = Color.FromArgb("#7FB4FF"),
-            AccentSoft = Color.FromArgb("#14263F"),
-            Success = Color.FromArgb("#8FCB7A"),
-            Danger = Color.FromArgb("#FF6B5A"),
-            ChipBg = Color.FromArgb("#1B2742"),
-            ChipText = Color.FromArgb("#D5DFF4"),
-            ImgPlaceholder = Color.FromArgb("#0E1526"),
-            CardStroke = Color.FromArgb("#223250"),
-            ShadowAlpha = 0f
-        };
-
-        // theme7 — "DinoSpace": the hand-painted twilight artwork made for the
-        // app (purple mountains, ember forest, cream planet). Deep plum with a
-        // warm cream-gold accent pulled straight from the painting.
+        // theme5 — the hand-painted twilight artwork a friend made for the
+        // app (purple mountains, ember forest, cream planet). Deep plum with
+        // a warm cream-gold accent pulled straight from the painting.
         private static readonly Palette DinoP = new()
         {
             Bg = Color.FromArgb("#221338"),
@@ -113,136 +168,41 @@ namespace dinospace
             ShadowAlpha = 0f
         };
 
-        private static readonly Palette NebulaP = new()
-        {
-            Bg = Color.FromArgb("#120826"),
-            BgRaised = Color.FromArgb("#1C0F38"),
-            Surface = Color.FromArgb("#221343"),
-            SurfaceAlt = Color.FromArgb("#2F1D57"),
-            SurfaceSunken = Color.FromArgb("#0C0519"),
-            Hairline = Color.FromArgb("#3D2A6B"),
-            HairlineSoft = Color.FromArgb("#2E1F52"),
-            TextPrimary = Color.FromArgb("#F3EDFD"),
-            TextSecondary = Color.FromArgb("#D6C6F2"),
-            TextHint = Color.FromArgb("#A48FD0"),
-            TextOnAccent = Color.FromArgb("#1D0B33"),
-            Accent = Color.FromArgb("#D98CFF"),
-            AccentSoft = Color.FromArgb("#33204F"),
-            Success = Color.FromArgb("#8FCB7A"),
-            Danger = Color.FromArgb("#FF6B5A"),
-            ChipBg = Color.FromArgb("#2F1D57"),
-            ChipText = Color.FromArgb("#E5D8F8"),
-            ImgPlaceholder = Color.FromArgb("#1C0F38"),
-            CardStroke = Color.FromArgb("#3D2A6B"),
-            ShadowAlpha = 0f
-        };
-
-        // The Playful layout's one and only look: the storybook page. Warm
-        // cream paper scattered with little stars (playfultheme.png), soft
-        // sage cards with a fine olive outline, deep-olive ink. The Playful
-        // layout is locked to this — picking themes is a Native thing.
-        private static readonly Palette PlayfulP = new()
-        {
-            Bg = Color.FromArgb("#EEF1E2"),
-            BgRaised = Color.FromArgb("#F5F7EA"),
-            Surface = Color.FromArgb("#FAFBF1"),
-            SurfaceAlt = Color.FromArgb("#E2E9D0"),
-            SurfaceSunken = Color.FromArgb("#E6EBD7"),
-            Hairline = Color.FromArgb("#B9C4A4"),
-            HairlineSoft = Color.FromArgb("#D3DCBF"),
-            TextPrimary = Color.FromArgb("#48523C"),
-            TextSecondary = Color.FromArgb("#75806A"),
-            TextHint = Color.FromArgb("#97A288"),
-            TextOnAccent = Color.FromArgb("#FBFDF4"),
-            Accent = Color.FromArgb("#6B8A5E"),
-            AccentSoft = Color.FromArgb("#DFE8CD"),
-            Success = Color.FromArgb("#4C8A4F"),
-            Danger = Color.FromArgb("#C05B4D"),
-            ChipBg = Color.FromArgb("#E2E9D0"),
-            ChipText = Color.FromArgb("#55614A"),
-            ImgPlaceholder = Color.FromArgb("#E5EBD6"),
-            CardStroke = Color.FromArgb("#C2CCAD"),
-            ShadowAlpha = 0.07f
-        };
-
-        private static readonly Palette FossilP = new()
-        {
-            Bg = Color.FromArgb("#F6EFE2"),
-            BgRaised = Color.FromArgb("#FFFDF7"),
-            Surface = Color.FromArgb("#FFFDF7"),
-            SurfaceAlt = Color.FromArgb("#ECE1CC"),
-            SurfaceSunken = Color.FromArgb("#EFE7D6"),
-            Hairline = Color.FromArgb("#DCCFB4"),
-            HairlineSoft = Color.FromArgb("#E7DCC6"),
-            TextPrimary = Color.FromArgb("#2A2118"),
-            TextSecondary = Color.FromArgb("#6E5F4B"),
-            TextHint = Color.FromArgb("#A08D71"),
-            TextOnAccent = Color.FromArgb("#FFF9EC"),
-            Accent = Color.FromArgb("#A5652A"),
-            AccentSoft = Color.FromArgb("#F4E3D0"),
-            Success = Color.FromArgb("#2E7D32"),
-            Danger = Color.FromArgb("#C62828"),
-            ChipBg = Color.FromArgb("#ECE1CC"),
-            ChipText = Color.FromArgb("#5A4A34"),
-            ImgPlaceholder = Color.FromArgb("#EDE4D2"),
-            CardStroke = Colors.Transparent,
-            ShadowAlpha = 0.14f
-        };
-
-        // Every look the Native layout offers, in display order. Fossil is
-        // the default; theme5 is the app's own painted artwork.
+        // Every look, in display order. Starry paper is the default.
         public static readonly IReadOnlyList<Spec> Wallpapers = new List<Spec>
         {
-            new() { Id = "theme1", Name = "Fossil", Blurb = "Warm parchment, light and easy to read", Wallpaper = "theme1.png", Dark = false, P = FossilP },
-            new() { Id = "theme2", Name = "Dark Mode", Blurb = "Black and gold, calm at night", Wallpaper = null, Dark = true, P = DarkP },
-            new() { Id = "theme3", Name = "Starry Midnight", Blurb = "A calm, star-filled deep blue", Wallpaper = "theme3.png", Dark = true, P = MidnightP },
-            new() { Id = "theme4", Name = "Nebula", Blurb = "Soft violet clouds where stars are born", Wallpaper = "theme4.png", Dark = true, P = NebulaP },
-            new() { Id = "theme5", Name = "DinoSpace", Blurb = "The app's own painted twilight, dinosaurs and all", Wallpaper = "theme5.png", Dark = true, P = DinoP },
+            new() { Id = "stars", Name = "starry paper", Blurb = "warm cream paper with little gold stars", Wallpaper = "wall_stars.png", Dark = false, Dim = 0.06f, P = StarsP },
+            new() { Id = "grid", Name = "meadow grid", Blurb = "a soft sage graph-paper page", Wallpaper = "wall_grid.png", Dark = false, Dim = 0.28f, P = GridP },
+            new() { Id = "clouds", Name = "daydream clouds", Blurb = "pale drifting clouds, calm and quiet", Wallpaper = "wall_clouds.png", Dark = false, Dim = 0.12f, P = CloudsP },
+            new() { Id = "night", Name = "night sky", Blurb = "deep navy night full of tiny stars", Wallpaper = "wall_night.png", Dark = true, Dim = 0.22f, P = NightP },
+            new() { Id = "dinospace", Name = "dinospace", Blurb = "the hand-painted twilight made for the app", Wallpaper = "theme5.png", Dark = true, Dim = 0.72f, P = DinoP },
         };
 
-        private static Palette _p = FossilP;
+        private static Spec _spec = null!;
         public static bool IsDark { get; private set; }
-        public static string CurrentId { get; private set; } = "theme1";
+        public static string CurrentId { get; private set; } = "stars";
         public static string? Wallpaper { get; private set; }
 
-        // Applies whatever the user last chose. Ids from older builds (the
-        // "classic" pair and the retired meadow/ember/aurora slots) map onto
+        // Applies whatever the user last chose. Ids from older builds map onto
         // the closest current look.
         public static void ApplyCurrent()
         {
-            // The Playful layout is locked to its storybook page: the starred
-            // cream wallpaper and the sage palette, always. Theme choices are
-            // remembered and come back when the layout returns to Native.
-            if (Services.AppSettings.LayoutId == "playful")
+            string id = Services.AppSettings.ThemeId switch
             {
-                CurrentId = "playful";
-                Wallpaper = "playfultheme.png";
-                SetPalette(PlayfulP, dark: false);
-                return;
-            }
-
-            string id = Services.AppSettings.ThemeId;
-            id = id switch
-            {
-                "classic" => Services.AppSettings.DarkMode ? "theme2" : "theme1",
-                "theme7" => "theme5",   // old dinospace slot
-                "theme6" => "theme1",   // retired meadow slot
-                _ => id,
+                "theme5" or "theme7" => "dinospace",
+                "theme2" or "theme3" or "theme4" => "night",
+                "stars" or "grid" or "clouds" or "night" or "dinospace" => Services.AppSettings.ThemeId,
+                _ => "stars",
             };
 
+            Spec pick = Wallpapers[0];
             foreach (var s in Wallpapers)
-            {
-                if (s.Id == id)
-                {
-                    CurrentId = s.Id;
-                    Wallpaper = s.Wallpaper;
-                    SetPalette(s.P, s.Dark);
-                    return;
-                }
-            }
-            CurrentId = "theme1";
-            Wallpaper = Wallpapers[0].Wallpaper;
-            SetPalette(FossilP, dark: false);
+                if (s.Id == id) pick = s;
+
+            _spec = pick;
+            CurrentId = pick.Id;
+            Wallpaper = pick.Wallpaper;
+            SetPalette(pick.P, pick.Dark);
         }
 
         // Mirror the palette into the XAML resource dictionary so Styles.xaml
@@ -275,16 +235,10 @@ namespace dinospace
         }
 
         // A wash drawn between the wallpaper and the content so text stays
-        // readable no matter how busy the art is. The painted DinoSpace theme
-        // needs a much heavier hand than the quiet generated skies.
-        public static Color WallpaperDim => CurrentId switch
-        {
-            "theme5" => Bg.WithAlpha(0.72f),   // hand-painted art: calm it right down
-            "theme4" => Bg.WithAlpha(0.45f),
-            "theme3" => Bg.WithAlpha(0.38f),
-            "playful" => Bg.WithAlpha(0.06f),  // the starred paper IS the design
-            _ => Bg.WithAlpha(0.30f),
-        };
+        // readable no matter how busy the art is.
+        public static Color WallpaperDim => Bg.WithAlpha(_spec?.Dim ?? 0.06f);
+
+        private static Palette _p = StarsP;
 
         // ---- tokens (live views of the current palette) ----
         public static Color Bg => _p.Bg;

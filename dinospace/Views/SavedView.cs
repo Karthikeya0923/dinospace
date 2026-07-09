@@ -54,8 +54,9 @@ namespace dinospace.Views
             if (dinos.Count == 0 && space.Count == 0)
             {
                 var empty = new VerticalStackLayout { Spacing = 12, Padding = new Thickness(10, 40), HorizontalOptions = LayoutOptions.Center };
-                var icon = Ui.Icon(Ui.IconSaved, 64, Theme.TextHint);
-                empty.Add(icon);
+                // the sleepy mascot's spot (mascot_empty.png); a thought
+                // bubble sticker holds the space until the art lands
+                empty.Add(Ui.Mascot("mascot_empty", 110, "st_bub_thought.png"));
                 empty.Add(new Label
                 {
                     Text = "Nothing saved yet.",
@@ -64,7 +65,7 @@ namespace dinospace.Views
                 });
                 empty.Add(new Label
                 {
-                    Text = "Tap the bookmark on any dinosaur or space object and it'll wait for you here.",
+                    Text = "Tap the bookmark on any creature or space object and it'll wait for you here.",
                     FontFamily = Ui.Fonts, FontSize = Ui.S(14), LineHeight = 1.45, TextColor = Theme.TextSecondary,
                     HorizontalTextAlignment = TextAlignment.Center
                 });

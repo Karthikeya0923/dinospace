@@ -24,7 +24,7 @@ namespace dinospace.Views
         {
             var stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(18, 4, 18, 28) };
 
-            stack.Add(new Label { Text = "Quiz time", FontFamily = Ui.Display, FontSize = Ui.S(30), TextColor = Theme.TextPrimary });
+            stack.Add(new Label { Text = "quiz time", FontFamily = Ui.Display, FontSize = Ui.S(30), TextColor = Theme.TextPrimary });
             stack.Add(new Label
             {
                 Text = "Pick a topic and how many questions you're up for.",
@@ -90,11 +90,14 @@ namespace dinospace.Views
             foreach (var m in new[] { "Dinosaurs", "Space", "Mixed" })
             {
                 bool active = _mode == m;
+                // "Dinosaurs" stays the internal mode key; the chip reads
+                // "prehistoric creatures" like the rest of the app.
+                string display = m == "Dinosaurs" ? "Prehistoric creatures" : m;
                 var chip = new Border
                 {
                     Content = new Label
                     {
-                        Text = m, FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), FontAttributes = FontAttributes.Bold,
+                        Text = Ui.T(display), FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), FontAttributes = FontAttributes.Bold,
                         TextColor = active ? Theme.TextOnAccent : Theme.ChipText
                     },
                     BackgroundColor = active ? Theme.Accent : Theme.ChipBg,

@@ -48,7 +48,7 @@ namespace dinospace.Views
             });
 
             _stack.Add(MoonHero());
-            _stack.Add(Ui.PrimaryButton("✦  POINT AT THE SKY", async (_, _) => await Nav.Push(() => new SkyViewPage())));
+            _stack.Add(Ui.PrimaryButton("Point at the sky", async (_, _) => await Nav.Push(() => new SkyViewPage())));
             _stack.Add(MoonDetailCard());
             _stack.Add(AskNovaCard());
             _stack.Add(TelescopeCard());
@@ -199,7 +199,7 @@ namespace dinospace.Views
                 BackgroundColor = Ui.MultiplyAlpha(Theme.AccentNova, 0.18f),
                 Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 19 },
                 VerticalOptions = LayoutOptions.Center,
-                Content = new Label { Text = "✦", FontSize = 18, TextColor = Theme.AccentNova, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
+                Content = new Image { Source = "st_icon_star.png", WidthRequest = 20, HeightRequest = 20, Aspect = Aspect.AspectFit, HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center }
             };
 
             var grid = new Grid { ColumnSpacing = 12 };

@@ -78,7 +78,7 @@ namespace dinospace.Views
             {
                 BackgroundColor = Ui.MultiplyAlpha(Accent, 0.14f), Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 12 }, Padding = new Thickness(14, 10),
-                Content = new Label { Text = "✦ You made this creation", FontFamily = Ui.Fonts, FontSize = Ui.S(13), FontAttributes = FontAttributes.Bold, TextColor = Accent, HorizontalTextAlignment = TextAlignment.Center }
+                Content = new Label { Text = "You made this creation", FontFamily = Ui.Fonts, FontSize = Ui.S(13), FontAttributes = FontAttributes.Bold, TextColor = Accent, HorizontalTextAlignment = TextAlignment.Center }
             };
             stack.Add(badge);
 

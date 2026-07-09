@@ -218,7 +218,7 @@ namespace dinospace.Views
 
             string verdict = pct switch
             {
-                100 => "Perfect score! You're a true expert. 🦖",
+                100 => "Perfect score! You're a true expert.",
                 >= 80 => "Amazing work! You really know your stuff.",
                 >= 60 => "Nice job! You're learning fast.",
                 >= 40 => "Good effort — keep exploring to level up!",
@@ -243,7 +243,10 @@ namespace dinospace.Views
                 }
             };
 
-            _body.Add(new Label { Text = "Quiz complete!", FontFamily = Ui.Display, FontSize = 26, TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(0, 20, 0, 8) });
+            _body.Add(new Label { Text = "quiz complete!", FontFamily = Ui.Display, FontSize = 26, TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(0, 20, 0, 8) });
+            // the celebrating mascot's spot (mascot_quiz.png), above the score
+            if (Ui.HasImage("mascot_quiz"))
+                _body.Add(Ui.Mascot("mascot_quiz", 120));
             _body.Add(ring);
             _body.Add(new Label { Text = verdict, FontFamily = Ui.Fonts, FontSize = 15, LineHeight = 1.4, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(20, 8) });
 

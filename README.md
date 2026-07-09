@@ -9,7 +9,7 @@ DinoSpace blends the two things every kid (and plenty of adults) can't get enoug
 ![Framework](https://img.shields.io/badge/framework-.NET%20MAUI-purple)
 ![Status](https://img.shields.io/badge/status-Play%20Store%20prep-orange)
 
-(add screenshot of home screen — Native layout) (add screenshot of home screen — Playful layout) (add screenshot of Sky Tonight) (add screenshot of Scan Sky in landscape with the camera + white star overlay) (add screenshot of NovaSaur chat) (add screenshot of a dino detail page) (add screenshot of Your Creations — the drawing studio) (add screenshot of Dino Battle with "Include my creatures" on) (add screenshot of a quiz) (add screenshot of the layout picker) (add screenshot of the themes picker)
+(add screenshot of the home cover) (add screenshot of Sky Tonight) (add screenshot of Scan Sky in landscape with the camera + white star overlay) (add screenshot of the NovaSaur chat) (add screenshot of a creature detail page) (add screenshot of Your Creations — the drawing studio) (add screenshot of Dino Battle) (add screenshot of a quiz) (add screenshot of the themes picker)
 
 ---
 
@@ -19,7 +19,7 @@ DinoSpace blends the two things every kid (and plenty of adults) can't get enoug
 33 dinosaurs and prehistoric creatures, 23 space objects — every entry hand-written and fact-checked against sources like NASA and published paleontology research. Stats, fun facts, behaviour, habitat, era, and full-page write-ups, with search, category filters, bookmarks, and curated ranked collections.
 
 ### 🔭 Scan Sky — point your phone at the sky
-Hold your phone up and the live camera fills the screen, with the whole naked-eye sky drawn over reality exactly where it is: **1,700 catalogue stars** with their true colours and a gentle twinkle, the **Milky Way's band** brightening toward its real core, constellation stick-figures, planets drawn with their signature looks (Saturn's rings, Jupiter's cloud belts, Mars' polar cap), a **phase-correct moon with its maria**, and the complete **Messier + Caldwell deep-sky catalogues** — 219 nebulae, clusters and galaxies, each with a one-line story. Shooting stars streak away from the radiant whenever a real meteor shower is active. A **time-travel slider** scrubs the sky up to 12 hours either way (bring the sun up, watch tonight's planets rise), and a **sky-darkness toggle** shows the honest star count for a city, suburb or dark-site sky. The page flips into landscape automatically; aim the crosshair at anything and a card names it, links into the encyclopedia, and offers **Ask NovaSaur** for whatever's under the crosshair. No camera falls back to a twilight-aware painted sky, and drag-to-explore works with no sensors at all.
+Hold your phone up and the live camera fills the screen, with the whole naked-eye sky drawn over reality exactly where it is: **1,700 catalogue stars** with their true colours and a gentle twinkle, the **Milky Way's band** brightening toward its real core, constellation stick-figures, planets drawn with their signature looks (Saturn's rings, Jupiter's cloud belts, Mars' polar cap), a **phase-correct moon with its maria**, and the complete **Messier + Caldwell deep-sky catalogues** — 219 nebulae, clusters and galaxies, each with a one-line story. Shooting stars streak away from the radiant whenever a real meteor shower is active. A **time-travel slider** scrubs the sky up to 12 hours either way (bring the sun up, watch tonight's planets rise), and the overlay always draws the full dark-site sky. The page flips into landscape automatically; aim the crosshair at anything and a card names it, links into the encyclopedia, and offers **Ask NovaSaur** for whatever's under the crosshair. No camera falls back to a twilight-aware painted sky, and drag-to-explore works with no sensors at all.
 
 ### 🌙 Sky Tonight
 Open the app and it tells you what's above you *right now*: the moon's phase (drawn with the real terminator curve), moonrise and moonset, which planets are visible and where to look, the constellations overhead, sunset/sunrise, the moment the sky gets *properly* dark, and the next meteor shower with a moonlight forecast. All of it is computed on-device by [SkyScanner](https://github.com/Karthikeya0923/SkyScanner), an astronomy engine verified against NASA JPL's Horizons ephemeris to within a few hundredths of a degree. Location is optional — say no and you still get a general Northern-sky view. A built-in "Learn the sky" page explains every moon phase and how to tell a planet from a star.
@@ -33,14 +33,14 @@ A proper little paint studio: real finger-drag freehand with five brushes (penci
 ### 🎮 Play
 Quizzes (5 to 100 questions, dinosaurs / space / mixed), Dino Battles with stat-driven verdicts that argue each matchup like a sports column, daily featured creatures, a **Surprise Me** button that pulls a creature or world you haven't met yet, and streak + discovery counters to keep explorers coming back.
 
-### 🪄 Two layouts, one app
-A whole second look you can switch to instantly, with the same seamless cross-fade the themes use. **Native** is the grown-up editorial style — elegant serif headlines, a flat tab bar, quiet monochrome cards, magazine-style lists. **Playful** is a ground-up redesign for 5-to-10-year-olds in soft storybook pastels — sage, powder blue, blush — with rounded Baloo headlines, a home screen of gentle pastel "worlds" to tap into, chunky buttons, and a bubbly tab bar. Same features, a completely different app. Choose it under Settings → Choose a layout. Six full themes sit alongside under Choose a theme, including **Dino Meadow**, a pale-sage picture-book world made for the Playful layout.
+### 🪄 The storybook look, five ways
+One hand-drawn storybook design language across the whole app — lowercase Baloo headlines, sage-and-cream cards, sticker-sheet illustrations — dressed by **five full themes**, each a wallpaper plus a palette tuned for it so text always reads clearly: **starry paper** (the signature cream page with little gold stars), **meadow grid**, **daydream clouds**, **night sky** (deep navy with pale ink and starlight-gold accents), and **dinospace** — the hand-painted twilight artwork made for the app. Switch under Settings → Choose a theme; the whole app re-skins with a seamless cross-fade.
 
 ---
 
 ## Engineering notes
 
-- **All-C# UI** — every screen is built in code (no XAML pages), on a small component kit with design tokens. Both the **theme** (palette + wallpaper) and the **layout** (fonts, shapes, tab bar, home screen) are switchable at runtime and re-skin the whole app with a freeze-frame cross-fade.
+- **All-C# UI** — every screen is built in code (no XAML pages), on a small component kit with design tokens. The **theme** (palette + wallpaper) switches at runtime and re-skins the whole app with a freeze-frame cross-fade; dark themes swap the full palette so nothing ever sits black-on-black.
 - **Instant-first answering** — a typo-tolerant matcher (aliases, edit distance, kid abbreviations) routes questions to the encyclopedia, the knowledge base, or the live astronomy engine before the model is ever considered; follow-up pronouns ("how fast was *it*?") resolve against the last-mentioned entities. Everything else goes straight to the model — one question at a time, with a full engine reload before each new question so the small model always starts clean.
 - **On-device drawing** — the Your Creations studio captures finger-strokes via pointer events, renders them live through `Microsoft.Maui.Graphics`, and rasterises to a PNG with a native Android canvas; creations convert into the same models the built-in encyclopedia uses, so they battle and list like any other entry.
 - **2.4 GB model delivery** — the AI model ships via Google Play Asset Delivery in 1 GB chunks and assembles on first run; a resumable in-app download (with pause/resume, storage preflight, and a remove-to-free-space option in Settings) covers every other install. No notification or foreground-service permissions needed.
@@ -75,26 +75,25 @@ Tracked in detail on the [project board →](https://github.com/users/Karthikeya
 - [x] Custom lists — build and mix your own dino/space collections (your creations included)
 - [x] Scan Sky — camera passthrough with a live overlay, automatic landscape, all 88 constellations, target card with Learn More & Ask NovaSaur
 - [x] Scan Sky, the full planetarium: 1,700-star catalogue with true colours, the Milky Way band, all 110 Messier + 109 Caldwell objects, textured moon & planets, radiant-aware shooting stars
-- [x] Time-travel slider (±12 h) and a city/suburb/dark-sky darkness toggle in Scan Sky
+- [x] Time-travel slider (±12 h) in Scan Sky
 - [x] True-north sensor pointing — the overlay tracks the real compass, so the moon is drawn where the moon is
 - [x] Streaming AI answers + 80-topic knowledge base, verified by an 800+-question harness
 - [x] Reset-per-question AI: one question at a time, a clean engine before every answer, no long-session decay, and no topic wall
 - [x] Your Creations — a drawing studio with full stats, its own gallery, custom-list support, and a Dino Battle "Include my creatures" toggle
-- [x] Two switchable layouts — grown-up **Native** and kid-first **Playful** — with a seamless cross-fade
 - [x] Live sky answers in chat — "where is Jupiter right now?", "when is the next meteor shower?"
 - [x] Meteor showers on Sky Tonight — active shower, next peak, moonlight forecast
 - [x] Moonrise/moonset and true astronomical-dark times
 - [x] Surprise Me discovery, daily streak & discovery counters
-- [x] Six full themes with wallpapers — including the pastel Dino Meadow — switched with a seamless cross-fade
-- [x] Playful layout in storybook pastels; Native layout kept quiet and editorial
+- [x] One storybook design language with five full wallpaper themes — including the hand-painted **dinospace** twilight — switched with a seamless cross-fade
+- [x] Sticker-sheet illustration system: cut-out art, theme wallpapers, app icon and splash all from one hand-drawn sheet
 - [x] True edge-to-edge UI, haptic strength control, adjustable text size
 - [x] In-app AI model manager — download / pause / resume / remove, in the chat and in Settings
 - [x] Drawings always display whole — letterboxed on their canvas colour in the gallery, entries, battles, and thumbnails
 - [x] Zero-warning build; AI answer pipeline covered by an automated test harness
 
 **In progress**
-- [ ] Final artwork for all encyclopedia entries
-- [ ] Play Store assets (icon, feature graphic, splash screen)
+- [ ] Final artwork for all encyclopedia entries and the mascot slots
+- [ ] Play Store listing assets (feature graphic, store screenshots)
 - [ ] Google Play closed testing, then production release
 
 ---
