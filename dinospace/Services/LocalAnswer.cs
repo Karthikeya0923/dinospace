@@ -27,6 +27,13 @@ namespace dinospace.Services
             var sky = SkyAnswer(q);
             if (sky != null) return sky;
 
+            // 0.5) Ranking, ordering, counting and list questions ("top 5
+            //      strongest dinosaurs", "name the planets in order") — sorted
+            //      straight out of the encyclopedia before entity matching can
+            //      shrink them down to a single creature.
+            var ranked = RankedAnswer.TryAnswer(q);
+            if (ranked != null) return ranked;
+
             var dinos = new List<Dinosaur>();
             var spaces = new List<SpaceObject>();
             foreach (var name in g.Entities)
@@ -635,7 +642,7 @@ namespace dinospace.Services
         private static bool Has(string v) => !string.IsNullOrWhiteSpace(v);
 
         // Turns "7500kg" -> "7,500 kg", "20km/h" -> "20 km/h", keeps "42 feet".
-        private static string Pretty(string stat)
+        internal static string Pretty(string stat)
         {
             if (string.IsNullOrWhiteSpace(stat)) return stat;
             stat = stat.Trim();
@@ -649,7 +656,7 @@ namespace dinospace.Services
             return unit.Length == 0 ? num : num + " " + unit;
         }
 
-        private static double Num(string s)
+        internal static double Num(string s)
         {
             if (string.IsNullOrWhiteSpace(s)) return 0;
             var sb = new StringBuilder(); bool started = false;
@@ -710,7 +717,7 @@ namespace dinospace.Services
             return char.ToLowerInvariant(s[0]) + s[1..];
         }
 
-        private static string FirstSentences(string text, int n)
+        internal static string FirstSentences(string text, int n)
         {
             var s = Sentences(text);
             return string.Join(" ", s.Take(n).Select(Clean)).Trim();

@@ -285,9 +285,63 @@ for (int a = 0; a < spaceNames.Count; a++)
 Console.WriteLine($"=== round 6 (pairwise distances): {d6} questions, {bad6} not answered instantly ===");
 foreach (var f in fail6) Console.WriteLine("  " + f);
 
+// round 7: ranking, ordering and list questions — the ones that used to fall
+// through to the model ("top 5 strongest dinosaurs", "planets in order").
+// Every one must answer INSTANTLY, and where a champion is known the reply
+// must actually contain it.
+(string q, string? mustMention)[] rankings =
+{
+    ("what are the top 5 strongest dinosaurs", "Tyrannosaurus"),
+    ("top 5 strongest dinosaurs", "Tyrannosaurus"),
+    ("name the planets in order", "Mercury"),
+    ("what are the planets in order", "Neptune"),
+    ("planets in order from the sun", "Venus"),
+    ("top 3 biggest planets", "Jupiter"),
+    ("what are the 3 biggest planets", "Saturn"),
+    ("what is the biggest planet", "Jupiter"),
+    ("what is the smallest planet", "Mercury"),
+    ("planets in order of size", "Jupiter"),
+    ("which planet has the most moons", "Saturn"),
+    ("what is the biggest moon", "Ganymede"),
+    ("list the planets", "Uranus"),
+    ("name all the planets", "Earth"),
+    ("top 10 biggest dinosaurs", "Argentinosaurus"),
+    ("what are the 5 fastest dinosaurs", null),
+    ("top 3 heaviest dinosaurs", "Argentinosaurus"),
+    ("strongest dinosaurs", "Tyrannosaurus"),
+    ("what is the strongest dinosaur", "Tyrannosaurus"),
+    ("what is the most dangerous dinosaur", null),
+    ("what was the deadliest dinosaur", null),
+    ("top 5 biggest carnivores", null),
+    ("biggest herbivores", null),
+    ("what is the biggest sea creature", null),
+    ("biggest flying creature", null),
+    ("fastest dinosaurs", null),
+    ("rank the dinosaurs by size", null),
+    ("smallest dinosaurs", null),
+    ("how many dinosaurs do you know", null),
+    ("how many planets are there", "eight"),
+    ("name some dinosaurs", null),
+    ("list 5 sea creatures", null),
+    ("name 3 herbivores", null),
+    ("what is the biggest galaxy", null),
+    ("what is the biggest black hole", "Phoenix"),
+    ("top 5 tallest dinosaurs", null),
+};
+int i7 = 0, m7 = 0;
+foreach (var (q7, must) in rankings)
+{
+    var t7 = PromptBuilder.Build(q7, new List<ChatMessage>(), new List<string>());
+    string? r7 = (t7.InstantReply != null && t7.InstantReply != NovaGuard.OffTopic) ? t7.InstantReply : null;
+    bool ok = r7 != null && !IsDodge(r7) && (must == null || r7.Contains(must, StringComparison.OrdinalIgnoreCase));
+    if (ok) { i7++; Console.WriteLine($"rank      {q7}  ->  {Snip(r7!.Replace('\n', ' '))}"); }
+    else { m7++; Console.WriteLine($"RANK-FAIL {q7}  ->  {Snip((r7 ?? t7.OfflineFallback ?? "(dead)").Replace('\n', ' '))}"); }
+}
+Console.WriteLine($"=== round 7 (rankings): {i7} instant, {m7} FAILURES ===");
+
 // CI-friendly: hard-fail when a question truly dead-ends (no instant reply
-// AND no offline fallback), a suggestion chip can't answer instantly, or a
-// distance pair goes unanswered. Dodge/wrong-entity counts print above as
-// advisories — the graders are heuristic and flag correct answers that
-// simply don't restate the creature's name.
-Environment.Exit(uncovered + m2 + m3 + m4 + dead + bad6 > 0 ? 1 : 0);
+// AND no offline fallback), a suggestion chip can't answer instantly, a
+// distance pair goes unanswered, or a ranking question fails. Dodge/wrong-
+// entity counts print above as advisories — the graders are heuristic and
+// flag correct answers that simply don't restate the creature's name.
+Environment.Exit(uncovered + m2 + m3 + m4 + dead + bad6 + m7 > 0 ? 1 : 0);

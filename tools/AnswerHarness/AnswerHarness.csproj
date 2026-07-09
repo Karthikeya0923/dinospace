@@ -22,6 +22,7 @@
     <Compile Include="..\..\dinospace\Data\FactData.cs" />
     <Compile Include="..\..\dinospace\Services\Retriever.cs" />
     <Compile Include="..\..\dinospace\Services\LocalAnswer.cs" />
+    <Compile Include="..\..\dinospace\Services\RankedAnswer.cs" />
     <Compile Include="..\..\dinospace\Services\PromptBuilder.cs" />
     <Compile Include="..\..\dinospace\Services\NovaCreative.cs" />
     <Compile Include="..\..\dinospace\Services\NovaGuard.cs" />
