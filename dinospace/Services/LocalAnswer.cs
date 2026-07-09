@@ -501,7 +501,13 @@ namespace dinospace.Services
         private static string EntityAnswer(string q, string name, List<string> sentences, string intro)
         {
             string rel = MostRelevant(q, name, sentences);
-            return rel.Length > 0 ? rel : intro;
+            string ans = rel.Length > 0 ? rel : intro;
+            // Entry sentences say "It…" because they live under a heading; in
+            // chat the creature should be named, so a child (or a scrollback
+            // reader) never wonders who "it" was.
+            if (ans.StartsWith("It ")) ans = name + ans[2..];
+            else if (ans.StartsWith("Its ")) ans = name + "'s" + ans[3..];
+            return ans;
         }
 
         private static string DinoIntro(Dinosaur d)

@@ -56,6 +56,17 @@ namespace dinospace.Services
             //     go straight to the model — that's what it's FOR.
             bool creative = IsCreative(q);
 
+            // 3.45 …except destructive hypotheticals the curated knowledge base
+            //      actually covers — "what would happen if the moon
+            //      disappeared" has a real physics answer, and kids deserve it
+            //      instantly rather than a make-believe story.
+            if (creative && new[] { "disappear", "vanish", "was gone", "were gone", "exploded", "blew up", "blow up", "without the" }
+                    .Any(c => q.Contains(c)))
+            {
+                var nug = Retriever.BestNugget(q);
+                if (nug != null) { turn.InstantReply = nug.Fact; turn.Entities = g.Entities; return turn; }
+            }
+
             // 3.5 Otherwise answer straight from the vetted encyclopedia
             //     whenever we can: instant and always accurate, saving the
             //     slow on-device model for genuinely open questions.

@@ -136,17 +136,44 @@ namespace dinospace.Services
                 foreach (var t in tokens)
                 {
                     string tok = t.Length > 3 && t.EndsWith("s") ? t[..^1] : t;
-                    if (tok == key) { if (key.Length > best) best = key.Length; break; }
+                    if (tok == key || t == key) { if (key.Length > best) best = key.Length; break; }
                     // kid abbreviation: 5+ letter start of an 8+ letter name
                     if (key.Length >= 8 && tok.Length >= 5 && tok.Length < key.Length && key.StartsWith(tok))
                     { if (tok.Length > best) best = tok.Length; break; }
-                    // typo tolerance
-                    if (key.Length >= 6 && Math.Abs(tok.Length - key.Length) <= 2)
+                    // Typo tolerance. The RAW token is checked as well as the
+                    // de-pluralised one: dinosaur names end in "s", so stripping
+                    // it turned near-misses like "trisaratops" into far misses.
+                    if (key.Length >= 5 && Math.Abs(t.Length - key.Length) <= 2)
                     {
-                        int allowed = key.Length >= 10 ? 2 : 1;
-                        if (EditDistanceAtMost(tok, key, allowed) && key.Length - 1 > best) best = key.Length - 1;
+                        int allowed = key.Length >= 7 ? 2 : 1;
+                        if ((EditDistanceAtMost(t, key, allowed) || EditDistanceAtMost(tok, key, allowed))
+                            && key.Length - 1 > best) best = key.Length - 1;
                     }
+                    // very short names ("sun") still deserve one slip — "the
+                    // son" — but only when the first letter agrees, so common
+                    // words can't drift onto planets.
+                    if (key.Length is 3 or 4 && t.Length == key.Length && t[0] == key[0]
+                        && EditDistanceAtMost(t, key, 1) && key.Length - 1 > best) best = key.Length - 1;
                 }
+
+                // Split-typo repair: kids write "tirano sarus" or "veloci
+                // raptor". Adjacent tokens are joined and matched against the
+                // long names. A fuzzy joined hit scores well BELOW an exact
+                // name (-4), because question words glued to a name ("did
+                // spinosaurus") can lie within edit distance of some OTHER
+                // dinosaur — the real name must always outrank the mirage.
+                if (key.Length >= 8)
+                    for (int i = 0; i + 1 < tokens.Length; i++)
+                    {
+                        string joined = tokens[i] + tokens[i + 1];
+                        if (joined == key) { if (key.Length > best) best = key.Length; break; }
+                        if (joined.Length >= 10 && Math.Abs(joined.Length - key.Length) <= 3)
+                        {
+                            int allowed = key.Length >= 12 ? 4 : 2;
+                            if (EditDistanceAtMost(joined, key, allowed)
+                                && key.Length - 4 > best) best = key.Length - 4;
+                        }
+                    }
             }
             return best;
         }

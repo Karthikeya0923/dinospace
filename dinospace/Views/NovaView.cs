@@ -280,17 +280,22 @@ namespace dinospace.Views
             int myGen = ++_gen;
             StartThinking();
             _ = FailsafeAsync(myGen);   // hard guarantee: "thinking…" can never last forever
-            await ScrollToEnd();
+            // Fire-and-forget on purpose: ScrollToAsync can wedge while the
+            // keyboard is animating, and awaiting it here silently froze the
+            // whole turn — no answer, just the failsafe apology 20s later.
+            _ = ScrollToEnd();
 
             NovaTurn turn;
             try { turn = PromptBuilder.Build(question, _messages, _lastEntities); }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Nova prompt: " + ex); FinishAnswer(myGen, NovaSaurService.ErrorMessage); return; }
+            catch (Exception ex) { Log("prompt build failed: " + ex.Message); FinishAnswer(myGen, NovaSaurService.ErrorMessage); return; }
+            _turn = turn;   // the failsafe answers from this turn's offline brain, never an apology
 
             if (turn.Entities.Count > 0) _lastEntities = new List<string>(turn.Entities);
 
             // Grounded instant reply from the encyclopedia — the common case.
             if (turn.InstantReply != null)
             {
+                Log("instant reply");
                 await Task.Delay(200);
                 if (myGen != _gen) return;
                 StopThinking();
@@ -306,11 +311,13 @@ namespace dinospace.Views
             // the chat "thinking…" until the timeout.
             if (!NovaSaurService.IsWarm)
             {
+                Log("model cold — offline fallback");
                 if (myGen != _gen) return;
                 StopThinking();
                 Reveal(turn.OfflineFallback ?? NovaSaurService.ErrorMessage);
                 return;
             }
+            Log("model warm — streaming");
 
             // The bubble is created on the FIRST token, not up front — until
             // then the "thinking…" line stays, so a slow engine warm-up reads
@@ -338,7 +345,7 @@ namespace dinospace.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Nova ask: " + ex);
+                Log("stream threw: " + ex.Message);
                 answer = turn.OfflineFallback ?? NovaSaurService.ErrorMessage;
             }
 
@@ -346,9 +353,14 @@ namespace dinospace.Views
             if (myGen != _gen) return;
 
             // If the model came back empty or with a failure line, fall back to
-            // the offline answer so the turn is never a dead end.
+            // the offline answer so the turn is never a dead end. The child
+            // never reads a timeout apology when a real answer exists.
             if (string.IsNullOrWhiteSpace(answer) || answer == NovaSaurService.ErrorMessage || answer == NovaSaurService.TimeoutMessage)
+            {
+                Log($"stream failed ({(string.IsNullOrWhiteSpace(answer) ? "empty" : answer == NovaSaurService.TimeoutMessage ? "timeout" : "error")}) — using offline fallback");
                 answer = turn.OfflineFallback ?? answer;
+            }
+            else Log("stream answered");
 
             StopThinking();                     // still up if no token ever arrived
             live ??= StartNovaBubble();
@@ -363,19 +375,37 @@ namespace dinospace.Views
         private void FinishAnswer(int myGen, string finalAnswer)
         {
             if (myGen != _gen) return;
+            _gen++;               // invalidate the in-flight turn so a late
+            _streaming = false;   // stream result can't post a second bubble
             StopThinking();
             Reveal(finalAnswer);
         }
 
         // Backstop for anything unforeseen: if this turn is somehow still
         // "thinking" — not streaming, not revealing — after the watchdog
-        // window, end it with a friendly line instead of hanging.
+        // window, end it with the turn's own offline answer (an apology only
+        // when there is truly nothing better to say).
         private async Task FailsafeAsync(int myGen)
         {
             await Task.Delay(TimeSpan.FromSeconds(20));
             if (myGen == _gen && _busy && !_revealActive && !_streaming)
-                FinishAnswer(myGen, NovaSaurService.TimeoutMessage);
+            {
+                Log("failsafe fired");
+                FinishAnswer(myGen, _turn?.OfflineFallback ?? NovaSaurService.TimeoutMessage);
+            }
         }
+
+        // adb-visible diagnostics: `adb logcat -s NovaChat` tells the whole
+        // story of every turn — which path answered and why.
+        private static void Log(string msg)
+        {
+#if ANDROID
+            try { Android.Util.Log.Info("NovaChat", msg); } catch { }
+#endif
+            System.Diagnostics.Debug.WriteLine("NovaChat: " + msg);
+        }
+
+        private NovaTurn? _turn;
 
         private void StopGeneration()
         {

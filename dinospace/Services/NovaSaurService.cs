@@ -31,9 +31,18 @@ namespace dinospace.Services
         private static readonly SemaphoreSlim _lock = new(1, 1);
 
         // Time budgets, deliberately tight so the chat never feels stuck.
+        // A healthy warm engine produces its first token in seconds; when it
+        // hasn't after this long it's wedged, and the chat swaps in the
+        // offline answer instead — so these caps bound how long a child can
+        // ever stare at "thinking…", not how long an answer may take.
         private static readonly TimeSpan QueueCap = TimeSpan.FromSeconds(35);   // waiting for the engine (reload/other answer)
         private static readonly TimeSpan FirstTokenCap = TimeSpan.FromSeconds(30);
-        private static readonly TimeSpan QuietCap = TimeSpan.FromSeconds(18);   // silence after tokens started
+        private static readonly TimeSpan QuietCap = TimeSpan.FromSeconds(15);   // silence after tokens started
+
+        // Two stream failures in a row = the engine is not trustworthy this
+        // session; every question answers from the instant offline brain
+        // until a warm-up proves the engine healthy again.
+        private static int _streamStrikes;
 
         public static bool SupportedPlatform =>
 #if ANDROID
@@ -62,7 +71,15 @@ namespace dinospace.Services
         // path instead.
         private static volatile bool _warm;
         private static int _warmPending;
-        public static bool IsWarm => IsReady && _warm;
+        public static bool IsWarm => IsReady && _warm && Volatile.Read(ref _streamStrikes) < 2;
+
+        private static void Log(string msg)
+        {
+#if ANDROID
+            try { Android.Util.Log.Info("NovaSvc", msg); } catch { }
+#endif
+            System.Diagnostics.Debug.WriteLine("NovaSvc: " + msg);
+        }
 
         private static void ScheduleWarmUp()
         {
@@ -289,6 +306,7 @@ namespace dinospace.Services
                     if (Environment.TickCount64 - callStart > QueueCap.TotalMilliseconds)
                     {
                         Interlocked.Exchange(ref abandoned, 1);
+                        Log($"queue timeout after {(Environment.TickCount64 - callStart) / 1000}s");
                         return TimeoutMessage;
                     }
                     continue;
@@ -297,19 +315,39 @@ namespace dinospace.Services
                 bool started; lock (sb) started = sb.Length > 0;
                 if ((!started && idleMs > FirstTokenCap.TotalMilliseconds) || (started && idleMs > QuietCap.TotalMilliseconds))
                 {
+                    Interlocked.Increment(ref _streamStrikes);
+                    Log($"stream {(started ? "stalled mid-answer" : "produced no tokens")} after {idleMs / 1000}s (strike {Volatile.Read(ref _streamStrikes)})");
                     ScheduleReset();
+
+                    // A stall after real progress isn't a loss: keep what the
+                    // model wrote, trimmed to its last complete sentence.
+                    if (started)
+                    {
+                        string partial; lock (sb) partial = sb.ToString();
+                        string salvage = PromptBuilder.Clean(partial);
+                        int lastStop = Math.Max(salvage.LastIndexOf('.'), Math.Max(salvage.LastIndexOf('!'), salvage.LastIndexOf('?')));
+                        if (lastStop >= 80)
+                        {
+                            salvage = salvage[..(lastStop + 1)];
+                            var guarded = NovaGuard.CheckAnswer(salvage) ?? salvage;
+                            Log($"salvaged {guarded.Length} chars from the stalled stream");
+                            return guarded;
+                        }
+                    }
                     return TimeoutMessage;
                 }
             }
 
             string raw;
             try { raw = await work; }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("NovaSaur stream: " + ex); ScheduleReset(); return ErrorMessage; }
+            catch (Exception ex) { Log("stream threw: " + ex.Message); Interlocked.Increment(ref _streamStrikes); ScheduleReset(); return ErrorMessage; }
 
             ScheduleReset();   // reload in the background for a clean next question
-            if (raw.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase)) return ErrorMessage;
+            if (raw.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase)) { Log("stream error: " + raw); Interlocked.Increment(ref _streamStrikes); return ErrorMessage; }
             string cleaned = PromptBuilder.Clean(raw);
-            if (string.IsNullOrWhiteSpace(cleaned)) return ErrorMessage;
+            if (string.IsNullOrWhiteSpace(cleaned)) { Log("stream returned empty text"); return ErrorMessage; }
+            Interlocked.Exchange(ref _streamStrikes, 0);
+            Log($"stream ok ({cleaned.Length} chars)");
             return NovaGuard.CheckAnswer(cleaned) ?? cleaned;
 #else
             await Task.CompletedTask;

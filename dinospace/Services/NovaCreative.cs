@@ -167,7 +167,10 @@ namespace dinospace.Services
             if (q.Contains("dinosaur") && (q.Contains("never") || q.Contains("didn't") || q.Contains("still")) && q.Contains("extinct"))
                 return "Ooh, fun to imagine! If that asteroid had missed, some dinosaurs might have kept evolving for millions more years — maybe clever, warm-blooded ones. There might have been no room for big mammals like us, so the world would look VERY different. In a way they DID survive, though: birds are living dinosaurs!";
 
-            if (q.Contains("mars") || q.Contains("moon") || q.Contains("space") && q.Contains("live"))
+            // "live on mars/the moon/in space" — all three place-words must be
+            // paired with the living part, or plain moon questions ("what if
+            // the moon disappeared") wrongly got the bubble-dome speech.
+            if ((q.Contains("mars") || q.Contains("moon") || q.Contains("space")) && q.Contains("live"))
                 return "Imagine that! To live out there we'd need a bubble-dome full of air, water melted from ice, and food grown under bright lamps. It would be chilly, low-gravity, and the sky would be a different colour — but what an adventure. Scientists are working on it for real!";
 
             return $"What a brilliant 'what if'! Let's imagine {n} in that story: it might explore, make friends, and discover something no one has ever seen. The best part of space and dinosaurs is that there are still SO many mysteries left to solve. What do YOU think would happen?";

@@ -136,6 +136,158 @@ foreach (var q in dinospace.Data.SuggestedQuestions.All)
 }
 Console.WriteLine($"=== round 4 (chips): {i4} instant, {m4} FLOPS ===");
 
-// CI-friendly: fail only if a question truly dead-ends (no instant reply AND
-// no offline fallback), or a suggestion chip can't answer instantly.
-Environment.Exit(uncovered + m2 + m3 + m4 > 0 ? 1 : 0);
+// round 5: the mega-battery. Every entry crossed with every phrasing a kid
+// types, misspellings, comparisons, follow-ups, and the little-sister set —
+// over a thousand questions. The graders:
+//   DEAD    no reply at all
+//   DODGE   the catch-all "I'm not sure" reply to a question that names a
+//           real entry or is clearly about dinosaurs/space
+//   WRONG   the reply is about a different creature than the one asked about
+string[] dodgeMarkers =
+{
+    "outside my rocket range", "best with dinosaurs and space", "stick to dinosaurs and space",
+};
+
+bool IsDodge(string reply) => dodgeMarkers.Any(m => reply.Contains(m, StringComparison.OrdinalIgnoreCase));
+
+// A reply "mentions" an entry if it contains any distinctive word of its
+// name — or of any of its aliases ("T. Rex" for Tyrannosaurus Rex).
+bool Mentions(string reply, string name)
+{
+    bool Hit(string n) =>
+        n.Split(' ', '-', '.').Where(w => w.Length >= 3)
+         .Any(w => reply.Contains(w, StringComparison.OrdinalIgnoreCase))
+        || reply.Contains(n, StringComparison.OrdinalIgnoreCase);
+    if (Hit(name)) return true;
+    var d = DinoData.ByName(name);
+    if (d != null && d.Aliases.Any(Hit)) return true;
+    var s = SpaceData.ByName(name);
+    return s != null && s.Aliases.Any(Hit);
+}
+
+var battery = new List<(string q, string? entity, bool onTopic)>();
+
+string[] dinoTemplates =
+{
+    "how big was {0}", "what did {0} eat", "when did {0} live", "how fast was {0}",
+    "tell me about {0}", "where did {0} live", "how heavy was {0}", "{0}",
+    "was {0} dangerous", "what does {0} mean", "how tall was {0}", "did {0} have teeth",
+};
+foreach (var d in DinoData.All)
+    foreach (var t in dinoTemplates)
+        battery.Add((string.Format(t, d.Name.ToLowerInvariant()), d.Name, true));
+
+string[] spaceTemplates =
+{
+    "how big is {0}", "how far away is {0}", "tell me about {0}", "what is {0}",
+    "{0}", "how hot is {0}", "how old is {0}",
+};
+foreach (var s in SpaceData.All)
+    foreach (var t in spaceTemplates)
+        battery.Add((string.Format(t, s.Name.ToLowerInvariant()), s.Name, true));
+
+// comparisons between well-known creatures
+string[] fighters = { "t rex", "spinosaurus", "giganotosaurus", "velociraptor", "triceratops", "megalodon", "mosasaurus" };
+for (int a = 0; a < fighters.Length; a++)
+    for (int b = 0; b < fighters.Length; b++)
+        if (a != b) battery.Add(($"who would win {fighters[a]} or {fighters[b]}", null, true));
+
+// kid spellings and phonetic mangling
+(string q, string entity)[] misspelled =
+{
+    ("tricerotops", "Triceratops"), ("trisaratops", "Triceratops"), ("velosiraptor", "Velociraptor"),
+    ("brakiosaurus", "Brachiosaurus"), ("brontosorus", "Brachiosaurus"), ("megladon", "Megalodon"),
+    ("tirano sarus", "Tyrannosaurus Rex"), ("tyranosaurus", "Tyrannosaurus Rex"), ("stegasaurus", "Stegosaurus"),
+    ("spinosorus", "Spinosaurus"), ("anklyosaurus", "Ankylosaurus"), ("terodactyl", "Pteranodon"),
+    ("how big is jupitor", "Jupiter"), ("how hot is the son", "Sun"), ("satern", "Saturn"),
+    ("how far is neptoon", "Neptune"), ("mercer y", "Mercury"), ("plutoe", "Pluto"),
+    ("woolly mamoth", "Woolly Mammoth"), ("smilodont", "Smilodon"),
+};
+foreach (var (q, entity) in misspelled) battery.Add((q, entity, true));
+
+// the little-sister set: real questions small kids actually ask. On-topic
+// ones must get a real answer; off-topic ones may redirect, but gracefully.
+string[] sisterOnTopic =
+{
+    "why did t rex have tiny arms", "can dinosaurs talk", "do dinosaurs fart",
+    "could a t rex eat me", "can i have a pet dinosaur", "what noise did dinosaurs make",
+    "did dinosaurs sleep", "did dinosaurs have babies", "do dinosaurs lay eggs",
+    "what was the first dinosaur", "what is the smallest dinosaur", "what dinosaur had the longest neck",
+    "did people live with dinosaurs", "how do we know dinosaurs existed", "what is a fossil",
+    "how are fossils made", "who finds fossils", "can we make a dinosaur from a mosquito",
+    "why is the moon following me", "why does the moon glow", "is the moon made of cheese",
+    "can you stand on the moon", "why do stars come out at night", "where does the sun go at night",
+    "why is space dark", "is space cold", "how many stars are there",
+    "can you hear sounds in space", "what happens if you fall in a black hole",
+    "how do astronauts sleep", "how do astronauts eat", "how do astronauts go to the bathroom",
+    "do aliens exist", "are there aliens on mars", "why is the sun so bright",
+    "what is the sun made of", "will the sun explode", "how long does it take to get to mars",
+    "can we live on the moon", "why do planets spin", "what is the hottest planet",
+    "what is the coldest planet", "which planet has the most moons", "why does saturn have rings",
+    "is pluto a planet", "what is a comet", "what is a meteor", "whats the difference between a meteor and a meteorite",
+    "why is the sky blue", "what are clouds made of", "how heavy is the earth",
+    "is the earth spinning right now", "why dont we fall off the earth", "what is inside the earth",
+    "what dinosaur am i most like", "which dinosaur was the nicest", "which dinosaur was the meanest",
+    "did sharks exist with dinosaurs", "whats older the sun or the earth", "how old is the moon",
+};
+foreach (var q in sisterOnTopic) battery.Add((q, null, true));
+
+string[] sisterOffTopic =
+{
+    "whats your favourite food", "do you like cats", "can you sing baby shark",
+    "whats my name", "how old am i", "do you know my mom", "can you do my homework",
+    "tell me a scary story", "what happens when you die", "are monsters real",
+};
+foreach (var q in sisterOffTopic) battery.Add((q, null, false));
+
+int total = 0, dead = 0, dodged = 0, wrong = 0;
+var failures = new List<string>();
+foreach (var (q, entity, onTopic) in battery)
+{
+    total++;
+    var turn = PromptBuilder.Build(q, new List<ChatMessage>(), new List<string>());
+    string? reply = (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic)
+        ? turn.InstantReply : turn.OfflineFallback;
+
+    if (reply == null)
+    { dead++; failures.Add($"DEAD   {q}"); continue; }
+
+    if (IsDodge(reply) && onTopic)
+    { dodged++; failures.Add($"DODGE  {q}  ->  {Snip(reply)}"); continue; }
+
+    if (entity != null && turn.InstantReply != null && !Mentions(turn.InstantReply, entity))
+    { wrong++; failures.Add($"WRONG  {q}  ->  {Snip(turn.InstantReply)}"); }
+}
+
+Console.WriteLine($"\n=== round 5 (mega-battery): {total} questions, {dead} dead, {dodged} on-topic dodges, {wrong} wrong-entity ===");
+foreach (var f in failures) Console.WriteLine("  " + f);
+
+// round 6: every pairwise "how far is X from Y" across the space entries —
+// the live-orbit pairs must produce a real computed distance, and the
+// non-computable pairs (a constellation from a planet) must still answer
+// honestly instead of dodging. Every single pair must answer instantly.
+string[] distTemplates = { "how far is {0} from {1}", "distance between {0} and {1}", "how far away is {0} from {1}" };
+int d6 = 0, bad6 = 0;
+var fail6 = new List<string>();
+var spaceNames = SpaceData.All.Select(s => s.Name.ToLowerInvariant()).ToList();
+int ti = 0;
+for (int a = 0; a < spaceNames.Count; a++)
+    for (int b = 0; b < spaceNames.Count; b++)
+    {
+        if (a == b) continue;
+        d6++;
+        string q6 = string.Format(distTemplates[ti++ % distTemplates.Length], spaceNames[a], spaceNames[b]);
+        var t6 = PromptBuilder.Build(q6, new List<ChatMessage>(), new List<string>());
+        string? r6 = (t6.InstantReply != null && t6.InstantReply != NovaGuard.OffTopic) ? t6.InstantReply : null;
+        if (r6 == null || IsDodge(r6))
+        { bad6++; if (fail6.Count < 12) fail6.Add($"{q6}  ->  {Snip(r6 ?? t6.OfflineFallback ?? "(dead)")}"); }
+    }
+Console.WriteLine($"=== round 6 (pairwise distances): {d6} questions, {bad6} not answered instantly ===");
+foreach (var f in fail6) Console.WriteLine("  " + f);
+
+// CI-friendly: hard-fail when a question truly dead-ends (no instant reply
+// AND no offline fallback), a suggestion chip can't answer instantly, or a
+// distance pair goes unanswered. Dodge/wrong-entity counts print above as
+// advisories — the graders are heuristic and flag correct answers that
+// simply don't restate the creature's name.
+Environment.Exit(uncovered + m2 + m3 + m4 + dead + bad6 > 0 ? 1 : 0);
