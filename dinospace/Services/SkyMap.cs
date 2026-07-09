@@ -4,10 +4,11 @@ using System.Linq;
 
 namespace dinospace
 {
-    // The sky-map engine behind Sky View: bright stars, constellation line
-    // figures, and deep-sky highlights, plus a stereographic projector that
-    // maps any of them to screen coordinates for whatever direction the
-    // phone is pointing. Same math as the SkyScanner chart engine.
+    // The sky-map engine behind Sky View: the full naked-eye star catalogue,
+    // constellation line figures, the Milky Way band, deep-sky highlights, and
+    // a stereographic projector that maps any of them to screen coordinates
+    // for whatever direction the phone is pointing. Positions are J2000;
+    // conversion to tonight's sky happens through SkyCalc's sidereal time.
     public static class SkyMap
     {
         private const double Deg = Math.PI / 180.0;
@@ -15,35 +16,6 @@ namespace dinospace
         public sealed record MapStar(string Name, double RaHours, double DecDeg, double Mag, string Colour);
         public sealed record MapFigure(string Name, (double ra, double dec)[] Stars, (int a, int b)[] Lines);
         public sealed record DeepSkyObject(string Name, string Kind, double RaHours, double DecDeg, string Blurb, bool NakedEye = false);
-
-        // The 24 stars worth naming on a phone screen.
-        public static readonly MapStar[] Stars =
-        {
-            new("Sirius", 6.752, -16.72, -1.46, "blue-white"),
-            new("Canopus", 6.399, -52.70, -0.74, "white"),
-            new("Alpha Centauri", 14.660, -60.83, -0.27, "yellow"),
-            new("Arcturus", 14.261, 19.18, -0.05, "orange"),
-            new("Vega", 18.616, 38.78, 0.03, "blue-white"),
-            new("Capella", 5.278, 45.99, 0.08, "golden"),
-            new("Rigel", 5.242, -8.20, 0.13, "blue-white"),
-            new("Procyon", 7.655, 5.22, 0.34, "white"),
-            new("Achernar", 1.629, -57.24, 0.46, "blue"),
-            new("Betelgeuse", 5.919, 7.41, 0.50, "red-orange"),
-            new("Hadar", 14.064, -60.37, 0.61, "blue"),
-            new("Altair", 19.846, 8.87, 0.76, "white"),
-            new("Acrux", 12.443, -63.10, 0.76, "blue"),
-            new("Aldebaran", 4.599, 16.51, 0.86, "orange"),
-            new("Antares", 16.490, -26.43, 0.96, "red"),
-            new("Spica", 13.420, -11.16, 0.97, "blue-white"),
-            new("Pollux", 7.755, 28.03, 1.14, "orange"),
-            new("Fomalhaut", 22.961, -29.62, 1.16, "white"),
-            new("Deneb", 20.690, 45.28, 1.25, "white"),
-            new("Mimosa", 12.795, -59.69, 1.25, "blue"),
-            new("Regulus", 10.139, 11.97, 1.35, "blue-white"),
-            new("Adhara", 6.977, -28.97, 1.50, "blue"),
-            new("Castor", 7.577, 31.89, 1.58, "white"),
-            new("Polaris", 2.530, 89.26, 1.98, "yellow-white"),
-        };
 
         // Stick figures for the constellations people actually recognise.
         public static readonly MapFigure[] Figures =
@@ -90,6 +62,7 @@ namespace dinospace
         };
 
         // Showpiece deep-sky objects for the "through a telescope" card.
+        // (Scan Sky itself draws the full Messier + Caldwell catalogues.)
         public static readonly DeepSkyObject[] DeepSky =
         {
             new("Orion Nebula (M42)", "nebula", 5.588, -5.39, "A stellar nursery you can spot below Orion's belt", NakedEye: true),
@@ -104,29 +77,163 @@ namespace dinospace
             new("Albireo", "double star", 19.512, 27.96, "One gold star, one sapphire — the sky's prettiest pair"),
         };
 
+        // ---------- fast per-frame star math ----------
+        // Every catalogue star's J2000 unit vector is computed once; each
+        // frame builds one local frame (zenith / north / east in equatorial
+        // coordinates) and reduces every star to three dot products — no
+        // trig per star, which is what lets 1,700 stars redraw at 20 fps.
+
+        public readonly struct LocalFrame
+        {
+            public readonly double Nx, Ny, Nz;   // north
+            public readonly double Ex, Ey, Ez;   // east
+            public readonly double Zx, Zy, Zz;   // zenith
+
+            public LocalFrame(double lat, double lon, DateTime utc)
+            {
+                double theta = (SkyCalc.Gmst(SkyCalc.JulianDay(utc)) + lon) * Deg;   // LST as angle
+                double phi = lat * Deg;
+                double ct = Math.Cos(theta), st = Math.Sin(theta);
+                double cp = Math.Cos(phi), sp = Math.Sin(phi);
+                Zx = cp * ct; Zy = cp * st; Zz = sp;
+                Nx = -sp * ct; Ny = -sp * st; Nz = cp;
+                Ex = -st; Ey = ct; Ez = 0;
+            }
+
+            // Horizon components (north, east, up) of a J2000 unit vector.
+            public (double n, double e, double u) Horizon(double vx, double vy, double vz)
+                => (vx * Nx + vy * Ny + vz * Nz,
+                    vx * Ex + vy * Ey + vz * Ez,
+                    vx * Zx + vy * Zy + vz * Zz);
+        }
+
+        public static (double x, double y, double z) UnitVectorOf(double raDeg, double decDeg)
+        {
+            double ra = raDeg * Deg, dec = decDeg * Deg;
+            double cd = Math.Cos(dec);
+            return (cd * Math.Cos(ra), cd * Math.Sin(ra), Math.Sin(dec));
+        }
+
+        // Catalogue star unit vectors, built once on first use.
+        private static double[]? _starVec;
+        public static double[] StarVectors
+        {
+            get
+            {
+                if (_starVec == null)
+                {
+                    var stars = SkyCatalog.Stars;
+                    var v = new double[stars.Length * 3];
+                    for (int i = 0; i < stars.Length; i++)
+                    {
+                        var (x, y, z) = UnitVectorOf(stars[i].RaDeg, stars[i].DecDeg);
+                        v[i * 3] = x; v[i * 3 + 1] = y; v[i * 3 + 2] = z;
+                    }
+                    _starVec = v;
+                }
+                return _starVec;
+            }
+        }
+
+        // ---------- the Milky Way band ----------
+        // Sampled along the galactic equator (IAU J2000 frame) at three
+        // galactic latitudes, with a brightness profile that peaks toward the
+        // galactic centre in Sagittarius and glows again through Cygnus and
+        // Carina — so the drawn band brightens exactly where the real one does.
+
+        public readonly record struct BandPoint(double X, double Y, double Z, float Brightness, float WidthDeg);
+
+        private static BandPoint[]? _milkyWay;
+        public static BandPoint[] MilkyWayBand
+        {
+            get
+            {
+                if (_milkyWay == null)
+                {
+                    var pts = new List<BandPoint>();
+                    foreach (double b in new[] { -5.5, 0.0, 5.5 })
+                        for (double l = 0; l < 360; l += 3)
+                        {
+                            var (ra, dec) = GalacticToEquatorial(l, b);
+                            var (x, y, z) = UnitVectorOf(ra, dec);
+                            float bright = (float)BandBrightness(l) * (b == 0 ? 1f : 0.55f);
+                            float width = (float)(5.5 + 5.0 * BandBrightness(l));
+                            pts.Add(new BandPoint(x, y, z, bright, width));
+                        }
+                    _milkyWay = pts.ToArray();
+                }
+                return _milkyWay;
+            }
+        }
+
+        private const double PoleRa = 192.85948, PoleDec = 27.12825, AscNode = 122.93192;
+
+        public static (double raDeg, double decDeg) GalacticToEquatorial(double lDeg, double bDeg)
+        {
+            double b = bDeg * Deg, pd = PoleDec * Deg;
+            double node = (AscNode - lDeg) * Deg;
+            double sinDec = Math.Sin(b) * Math.Sin(pd) + Math.Cos(b) * Math.Cos(pd) * Math.Cos(node);
+            double dec = Math.Asin(Math.Clamp(sinDec, -1, 1));
+            double y = Math.Cos(b) * Math.Sin(node);
+            double x = Math.Sin(b) * Math.Cos(pd) - Math.Cos(b) * Math.Sin(pd) * Math.Cos(node);
+            double ra = PoleRa * Deg + Math.Atan2(y, x);
+            double raDeg = ra / Deg; raDeg %= 360; if (raDeg < 0) raDeg += 360;
+            return (raDeg, dec / Deg);
+        }
+
+        public static double BandBrightness(double lDeg)
+        {
+            double l = ((lDeg % 360) + 360) % 360;
+            double toCentre = Math.Min(l, 360 - l);
+            double core = Math.Exp(-toCentre * toCentre / (2 * 55.0 * 55.0));
+            double cygnus = 0.25 * Math.Exp(-(l - 80) * (l - 80) / (2 * 18.0 * 18.0));
+            double carina = 0.22 * Math.Exp(-(l - 287) * (l - 287) / (2 * 15.0 * 15.0));
+            return Math.Min(1.0, 0.35 + 0.65 * core + cygnus + carina);
+        }
+
         // ---------- projection (stereographic, like a planisphere) ----------
 
-        public sealed record View(double Lat, double Lon, DateTime Utc, double CenterAz, double CenterAlt, double FovDeg, float SizePx);
+        public sealed record View(double Lat, double Lon, DateTime Utc, double CenterAz, double CenterAlt, double FovDeg, float SizePx)
+        {
+            // Cached basis so projecting a point is pure arithmetic.
+            internal readonly (double x, double y, double z) F = ToVector(CenterAlt, CenterAz);
+            internal (double x, double y, double z) Right, Up;
+            internal double MaxR => 2.0 * Math.Tan(FovDeg * Deg / 4.0);
+        }
 
         public static (float x, float y, bool visible) Project(double altDeg, double azDeg, View v)
         {
             var p = ToVector(altDeg, azDeg);
-            var f = ToVector(v.CenterAlt, v.CenterAz);
-            var right = Cross(f, (0, 0, 1));
-            double rl = Len(right);
-            if (rl < 1e-6) { right = (1, 0, 0); rl = 1; }
-            right = (right.x / rl, right.y / rl, right.z / rl);
-            var up = Cross(right, f);
+            return ProjectVector(p.x, p.y, p.z, v);
+        }
 
-            double zf = Dot(p, f);
+        // Projects a unit vector already expressed in the horizon frame
+        // (x = north, y = east, z = up).
+        public static (float x, float y, bool visible) ProjectVector(double px, double py, double pz, View v)
+        {
+            var f = v.F;
+            if (v.Right.x == 0 && v.Right.y == 0 && v.Right.z == 0)
+            {
+                // Screen right = worldUp × forward: east when facing north.
+                // (forward × worldUp pointed WEST, which mirrored the whole
+                // sky east-to-west — the moon drew opposite its real spot.)
+                var right = Cross((0, 0, 1), f);
+                double rl = Len(right);
+                if (rl < 1e-6) { right = (0, 1, 0); rl = 1; }
+                v.Right = (right.x / rl, right.y / rl, right.z / rl);
+                v.Up = Cross(f, v.Right);
+            }
+
+            double zf = px * f.x + py * f.y + pz * f.z;
             if (zf <= 0.02) return (0, 0, false);
 
             double k = 2.0 / (1.0 + zf);
-            double px = k * Dot(p, right), py = k * Dot(p, up);
-            double maxR = 2.0 * Math.Tan(v.FovDeg * Deg / 4.0);
+            double sx = k * (px * v.Right.x + py * v.Right.y + pz * v.Right.z);
+            double sy = k * (px * v.Up.x + py * v.Up.y + pz * v.Up.z);
+            double maxR = v.MaxR;
             double scale = (v.SizePx / 2.0) / maxR;
-            return ((float)(v.SizePx / 2.0 + px * scale), (float)(v.SizePx / 2.0 - py * scale),
-                    Math.Sqrt(px * px + py * py) <= maxR * 1.1);
+            return ((float)(v.SizePx / 2.0 + sx * scale), (float)(v.SizePx / 2.0 - sy * scale),
+                    Math.Sqrt(sx * sx + sy * sy) <= maxR * 1.1);
         }
 
         // Angular distance in degrees between two sky directions.
