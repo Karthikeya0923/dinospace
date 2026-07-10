@@ -297,7 +297,7 @@ namespace dinospace.Views
                 {
                     DetailUi.TitleRow("the stats", Theme.AccentDino),
                     CompareRow("Length", a.Length, b.Length),
-                    CompareRow("Height", a.Height, b.Height),
+                    CompareRow("Height", HeightOf(a), HeightOf(b)),
                     CompareRow("Weight", a.Weight, b.Weight),
                     CompareRow("Top speed", a.Speed, b.Speed),
                     CompareRow("Bite force", string.IsNullOrEmpty(a.BiteForce) ? "—" : a.BiteForce, string.IsNullOrEmpty(b.BiteForce) ? "—" : b.BiteForce),
@@ -339,6 +339,11 @@ namespace dinospace.Views
             _resultArea.Add(Ui.GhostButton("random battle", (_, _) => RandomBattle()));
         }
 
+        // Sea creatures measure body width instead of standing height —
+        // the tape shows whichever one they actually have, never a blank.
+        private static string HeightOf(Dinosaur d)
+            => string.IsNullOrWhiteSpace(d.Height) ? d.Width : d.Height;
+
         // Two random creatures from the same arena walk in and settle it.
         private void RandomBattle()
         {
@@ -367,7 +372,7 @@ namespace dinospace.Views
             yield return ("defence", Defence(a), Defence(b));
             yield return ("speed", SpeedRating(a), SpeedRating(b));
             yield return ("size", SizeRating(a), SizeRating(b));
-            yield return ("smarts", Smarts(a), Smarts(b));
+            yield return ("intelligence", Smarts(a), Smarts(b));
         }
 
         private static int Pct(double v, double max) => max <= 0 ? 10 : Math.Clamp((int)Math.Round(v / max * 100), 8, 100);

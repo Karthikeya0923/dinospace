@@ -474,8 +474,118 @@ foreach (var name in allNames)
 Console.WriteLine($"\n=== round 11 (typo gauntlet): {q11} questions, {dead11} dead, {dodge11} graceful dodges (advisory) ===");
 foreach (var f in fail11) Console.WriteLine("  " + f);
 
+// round 12: one hundred questions phrased the way KIDS actually ask —
+// hypotheticals, silliness, "would win" matchups, everyday wording. The bar:
+// no dead ends and no dodges on on-topic questions.
+string[] kidQs =
+{
+    "what if compsognathus was alive today", "what if a t rex was alive today",
+    "what if dinosaurs were alive today", "what if megalodon still existed",
+    "what if a velociraptor was my pet", "what if a brachiosaurus was in my backyard",
+    "what if titanoboa came back", "what if spinosaurus was alive now",
+    "what if the moon disappeared", "what if the sun went out",
+    "what if i fell into a black hole", "what if the earth stopped spinning",
+    "would a t rex eat me", "could i ride a triceratops", "could a pteranodon carry me",
+    "can dinosaurs come back", "can we make a real jurassic park",
+    "who would win a lion or a velociraptor", "who would win trex or giganotosaurus",
+    "who would win megalodon or mosasaurus", "who would win ankylosaurus or trex",
+    "whats the scariest dinosaur", "whats the coolest dinosaur", "whats the weirdest dinosaur",
+    "what dinosaur has the longest name", "which dinosaur is the strongest",
+    "which dinosaur was the tiniest", "what was the biggest thing ever",
+    "did dinosaurs sleep", "did dinosaurs poop", "did dinosaurs fart", "did dinosaurs have tongues",
+    "did dinosaurs make noises", "what sound did a trex make", "could dinosaurs swim",
+    "could a trex do a pushup", "why are trex arms so small", "did trex have feathers",
+    "how many teeth did a trex have", "how big is a trex tooth", "do dinosaur bones grow",
+    "how do we know what dinosaurs looked like", "how do fossils form", "where can i see a real dinosaur bone",
+    "were dinosaurs colourful", "did dinosaurs live with people", "did cavemen fight dinosaurs",
+    "whats a baby dinosaur called", "did dinosaurs lay eggs", "how big was a dinosaur egg",
+    "whats faster a cheetah or a velociraptor", "was megalodon bigger than a whale",
+    "is a shark a dinosaur", "is a crocodile a dinosaur", "is a chicken really a dinosaur",
+    "are dragons real", "did unicorns exist", "whats the closest thing to a dragon",
+    "why is the sky blue", "why do stars shine", "can you count the stars",
+    "how many stars are there", "is the moon made of cheese", "can you touch a star",
+    "why cant we breathe in space", "what happens if you take your helmet off in space",
+    "do astronauts float", "how do astronauts sleep", "how do astronauts go to the bathroom",
+    "whats inside a black hole", "can the sun explode", "will the sun eat the earth",
+    "is there life on other planets", "are aliens real", "have we found aliens",
+    "can i be an astronaut", "how do i become an astronaut", "whats it like in space",
+    "how long does it take to get to the moon", "how long to get to mars",
+    "can you hear sounds in space", "is space cold or hot", "what does space smell like",
+    "whats the biggest planet", "whats the smallest planet", "whats the hottest planet",
+    "whats the coldest planet", "which planet has the most moons", "can we live on jupiter",
+    "why does saturn have rings", "is pluto a planet", "whats beyond the stars",
+    "tell me a story about a brave triceratops", "tell me a dinosaur joke",
+    "whats your favourite space fact", "tell me something gross about dinosaurs",
+    "what if the dinosaurs had phones", "imagine a stegosaurus at school",
+    "can i keep a compsognathus as a pet", "which dinosaur would make the best pet",
+};
+int k12 = 0, f12 = 0;
+foreach (var q in kidQs)
+{
+    var turn = PromptBuilder.Build(q, new List<ChatMessage>(), new List<string>());
+    string? reply = (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic) ? turn.InstantReply : turn.OfflineFallback;
+    bool flop = reply == null || IsDodge(reply);
+    if (flop) { f12++; Console.WriteLine($"KID-FLOP  {q}  ->  {Snip(reply ?? "(dead)")}"); }
+    else k12++;
+}
+Console.WriteLine($"=== round 12 (kids): {k12} good, {f12} FLOPS ===");
+
+// round 13: one hundred questions phrased the way ADULTS ask — precise,
+// historical, mission-oriented, and sceptical. Same bar.
+string[] adultQs =
+{
+    "who was the first person on the moon", "when did apollo 11 land", "who was the second person on the moon",
+    "how many people have walked on the moon", "when was the last moon landing", "will we ever go back to the moon",
+    "will we ever go to mars", "when will humans land on mars", "how long would a trip to mars take",
+    "what is the artemis program", "what rockets does nasa use now", "what is spacex starship",
+    "who was the first human in space", "who was the first woman in space", "what was the first satellite",
+    "what happened to the voyager probes", "how far has voyager 1 travelled", "what is on the golden record",
+    "what is the james webb telescope", "what did the hubble telescope discover", "how does a telescope work",
+    "what is the speed of light", "how long does sunlight take to reach earth", "what is a light year in kilometres",
+    "how old is the earth", "how old is the sun", "how was the moon formed",
+    "what is the big bang theory", "what evidence supports the big bang", "is the universe expanding",
+    "what is dark energy", "what is the difference between dark matter and dark energy",
+    "how do black holes form", "what is the event horizon", "what is hawking radiation",
+    "what is a pulsar", "what is a quasar", "what is a red giant",
+    "what will happen when the sun dies", "how do supernovas work", "what elements are made in stars",
+    "what is the asteroid belt made of", "could an asteroid hit earth", "how do we track asteroids",
+    "what caused the dinosaur extinction", "where did the asteroid hit", "what is the chicxulub crater",
+    "what survived the extinction", "how long ago did dinosaurs live", "what were the three dinosaur periods",
+    "what is the difference between the triassic and jurassic", "when did the first dinosaurs appear",
+    "what came before the dinosaurs", "what is the permian extinction", "how many mass extinctions have there been",
+    "how are dinosaur fossils dated", "what is carbon dating", "can dna survive in fossils",
+    "is jurassic park scientifically possible", "what dinosaur dna do we actually have",
+    "how are birds related to dinosaurs", "what is archaeopteryx", "when did birds evolve",
+    "were dinosaurs warm blooded", "how smart were dinosaurs really", "did dinosaurs care for their young",
+    "how fast could a t rex actually run", "could t rex really not see you if you stood still",
+    "how accurate is the velociraptor in the movies", "how big were velociraptors really",
+    "what is the largest dinosaur ever discovered", "what is the largest carnivore ever",
+    "was spinosaurus really aquatic", "what did spinosaurus actually eat",
+    "how strong was a megalodon bite", "why did megalodon go extinct", "are megalodons still alive",
+    "what is the difference between a mosasaur and a plesiosaur", "were pterosaurs dinosaurs",
+    "what is the difference between mammoths and elephants", "when did the woolly mammoth go extinct",
+    "could we clone a mammoth", "what is de-extinction",
+    "what phase is the moon in tonight", "when is the next solar eclipse", "how do eclipses work",
+    "why do we always see the same side of the moon", "what causes the seasons",
+    "what is the difference between a meteor meteorite and meteoroid", "what are the northern lights caused by",
+    "how many galaxies are there", "what is the closest star to earth", "how far is proxima centauri",
+    "what is the goldilocks zone", "what makes a planet habitable", "what are exoplanets",
+    "how do we detect exoplanets", "what is the drake equation", "what is the fermi paradox",
+    "what time is sunset tonight", "when does the iss pass overhead",
+};
+int k13 = 0, f13 = 0;
+foreach (var q in adultQs)
+{
+    var turn = PromptBuilder.Build(q, new List<ChatMessage>(), new List<string>());
+    string? reply = (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic) ? turn.InstantReply : turn.OfflineFallback;
+    bool flop = reply == null || IsDodge(reply);
+    if (flop) { f13++; Console.WriteLine($"ADULT-FLOP  {q}  ->  {Snip(reply ?? "(dead)")}"); }
+    else k13++;
+}
+Console.WriteLine($"=== round 13 (adults): {k13} good, {f13} FLOPS ===");
+
 int grand = questions.Length + round2.Length + round3.Length + dinospace.Data.SuggestedQuestions.All.Count
-          + total + d6 + rankings.Length + q8 + q9 + q10 + q11;
+          + total + d6 + rankings.Length + q8 + q9 + q10 + q11 + kidQs.Length + adultQs.Length;
 Console.WriteLine($"\n=== GRAND TOTAL: {grand} questions ===");
 
 // CI-friendly: hard-fail when a question truly dead-ends (no instant reply
@@ -484,4 +594,4 @@ Console.WriteLine($"\n=== GRAND TOTAL: {grand} questions ===");
 // phrasing isn't instant, or a battle has no verdict. Dodge/wrong-entity
 // counts in the entity batteries print above as advisories — the graders
 // are heuristic and flag correct answers that simply don't restate names.
-Environment.Exit(uncovered + m2 + m3 + m4 + dead + bad6 + m7 + m8 + dead9 + m10 + dead11 > 0 ? 1 : 0);
+Environment.Exit(uncovered + m2 + m3 + m4 + dead + bad6 + m7 + m8 + dead9 + m10 + dead11 + f12 + f13 > 0 ? 1 : 0);

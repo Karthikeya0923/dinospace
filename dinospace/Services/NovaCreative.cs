@@ -42,7 +42,7 @@ namespace dinospace.Services
                 if (Has(q, "poem", "poems", "rhyme")) return Poem(Subject(g));
                 if (Has(q, "song", "sing", "rap", "rhyme")) return Song(Subject(g));
                 if (Has(q, "story", "stories", "tale", "adventure")) return Story(Subject(g), Second(g));
-                if (Has(q, "what if", "imagine", "pretend", "would happen")) return Imagine(question, Subject(g));
+                if (Has(q, "what if", "imagine", "pretend", "would happen")) return Imagine(question, Subject(g), SubjectNamed(g));
                 // "make up", "invent", "write me..." — a story is the safest bet.
                 return Story(Subject(g), Second(g));
             }
@@ -159,9 +159,13 @@ namespace dinospace.Services
 
         // ---------- imagine / what-if ----------
 
-        private static string Imagine(string question, object subject)
+        // True when the question actually named someone we know — so "what if
+        // dinosaurs were alive today" doesn't get an answer about a random one.
+        private static bool SubjectNamed(Grounding g)
+            => g.Entities.Any(name => DinoData.ByName(name) != null || SpaceData.ByName(name) != null);
+
+        private static string Imagine(string question, object subject, bool subjectNamed = false)
         {
-            string n = NameOf(subject);
             string q = question.ToLowerInvariant();
 
             if (q.Contains("dinosaur") && (q.Contains("never") || q.Contains("didn't") || q.Contains("still")) && q.Contains("extinct"))
@@ -170,10 +174,73 @@ namespace dinospace.Services
             // "live on mars/the moon/in space" — all three place-words must be
             // paired with the living part, or plain moon questions ("what if
             // the moon disappeared") wrongly got the bubble-dome speech.
-            if ((q.Contains("mars") || q.Contains("moon") || q.Contains("space")) && q.Contains("live"))
+            if ((q.Contains("mars") || q.Contains("moon") || q.Contains("space")) && q.Contains("live") && !q.Contains("alive"))
                 return "Imagine that! To live out there we'd need a bubble-dome full of air, water melted from ice, and food grown under bright lamps. It would be chilly, low-gravity, and the sky would be a different colour — but what an adventure. Scientists are working on it for real!";
 
+            // "what if X was alive today / still existed / came back / lived
+            // now / was my pet / walked around today" — the single most-asked
+            // what-if. Answer from the creature's REAL stats.
+            if (Has(q, "alive today", "alive now", "still alive", "still existed", "still exist",
+                       "came back", "come back", "was alive", "were alive", "lived today",
+                       "lived now", "was my pet", "as a pet", "in my backyard", "walked around today",
+                       "existed today", "was real today", "were real today", "around today"))
+                return AliveToday(subjectNamed ? subject : null);
+
+            string n = NameOf(subject);
             return $"What a brilliant 'what if'! Let's imagine {n} in that story: it might explore, make friends, and discover something no one has ever seen. The best part of space and dinosaurs is that there are still SO many mysteries left to solve. What do YOU think would happen?";
+        }
+
+        // A grounded daydream: what life would actually look like with this
+        // creature around, built from its real size, diet, speed and habitat.
+        private static string AliveToday(object? subject)
+        {
+            // "what if dinosaurs were alive today" — no specific creature named.
+            if (subject is not Dinosaur d)
+                return "What a thought! If dinosaurs were alive today, the big plant-eaters would need whole forests to graze, cities would build VERY tall fences, and safari trips would get a lot more exciting. Scientists think our world is too different now — cooler, with new plants and animals — so they'd struggle. But look up: birds ARE dinosaurs that made it, so in a way they never left!";
+
+            double lenFt = LeadingNumber(d.Length);
+            double spd = LeadingNumber(d.Speed);
+            bool carn = d.Diet.Contains("Carn", StringComparison.OrdinalIgnoreCase);
+
+            string sizeLine = lenFt switch
+            {
+                <= 0 => $"{d.Name} would turn every head on the street.",
+                < 5 => $"At about {d.Length} long, {d.Name} would be around the size of a big chicken or a dog — small enough to dart under a park bench!",
+                < 15 => $"At about {d.Length} long, {d.Name} would be the size of a car — imagine one waiting at the school gates.",
+                < 35 => $"At about {d.Length} long, {d.Name} would be as big as a bus — it would need a whole park to itself.",
+                _ => $"At about {d.Length} long, {d.Name} would tower over houses — you'd see it coming from blocks away.",
+            };
+
+            string homeLine = d.Category switch
+            {
+                "Sea" => "It would rule the oceans, and beach days would come with a very interesting new warning sign.",
+                "Flying" => "It would own the sky — planes and birds would both have to share the air with it.",
+                _ => carn
+                    ? "Zoos would need seriously strong walls, and nobody would complain about being late if one was on the road."
+                    : "It would happily mow every lawn and garden in town — free of charge, leaves included.",
+            };
+
+            string speedLine = spd switch
+            {
+                <= 0 => "",
+                >= 45 => $" And at {d.Speed}, it could keep up with cars on the highway — no escaping on a bicycle!",
+                >= 25 => $" At {d.Speed}, it would outrun every kid at sports day without even trying.",
+                _ => $" At a slow-and-steady {d.Speed}, at least you could out-walk it!",
+            };
+
+            return $"Great what-if! {sizeLine} {homeLine}{speedLine} Sadly today's world — the food, the climate, the oxygen — is too different for it to really thrive, but it's a brilliant thing to imagine. Want to know what {d.Name} actually ate?";
+        }
+
+        private static double LeadingNumber(string s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return 0;
+            var digits = new System.Text.StringBuilder(); bool started = false;
+            foreach (char c in s.Replace(",", ""))
+            {
+                if (char.IsDigit(c) || (c == '.' && started)) { digits.Append(c); started = true; }
+                else if (started) break;
+            }
+            return digits.Length > 0 && double.TryParse(digits.ToString(), System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : 0;
         }
 
         // ---------- jokes ----------

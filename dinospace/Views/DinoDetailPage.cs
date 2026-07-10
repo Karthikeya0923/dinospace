@@ -49,6 +49,7 @@ namespace dinospace.Views
             {
                 ("Length", _d.Length),
                 ("Height", _d.Height),
+                ("Width", _d.Width),
                 ("Weight", _d.Weight),
                 ("Top speed", _d.Speed),
                 ("Bite force", _d.BiteForce),

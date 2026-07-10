@@ -477,14 +477,16 @@ namespace dinospace.Views
                 name = n; kind = k; blurb = b; entry = e;
             }
 
-            // the moon — a little extra reach because it is big
+            // the moon — a little extra reach because it is big. If it is
+            // drawn near the horizon, it can be named there too.
             var (mra, mdec) = SkyCalc.MoonRaDec(jd);
             var (mAlt, mAz) = SkyCalc.AltAz(mra, mdec, _lat, _lon, utc);
-            if (mAlt > -2)
+            if (mAlt > -10)
             {
                 var e = SpaceData.ByName("Moon");
                 Consider(SepTo(mAlt, mAz), Ring, 12,
-                         "Moon", "Earth's moon", e?.ShortDescription, e);
+                         "Moon", mAlt < 0 ? "Earth's moon · below the horizon right now" : "Earth's moon",
+                         e?.ShortDescription, e);
             }
 
             // planets
@@ -492,26 +494,28 @@ namespace dinospace.Views
             {
                 var (ra, dec, _) = SkyCalc.PlanetRaDec(b, jd);
                 var (alt, az) = SkyCalc.AltAz(ra, dec, _lat, _lon, utc);
-                if (alt <= -2) continue;
+                if (alt <= -10) continue;
                 var e = SpaceData.ByName(b.ToString());
                 Consider(SepTo(alt, az), Ring, 6,
-                         b.ToString(), "Planet", e?.ShortDescription, e);
+                         b.ToString(), alt < 0 ? "Planet · below the horizon right now" : "Planet",
+                         e?.ShortDescription, e);
             }
 
             // the sun, during the day
             var (sra, sdec) = SkyCalc.SunRaDec(jd);
             var (sAlt, sAz) = SkyCalc.AltAz(sra, sdec, _lat, _lon, utc);
-            if (sAlt > -2)
+            if (sAlt > -10)
             {
                 var e = SpaceData.ByName("Sun");
                 Consider(SepTo(sAlt, sAz), Ring, 8,
-                         "Sun", "Our star", e?.ShortDescription, e);
+                         "Sun", sAlt < 0 ? "Our star · below the horizon right now" : "Our star",
+                         e?.ShortDescription, e);
             }
 
-            // stars — only the bright NAMED ones you can genuinely see, only
-            // after dark, only while "view all" shows them, and only when the
-            // crosshair is right on one.
-            if (skyDark && _drawable.ShowAll)
+            // stars — only the bright NAMED ones, only while "view all"
+            // shows them (any hour: view-all is the "show me everything
+            // anyway" switch), and only when the crosshair is right on one.
+            if (_drawable.ShowAll)
             {
                 var stars = SkyCatalog.Stars;
                 var sv = SkyMap.StarVectors;
@@ -531,11 +535,26 @@ namespace dinospace.Views
                 }
             }
 
+            // deep sky: only in "view all", only right under the crosshair
+            if (_drawable.ShowAll)
+            {
+                var dsos = SkyDeepSkyCatalog.All;
+                for (int i = 0; i < dsos.Length; i++)
+                {
+                    var d = dsos[i];
+                    if (d.Mag > SkyViewDrawable.DsoShowMag) continue;
+                    var (alt, az) = SkyCalc.AltAz(d.RaHours * 15.0, d.DecDeg, _lat, _lon, utc);
+                    if (alt < 1) continue;
+                    Consider(SepTo(alt, az), Ring * 0.8, 0,
+                             d.Name, d.Kind, d.Blurb, SpaceData.ByName(d.Name.Split(" (")[0]));
+                }
+            }
+
             // fall back to a constellation — but ONLY one whose stick-figure
             // is actually drawn on screen right now, measured to the centre
             // of its drawn stars. Invisible regions (Grus, Microscopium…)
             // can never claim the card again.
-            if (name == null && skyDark)
+            if (name == null && (skyDark || _drawable.ShowAll))
             {
                 string? bestFig = null; double bestPx = 170;
                 foreach (var f in SkyMap.Figures)
@@ -619,8 +638,13 @@ namespace dinospace.Views
         public bool CameraBehind;
 
         // Off: just the solar system and the constellations — clean, like a
-        // picture book. On ("view all"): the bright named stars join in.
+        // picture book. On ("view all"): the bright named stars, all the
+        // constellation figures and the famous deep-sky objects join in — at
+        // any hour, because view-all means "show me where they are anyway".
         public bool ShowAll;
+
+        // Naked-eye-famous deep sky only (view-all): the showpieces.
+        public const float DsoShowMag = 6.5f;
 
         // The naked-eye cut for "a star worth drawing": every star this
         // bright has a proper name and really is visible from a backyard.
@@ -682,8 +706,8 @@ namespace dinospace.Views
             canvas.StrokeSize = 1.6f;
             canvas.DrawPath(horizon);
 
-            // ---- constellation figures with glow lines (night only) ----
-            if (skyDark)
+            // ---- constellation figures with glow lines ----
+            if (skyDark || ShowAll)
                 foreach (var f in SkyMap.Figures)
                 {
                     var pts = new (float x, float y, bool ok)[f.Stars.Length];
@@ -713,7 +737,7 @@ namespace dinospace.Views
                 }
 
             // ---- the bright named stars — only in "view all" ----
-            if (skyDark && ShowAll)
+            if (ShowAll)
             {
                 var stars = SkyCatalog.Stars;
                 var sv = SkyMap.StarVectors;
@@ -739,12 +763,35 @@ namespace dinospace.Views
                 }
             }
 
+            // ---- deep sky showpieces — only in "view all" ----
+            if (ShowAll)
+            {
+                var dsos = SkyDeepSkyCatalog.All;
+                for (int i = 0; i < dsos.Length; i++)
+                {
+                    var d = dsos[i];
+                    if (d.Mag > DsoShowMag) continue;
+                    var (alt, az) = SkyCalc.AltAz(d.RaHours * 15.0, d.DecDeg, Lat, Lon, utc);
+                    if (alt < 1) continue;
+                    var (x, y, vis) = SkyMap.Project(alt, az, v);
+                    if (!vis) continue;
+                    var dia = new PathF();
+                    dia.MoveTo(x, y - 5); dia.LineTo(x + 5, y); dia.LineTo(x, y + 5); dia.LineTo(x - 5, y); dia.Close();
+                    canvas.StrokeColor = Color.FromArgb("#9AE8C8").WithAlpha(0.85f);
+                    canvas.StrokeSize = 1.3f;
+                    canvas.DrawPath(dia);
+                    canvas.FontColor = Color.FromArgb("#9AE8C8").WithAlpha(0.9f);
+                    canvas.FontSize = 11;
+                    canvas.DrawString(d.Name.Split(" (")[0], x + 8, y + 4, HorizontalAlignment.Left);
+                }
+            }
+
             // ---- planets with their signature looks ----
             foreach (var b in Enum.GetValues<SkyCalc.Body>())
             {
                 var (ra, dec, _) = SkyCalc.PlanetRaDec(b, jd);
                 var (alt, az) = SkyCalc.AltAz(ra, dec, Lat, Lon, utc);
-                if (alt < -5) continue;
+                if (alt < -10) continue;
                 var (x, y, vis) = SkyMap.Project(alt, az, v);
                 if (!vis) continue;
                 DrawPlanet(canvas, b, x, y, labelC);
@@ -753,14 +800,14 @@ namespace dinospace.Views
             // ---- the moon: phase-correct, with maria ----
             var (mra2, mdec2) = SkyCalc.MoonRaDec(jd);
             var (moonAlt, moonAz) = SkyCalc.AltAz(mra2, mdec2, Lat, Lon, utc);
-            if (moonAlt > -5)
+            if (moonAlt > -10)
             {
                 var (mx, my, mvis) = SkyMap.Project(moonAlt, moonAz, v);
                 if (mvis) DrawMoon(canvas, mx, my, 13, SkyCalc.MoonElongation(jd), labelC);
             }
 
-            // ---- the sun (time travel can bring it into view) ----
-            if (sunAlt > -3)
+            // ---- the sun ----
+            if (sunAlt > -10)
             {
                 var (sx, sy, svis) = SkyMap.Project(sunAlt, sunAz, v);
                 if (svis)
