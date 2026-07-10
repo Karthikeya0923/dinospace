@@ -193,12 +193,19 @@ namespace dinospace
 
         // ---------- projection (stereographic, like a planisphere) ----------
 
-        public sealed record View(double Lat, double Lon, DateTime Utc, double CenterAz, double CenterAlt, double FovDeg, float SizePx)
+        public sealed record View(double Lat, double Lon, DateTime Utc, double CenterAz, double CenterAlt, double FovDeg, float SizePx,
+            float CxPx = -1, float CyPx = -1)
         {
             // Cached basis so projecting a point is pure arithmetic.
             internal readonly (double x, double y, double z) F = ToVector(CenterAlt, CenterAz);
             internal (double x, double y, double z) Right, Up;
             internal double MaxR => 2.0 * Math.Tan(FovDeg * Deg / 4.0);
+            // Where the pointing direction lands on screen. Defaults to the
+            // square centre for callers that render a square; the AR view
+            // passes its true rectangle centre so the crosshair, the drawn
+            // sky, and the target card all agree on ONE centre.
+            internal float CX => CxPx >= 0 ? CxPx : SizePx / 2f;
+            internal float CY => CyPx >= 0 ? CyPx : SizePx / 2f;
         }
 
         public static (float x, float y, bool visible) Project(double altDeg, double azDeg, View v)
@@ -232,7 +239,7 @@ namespace dinospace
             double sy = k * (px * v.Up.x + py * v.Up.y + pz * v.Up.z);
             double maxR = v.MaxR;
             double scale = (v.SizePx / 2.0) / maxR;
-            return ((float)(v.SizePx / 2.0 + sx * scale), (float)(v.SizePx / 2.0 - sy * scale),
+            return ((float)(v.CX + sx * scale), (float)(v.CY - sy * scale),
                     Math.Sqrt(sx * sx + sy * sy) <= maxR * 1.1);
         }
 

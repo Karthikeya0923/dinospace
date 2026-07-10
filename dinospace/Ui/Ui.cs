@@ -47,6 +47,7 @@ namespace dinospace
         public const string IconPrivacy = "icon_privacy";              // settings row
         public const string IconAbout = "icon_about";                  // settings row
         public const string IconContact = "icon_contact";              // settings row
+        public const string IconDelete = "icon_delete";                // creation page header (delete)
         public const string IconCorrect = "icon_correct";              // quiz right answer
         public const string IconWrong = "icon_wrong";                  // quiz wrong answer
 

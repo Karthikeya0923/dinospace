@@ -42,10 +42,10 @@ namespace dinospace
         private static readonly Palette PastelP = new()
         {
             Bg = Color.FromArgb("#E9EDDA"),
-            BgRaised = Color.FromArgb("#F0F3E0"),
-            Surface = Color.FromArgb("#F4F6E3"),
-            SurfaceAlt = Color.FromArgb("#DFE6C9"),
-            SurfaceSunken = Color.FromArgb("#E0E6CD"),
+            BgRaised = Color.FromArgb("#EDF1DC"),
+            Surface = Color.FromArgb("#DFE6C9"),
+            SurfaceAlt = Color.FromArgb("#D2DCB6"),
+            SurfaceSunken = Color.FromArgb("#D6DFBE"),
             Hairline = Color.FromArgb("#B9C4A4"),
             HairlineSoft = Color.FromArgb("#D3DCBF"),
             TextPrimary = Color.FromArgb("#48523C"),
@@ -56,61 +56,10 @@ namespace dinospace
             AccentSoft = Color.FromArgb("#DFE8CD"),
             Success = Color.FromArgb("#4C8A4F"),
             Danger = Color.FromArgb("#C05B4D"),
-            ChipBg = Color.FromArgb("#E2E9D0"),
+            ChipBg = Color.FromArgb("#D2DCB6"),
             ChipText = Color.FromArgb("#55614A"),
-            ImgPlaceholder = Color.FromArgb("#E5EBD6"),
+            ImgPlaceholder = Color.FromArgb("#D8E0C1"),
             CardStroke = Color.FromArgb("#C2CCAD"),
-            ShadowAlpha = 0.07f
-        };
-
-        // The sage graph-paper page: a touch greener, cards go nearly white so
-        // they lift off the grid.
-        private static readonly Palette GridP = new()
-        {
-            Bg = Color.FromArgb("#E3EAD5"),
-            BgRaised = Color.FromArgb("#EEF3E2"),
-            Surface = Color.FromArgb("#FBFCF3"),
-            SurfaceAlt = Color.FromArgb("#DEE7CB"),
-            SurfaceSunken = Color.FromArgb("#DCE4CA"),
-            Hairline = Color.FromArgb("#AEBB97"),
-            HairlineSoft = Color.FromArgb("#C9D4B3"),
-            TextPrimary = Color.FromArgb("#43503A"),
-            TextSecondary = Color.FromArgb("#6F7C63"),
-            TextHint = Color.FromArgb("#8FA07E"),
-            TextOnAccent = Color.FromArgb("#FBFDF4"),
-            Accent = Color.FromArgb("#63855A"),
-            AccentSoft = Color.FromArgb("#D9E4C3"),
-            Success = Color.FromArgb("#4C8A4F"),
-            Danger = Color.FromArgb("#C05B4D"),
-            ChipBg = Color.FromArgb("#DEE7CB"),
-            ChipText = Color.FromArgb("#505D45"),
-            ImgPlaceholder = Color.FromArgb("#E0E8CE"),
-            CardStroke = Color.FromArgb("#B7C29E"),
-            ShadowAlpha = 0.07f
-        };
-
-        // The daydream page: pale cloudy paper, slightly cooler ink.
-        private static readonly Palette CloudsP = new()
-        {
-            Bg = Color.FromArgb("#EAEEE3"),
-            BgRaised = Color.FromArgb("#F2F5EB"),
-            Surface = Color.FromArgb("#FBFCF6"),
-            SurfaceAlt = Color.FromArgb("#E0E7D6"),
-            SurfaceSunken = Color.FromArgb("#E2E8D9"),
-            Hairline = Color.FromArgb("#B6C1A8"),
-            HairlineSoft = Color.FromArgb("#D2DAC5"),
-            TextPrimary = Color.FromArgb("#4A5443"),
-            TextSecondary = Color.FromArgb("#78826E"),
-            TextHint = Color.FromArgb("#99A48C"),
-            TextOnAccent = Color.FromArgb("#FBFDF4"),
-            Accent = Color.FromArgb("#6E8B63"),
-            AccentSoft = Color.FromArgb("#DFE7D2"),
-            Success = Color.FromArgb("#4C8A4F"),
-            Danger = Color.FromArgb("#C05B4D"),
-            ChipBg = Color.FromArgb("#E0E7D6"),
-            ChipText = Color.FromArgb("#57614C"),
-            ImgPlaceholder = Color.FromArgb("#E3E9DA"),
-            CardStroke = Color.FromArgb("#C0CAAF"),
             ShadowAlpha = 0.07f
         };
 
@@ -131,7 +80,7 @@ namespace dinospace
             TextHint = Color.FromArgb("#C3B0E2"),
             TextOnAccent = Color.FromArgb("#33200A"),
             Accent = Color.FromArgb("#EDC46B"),
-            AccentSoft = Color.FromArgb("#463217"),
+            AccentSoft = Color.FromArgb("#3B2759"),
             Success = Color.FromArgb("#8FCB7A"),
             Danger = Color.FromArgb("#FF6B5A"),
             ChipBg = Color.FromArgb("#422B66"),
@@ -141,12 +90,11 @@ namespace dinospace
             ShadowAlpha = 0f
         };
 
-        // Every look, in display order. The plain pastel page is the default.
+        // Two looks only: the app's own pastel page, and the hand-painted
+        // dinospace twilight. Pastel is the default.
         public static readonly IReadOnlyList<Spec> Wallpapers = new List<Spec>
         {
             new() { Id = "pastel", Name = "soft pastel", Blurb = "the app's own plain pastel page", Wallpaper = null, Dark = false, Dim = 0f, P = PastelP },
-            new() { Id = "grid", Name = "meadow grid", Blurb = "a soft sage graph-paper page", Wallpaper = "wall_grid.png", Dark = false, Dim = 0f, P = GridP },
-            new() { Id = "clouds", Name = "daydream clouds", Blurb = "pale drifting clouds, calm and quiet", Wallpaper = "wall_clouds.png", Dark = false, Dim = 0f, P = CloudsP },
             new() { Id = "dinospace", Name = "dinospace", Blurb = "the hand-painted twilight made for the app", Wallpaper = "theme5.png", Dark = true, Dim = 0.72f, P = DinoP },
         };
 
@@ -162,7 +110,7 @@ namespace dinospace
             string id = Services.AppSettings.ThemeId switch
             {
                 "theme5" or "theme7" or "night" or "theme2" or "theme3" or "theme4" => "dinospace",
-                "pastel" or "grid" or "clouds" or "dinospace" => Services.AppSettings.ThemeId,
+                "pastel" or "dinospace" => Services.AppSettings.ThemeId,
                 _ => "pastel",
             };
 

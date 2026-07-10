@@ -333,7 +333,10 @@ namespace dinospace.Views
             info.Add(new Label { Text = s.Constellation.Blurb, FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), LineHeight = 1.3, TextColor = Theme.TextSecondary });
 
             var card = SightingCard(info, SkyService.Describe(s.AltDeg, s.AzDeg));
-            if (s.Constellation.LinkEntry is string link && SpaceData.ByName(link) is SpaceObject entry)
+            // Open an entry only when the encyclopedia truly has THIS
+            // constellation (Orion today, more as their art lands) — tapping
+            // Cygnus must not open the Milky Way.
+            if (SpaceData.ByName(s.Constellation.Name) is SpaceObject entry)
                 Ui.OnTap(card, async (_, _) => await Nav.OpenSpace(entry));
             return card;
         }

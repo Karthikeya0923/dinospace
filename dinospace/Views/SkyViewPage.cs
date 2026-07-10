@@ -30,8 +30,8 @@ namespace dinospace.Views
         // chrome
         private Label _targetName = null!, _targetKind = null!, _targetBlurb = null!;
         private Border _targetCard = null!, _learnBtn = null!, _askBtn = null!;
-        private Label _hint = null!;
         private GraphicsView _compass = null!;
+        private Label _viewAllLabel = null!;
         private readonly CompassRoseDrawable _rose = new();
         private SpaceObject? _learnTarget;
 
@@ -154,16 +154,31 @@ namespace dinospace.Views
             // ----- compass rose (bottom-left) -----
             _compass = new GraphicsView { Drawable = _rose, WidthRequest = 76, HeightRequest = 76, InputTransparent = true, HorizontalOptions = LayoutOptions.Start, VerticalOptions = LayoutOptions.End, Margin = new Thickness(16, 0, 0, 86) };
 
-            // ----- bottom hint -----
-            _hint = new Label
+            // ----- "view all" (bottom-left): stars & their names on demand -----
+            _viewAllLabel = new Label
             {
-                Text = "…",
-                FontFamily = Ui.Fonts, FontSize = Ui.S(12.5),
-                TextColor = Color.FromArgb("#C9C8B4"),
-                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.End,
-                Margin = new Thickness(60, 0, 60, 8),
-                HorizontalTextAlignment = TextAlignment.Center
+                Text = "view all",
+                FontFamily = Ui.Display, FontSize = 14,
+                TextColor = Colors.White,
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Center
             };
+            var viewAll = new Border
+            {
+                Content = _viewAllLabel,
+                BackgroundColor = Color.FromArgb("#4D000000"),
+                Stroke = Color.FromArgb("#66FFFFFF"), StrokeThickness = 1,
+                StrokeShape = new RoundRectangle { CornerRadius = 100 },
+                Padding = new Thickness(18, 9),
+                HorizontalOptions = LayoutOptions.Start, VerticalOptions = LayoutOptions.End,
+                Margin = new Thickness(16, 0, 0, 14)
+            };
+            Ui.OnTap(viewAll, (_, _) =>
+            {
+                _drawable.ShowAll = !_drawable.ShowAll;
+                _viewAllLabel.Text = _drawable.ShowAll ? "less" : "view all";
+            });
+            Ui.Describe(viewAll, "Show everything in the sky");
 
             _root = new Grid { BackgroundColor = Color.FromArgb("#070B14") };
             // camera slot is index 0 (inserted on demand); overlay stack above it
@@ -171,7 +186,7 @@ namespace dinospace.Views
             _root.Add(topBar);
             _root.Add(_targetCard);
             _root.Add(_compass);
-            _root.Add(_hint);
+            _root.Add(viewAll);
             Content = _root;
             Shell.SetNavBarIsVisible(this, false);
         }
@@ -214,28 +229,11 @@ namespace dinospace.Views
                     _view.Invalidate();          // continuous: twinkle + meteors
                     _compass.Invalidate();
                     if (++_tick % 6 == 0) UpdateTarget();   // naming can be lazier
-
-                    // A drifting or offset overlay is nearly always a compass
-                    // that wants calibrating — tell the user how to fix it.
-                    // Until a real location fix lands, say that instead of
-                    // confidently naming the wrong sky.
-                    if (_tick % 20 == 0 && _sensorMode)
-                        _hint.Text = !_locationReal
-                            ? "Finding your location — names sharpen in a moment"
-                            : _pointing?.NeedsCalibration == true
-                            ? "Compass needs calibrating — wave your phone in a big figure-8"
-                            : "Point your phone at the sky — names appear as you aim";
                 };
             }
             _timer.Start();
 
             await StartCameraAsync();
-            _hint.Text = (_cameraOn, _sensorMode) switch
-            {
-                (true, true) => "Point your phone at the sky — names appear as you aim",
-                (false, true) => "Move your phone to explore (camera off — overlay only)",
-                _ => "Drag to look around the sky",
-            };
         }
 
         protected override void OnDisappearing()
@@ -429,12 +427,32 @@ namespace dinospace.Views
             double jd = SkyCalc.JulianDay(utc);
             var frame = new SkyMap.LocalFrame(_lat, _lon, utc);
 
-            // the pointing direction as a horizon-frame unit vector
-            double altR = _alt * Math.PI / 180.0, azR = _az * Math.PI / 180.0;
-            double pn = Math.Cos(altR) * Math.Cos(azR), pe = Math.Cos(altR) * Math.Sin(azR), pu = Math.Sin(altR);
+            // THE fix for "the crosshair is on X but the card says Y": the
+            // card now measures distance in SCREEN PIXELS using the exact
+            // same projection that draws the overlay. Whatever is drawn
+            // nearest the crosshair is what gets named — they can never
+            // disagree again.
+            float vw = (float)_view.Width, vh = (float)_view.Height;
+            if (vw < 10 || vh < 10) return;
+            var view = new SkyMap.View(_lat, _lon, utc, _az, _alt, _drawable.FovDeg, Math.Max(vw, vh), vw / 2f, vh / 2f);
+            float cxPx = vw / 2f, cyPx = vh / 2f;
 
-            double SepTo(double n, double e, double u)
-                => Math.Acos(Math.Clamp(n * pn + e * pe + u * pu, -1, 1)) * 180.0 / Math.PI;
+            double SepTo(double alt, double az)
+            {
+                var (x, y, vis) = SkyMap.Project(alt, az, view);
+                if (!vis) return double.MaxValue;
+                return Math.Sqrt((x - cxPx) * (x - cxPx) + (y - cyPx) * (y - cyPx));
+            }
+            double SepToVec(double n, double e, double u)
+            {
+                var (x, y, vis) = SkyMap.ProjectVector(n, e, u, view);
+                if (!vis) return double.MaxValue;
+                return Math.Sqrt((x - cxPx) * (x - cxPx) + (y - cyPx) * (y - cyPx));
+            }
+            // Everything inside the crosshair ring (~34 px radius, drawn at
+            // 50) is a legitimate aim; a small bonus keeps the moon easy to
+            // hit without letting it steal a neighbour.
+            const double Ring = 50;
 
             string? name = null, kind = null, blurb = null;
             SpaceObject? entry = null;
@@ -459,14 +477,13 @@ namespace dinospace.Views
                 name = n; kind = k; blurb = b; entry = e;
             }
 
-            // the moon — a little extra reach over the planets because it is
-            // big, but still only when the crosshair is close
+            // the moon — a little extra reach because it is big
             var (mra, mdec) = SkyCalc.MoonRaDec(jd);
             var (mAlt, mAz) = SkyCalc.AltAz(mra, mdec, _lat, _lon, utc);
             if (mAlt > -2)
             {
                 var e = SpaceData.ByName("Moon");
-                Consider(SkyMap.Separation(mAlt, mAz, _alt, _az), 6, 2.0,
+                Consider(SepTo(mAlt, mAz), Ring, 12,
                          "Moon", "Earth's moon", e?.ShortDescription, e);
             }
 
@@ -477,7 +494,7 @@ namespace dinospace.Views
                 var (alt, az) = SkyCalc.AltAz(ra, dec, _lat, _lon, utc);
                 if (alt <= -2) continue;
                 var e = SpaceData.ByName(b.ToString());
-                Consider(SkyMap.Separation(alt, az, _alt, _az), 4, 1.0,
+                Consider(SepTo(alt, az), Ring, 6,
                          b.ToString(), "Planet", e?.ShortDescription, e);
             }
 
@@ -487,13 +504,14 @@ namespace dinospace.Views
             if (sAlt > -2)
             {
                 var e = SpaceData.ByName("Sun");
-                Consider(SkyMap.Separation(sAlt, sAz, _alt, _az), 5, 1.5,
+                Consider(SepTo(sAlt, sAz), Ring, 8,
                          "Sun", "Our star", e?.ShortDescription, e);
             }
 
             // stars — only the bright NAMED ones you can genuinely see, only
-            // after dark, and only when the crosshair is right on one.
-            if (skyDark)
+            // after dark, only while "view all" shows them, and only when the
+            // crosshair is right on one.
+            if (skyDark && _drawable.ShowAll)
             {
                 var stars = SkyCatalog.Stars;
                 var sv = SkyMap.StarVectors;
@@ -504,8 +522,8 @@ namespace dinospace.Views
                     if (s.Name.Length == 0) continue;
                     var (n, e, u) = frame.Horizon(sv[i * 3], sv[i * 3 + 1], sv[i * 3 + 2]);
                     if (u < 0) continue;
-                    double sep = SepTo(n, e, u);
-                    Consider(sep, 2.5, -s.Mag * 0.15,
+                    double sep = SepToVec(n, e, u);
+                    Consider(sep, Ring * 0.8, 0,
                              s.Name,
                              $"Star · {s.Colour()}",
                              $"Magnitude {s.Mag:0.0#} — one of the stars bright enough to carry a name.",
@@ -529,7 +547,9 @@ namespace dinospace.Views
                 if (nearest != null)
                 {
                     name = nearest.Name; kind = "Constellation"; blurb = nearest.Blurb + ".";
-                    entry = nearest.LinkEntry is string link ? SpaceData.ByName(link) : null;
+                    // Only link when the encyclopedia truly has THIS
+                    // constellation (like Orion) — never a lookalike entry.
+                    entry = SpaceData.ByName(nearest.Name);
                 }
             }
 
@@ -587,6 +607,10 @@ namespace dinospace.Views
         public double FovDeg = 95;
         public bool CameraBehind;
 
+        // Off: just the solar system and the constellations — clean, like a
+        // picture book. On ("view all"): the bright named stars join in.
+        public bool ShowAll;
+
         // The naked-eye cut for "a star worth drawing": every star this
         // bright has a proper name and really is visible from a backyard.
         public const float BrightStarMag = 2.2f;
@@ -594,7 +618,7 @@ namespace dinospace.Views
         public void Draw(ICanvas canvas, RectF rect)
         {
             var utc = DateTime.UtcNow;
-            var v = new SkyMap.View(Lat, Lon, utc, CenterAz, CenterAlt, FovDeg, Math.Max(rect.Width, rect.Height));
+            var v = new SkyMap.View(Lat, Lon, utc, CenterAz, CenterAlt, FovDeg, Math.Max(rect.Width, rect.Height), rect.Width / 2f, rect.Height / 2f);
             var frame = new SkyMap.LocalFrame(Lat, Lon, utc);
             long nowMs = Environment.TickCount64;
             canvas.Antialias = true;
@@ -677,8 +701,8 @@ namespace dinospace.Views
                     }
                 }
 
-            // ---- the bright named stars — the ones you can really see ----
-            if (skyDark)
+            // ---- the bright named stars — only in "view all" ----
+            if (skyDark && ShowAll)
             {
                 var stars = SkyCatalog.Stars;
                 var sv = SkyMap.StarVectors;

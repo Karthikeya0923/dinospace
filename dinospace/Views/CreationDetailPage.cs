@@ -110,10 +110,10 @@ namespace dinospace.Views
             stack.Add(Ui.PrimaryButton("EDIT THIS CREATION", async (_, _) => await Nav.Push(() => new CreationEditorPage(c))));
             if (c.Kind == CreationKind.Dinosaur)
                 stack.Add(Ui.GhostButton("Battle this creature", async (_, _) => await Nav.Push(() => new BattlePage(c.ToDinosaur()))));
-            stack.Add(DeleteButton(c));
 
-            var header = DetailUi.HeaderBar(c.Kind == CreationKind.Dinosaur ? "dinosaurs" : "space",
-                false, OnBack, () => { }, out _, showSave: false);
+            // The header carries a delete slot where real entries keep their
+            // save star — same spot, same size, Karthik's icon_delete.png.
+            var header = HeaderWithDelete(c);
 
             var main = new Grid { RowSpacing = 0 };
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -147,25 +147,34 @@ namespace dinospace.Views
             return g;
         }
 
-        private View DeleteButton(UserCreation c)
+        // Back arrow left, section name centred, the hand-drawn delete slot
+        // right — exactly where real entries keep their save star.
+        private View HeaderWithDelete(UserCreation c)
         {
-            var label = new Label
+            var back = Ui.Icon(Ui.IconBack, 24);
+            var backWrap = new Border
             {
-                Text = Ui.T("Delete this creation"),
-                FontFamily = Ui.Display, FontSize = Ui.S(15),
-                TextColor = Theme.Danger,
-                HorizontalTextAlignment = TextAlignment.Center,
-                VerticalTextAlignment = TextAlignment.Center
+                Content = back, WidthRequest = 44, HeightRequest = 44,
+                BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent
             };
-            var btn = new Border
+            Ui.OnTap(backWrap, (_, _) => OnBack());
+            Ui.Describe(backWrap, "Go back");
+
+            var title = new Label
             {
-                Content = label,
-                BackgroundColor = Colors.Transparent,
-                Stroke = Theme.Danger.WithAlpha(0.55f), StrokeThickness = 1.4,
-                StrokeShape = new RoundRectangle { CornerRadius = 100 },
-                HeightRequest = 50, Padding = new Thickness(20, 0)
+                Text = Ui.T(c.Kind == CreationKind.Dinosaur ? "dinosaurs" : "space"),
+                FontFamily = Ui.Display, FontSize = Ui.S(22), TextColor = Theme.TextPrimary,
+                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center,
+                HorizontalTextAlignment = TextAlignment.Center
             };
-            Ui.OnTap(btn, async (_, _) =>
+
+            var del = new Border
+            {
+                Content = Ui.Icon(Ui.IconDelete, 26),
+                WidthRequest = 44, HeightRequest = 44,
+                BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent
+            };
+            Ui.OnTap(del, async (_, _) =>
             {
                 bool sure = await DisplayAlertAsync("Delete this creation?",
                     $"{c.Name} will be gone for good — the drawing too. This can't be undone.",
@@ -175,8 +184,16 @@ namespace dinospace.Views
                 AppSettings.LongPress();
                 try { if (Navigation.NavigationStack.Count > 1) await Navigation.PopAsync(); } catch { }
             });
-            Ui.Describe(btn, "Delete this creation");
-            return btn;
+            Ui.Describe(del, "Delete this creation");
+
+            var grid = new Grid { Padding = new Thickness(8, 10) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(56) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(56) });
+            grid.Add(backWrap, 0, 0);
+            grid.Add(title, 1, 0);
+            grid.Add(del, 2, 0);
+            return grid;
         }
 
         private async void OnBack()
