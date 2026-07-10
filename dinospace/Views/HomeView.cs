@@ -17,11 +17,13 @@ namespace dinospace.Views
 
         private void Build()
         {
-            var grid = new Grid { Padding = new Thickness(28, 6, 28, 26), RowSpacing = 0 };
+            // Pills sit at the very bottom of the page, right above the tab
+            // bar, exactly like the cover sheet — the mascot owns everything
+            // between the wordmark and them.
+            var grid = new Grid { Padding = new Thickness(28, 6, 28, 18), RowSpacing = 0 };
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });          // wordmark
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(2, GridUnitType.Star) });  // mascot
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });          // mascot
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });          // pills
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(0.55, GridUnitType.Star) });
 
             // ---- wordmark block, high on the page like the cover art ----
             var mast = new Grid { Margin = new Thickness(0, 26, 0, 0) };
@@ -82,10 +84,10 @@ namespace dinospace.Views
             grid.Add(heroArea, 0, 1);
 
             // ---- the two cover pills ----
-            var buttons = new VerticalStackLayout { Spacing = 14, VerticalOptions = LayoutOptions.Start };
-            buttons.Add(HomePill(Ui.Sticker("st_telescope.png", 26), "scan sky",
+            var buttons = new VerticalStackLayout { Spacing = 14, VerticalOptions = LayoutOptions.End };
+            buttons.Add(HomePill(Ui.Icon(Ui.IconScanSky, 26), "scan sky",
                 async () => await Nav.Push(() => new SkyViewPage())));
-            buttons.Add(HomePill(Ui.Mascot("mascot_ask", 26, "st_bub_green_dots.png"), "ask novasaur",
+            buttons.Add(HomePill(Ui.Mascot("mascot_ask", 26, Ui.IconAsk), "ask novasaur",
                 async () => await Nav.Push(() => new NovaPage())));
             grid.Add(buttons, 0, 2);
 

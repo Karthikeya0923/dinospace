@@ -16,42 +16,39 @@ namespace dinospace
         public static string Fonts => AppLayout.BodyFont;          // body sans
         public static string Display => AppLayout.DisplayFont;     // Baloo
         public static string DisplayItalic => AppLayout.DisplayItalicFont;
-        // Icon names -> vector geometry (see IconData). Drawn as Paths, not a
-        // font, because icon fonts render as tofu boxes on some Android builds.
-        public const string IconHome = "home";
-        public const string IconSearch = "search";
-        public const string IconSaved = "saved";
-        public const string IconSavedFill = "savedfill";
-        public const string IconSettings = "settings";
-        public const string IconBack = "back";
-        public const string IconChevron = "chevron";
-        public const string IconClose = "close";
-        public const string IconStar = "star";
-        public const string IconStarBorder = "star";
-        public const string IconSwap = "swap";
-        public const string IconBolt = "bolt";
-        public const string IconQuiz = "quiz";
-        public const string IconList = "list";
-        public const string IconChat = "chat";
-        public const string IconBrush = "brush";
-        public const string IconSend = "send";
-        public const string IconStop = "stop";
-        public const string IconBook = "book";
-        public const string IconSwords = "swords";
-        public const string IconCollection = "collection";
-        public const string IconMore = "more";
-        public const string IconTelescope = "telescope";
-        public const string IconPencil = "pencil";
-        public const string IconStarLine = "starline";
-        public const string IconSun = "sun";
-        public const string IconSpeaker = "speaker";
-        public const string IconLock = "lock";
-        public const string IconInfo = "info";
-        public const string IconMail = "mail";
-
-        // The save-star gold, same in every theme (it reads on light paper
-        // and on the dark painted themes alike).
-        public static readonly Color StarGold = Color.FromArgb("#E7BC4F");
+        // Every icon in the app is a named SLOT for Karthik's hand-drawn art:
+        // a transparent PNG in Resources/Images with the slot's exact name.
+        // Drop the file in and it appears everywhere that slot is used; until
+        // then the slot just holds its space, blank. No built-in glyphs, no
+        // emojis, no symbols — every picture in the app is his.
+        public const string IconHome = "icon_home";                    // tab bar
+        public const string IconEncyclopedia = "icon_encyclopedia";    // tab bar + more tile
+        public const string IconBattles = "icon_battles";              // tab bar + more tile
+        public const string IconCollection = "icon_collection";        // tab bar + "saved" more tile
+        public const string IconMore = "icon_more";                    // tab bar
+        public const string IconBack = "icon_back";                    // every back arrow
+        public const string IconChevron = "icon_chevron";              // list rows / settings rows
+        public const string IconClose = "icon_close";                  // scan sky close, remove-from-list
+        public const string IconSearch = "icon_search";                // encyclopedia search bar
+        public const string IconSend = "icon_send";                    // chat send
+        public const string IconStop = "icon_stop";                    // chat stop-while-answering
+        public const string IconStar = "icon_star";                    // saved star (gold), battle winner
+        public const string IconStarOutline = "icon_star_outline";     // unsaved star
+        public const string IconPlus = "icon_plus";                    // battle choose, own-list add, colour mixer
+        public const string IconScanSky = "icon_scan_sky";             // home pill + more tile
+        public const string IconAsk = "icon_ask";                      // ask-novasaur pill/tile/avatar until mascot_ask lands
+        public const string IconDraw = "icon_draw";                    // draw entry more tile
+        public const string IconQuiz = "icon_quiz";                    // quiz more tile
+        public const string IconCollections = "icon_collections";      // collections more tile
+        public const string IconSettings = "icon_settings";            // settings more tile
+        public const string IconAppearance = "icon_appearance";        // settings row
+        public const string IconSound = "icon_sound";                  // settings row
+        public const string IconNovaAi = "icon_novasaur";              // settings row
+        public const string IconPrivacy = "icon_privacy";              // settings row
+        public const string IconAbout = "icon_about";                  // settings row
+        public const string IconContact = "icon_contact";              // settings row
+        public const string IconCorrect = "icon_correct";              // quiz right answer
+        public const string IconWrong = "icon_wrong";                  // quiz wrong answer
 
         public static double Scale => AppSettings.FontScale;
         public static double S(double size) => size * Scale;
@@ -98,61 +95,45 @@ namespace dinospace
             TextColor = Theme.TextSecondary
         };
 
-        private static readonly Microsoft.Maui.Controls.Shapes.PathGeometryConverter _geoConv = new();
-
-        // A crisp vector icon (24x24 geometry scaled to `size`).
-        public static Microsoft.Maui.Controls.Shapes.Path Icon(string name, double size, Color color) => new()
+        // A hand-drawn icon slot: the PNG if Karthik has drawn it yet, or an
+        // invisible box that reserves exactly the same space until he has.
+        public static View Icon(string slot, double size)
         {
-            Data = (Microsoft.Maui.Controls.Shapes.Geometry)_geoConv.ConvertFromInvariantString(IconData(name))!,
-            Fill = new SolidColorBrush(color),
-            Aspect = Stretch.Uniform,
-            WidthRequest = size,
-            HeightRequest = size,
-            HorizontalOptions = LayoutOptions.Center,
-            VerticalOptions = LayoutOptions.Center
-        };
-
-        // Recolour / reshape an existing icon in place (nav selection, save toggle).
-        public static void SetIcon(Microsoft.Maui.Controls.Shapes.Path icon, string name, Color color)
-        {
-            icon.Data = (Microsoft.Maui.Controls.Shapes.Geometry)_geoConv.ConvertFromInvariantString(IconData(name))!;
-            icon.Fill = new SolidColorBrush(color);
+            if (HasImage(slot))
+                return new Image
+                {
+                    Source = slot + ".png",
+                    WidthRequest = size, HeightRequest = size,
+                    Aspect = Aspect.AspectFit,
+                    HorizontalOptions = LayoutOptions.Center,
+                    VerticalOptions = LayoutOptions.Center,
+                    InputTransparent = true
+                };
+            return new BoxView
+            {
+                WidthRequest = size, HeightRequest = size,
+                Color = Colors.Transparent, InputTransparent = true
+            };
         }
 
-        // Material-style 24x24 path data.
-        private static string IconData(string name) => name switch
+        // A two-state icon slot (saved/unsaved star, send/stop) that swaps
+        // between two hand-drawn slots in place.
+        public sealed class IconToggle : Grid
         {
-            "home" => "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z",
-            "search" => "M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z",
-            "saved" => "M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z",
-            "savedfill" => "M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z",
-            "settings" => "M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z",
-            "back" => "M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z",
-            "chevron" => "M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z",
-            "close" => "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
-            "star" => "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z",
-            "starline" => "M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z",
-            "sun" => "M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z",
-            "speaker" => "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z",
-            "lock" => "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z",
-            "info" => "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z",
-            "mail" => "M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z",
-            "swap" => "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z",
-            "bolt" => "M12 2.02c-5.51 0-9.98 4.47-9.98 9.98s4.47 9.98 9.98 9.98 9.98-4.47 9.98-9.98S17.51 2.02 12 2.02zM11.48 20v-6.26H8L13 4v6.26h3.35L11.48 20z",
-            "list" => "M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z",
-            "quiz" => "M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z",
-            "chat" => "M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z",
-            "brush" => "M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z",
-            "send" => "M2.01 21L23 12 2.01 3 2 10l15 2-15 2z",
-            "stop" => "M6 6h12v12H6z",
-            "book" => "M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z",
-            "swords" => "M3 4.2 4.2 3 20 18.8 18.8 20 Z M19.8 3 21 4.2 5.2 20 4 18.8 Z M15.9 20.1 20.1 15.9 21.3 17.1 17.1 21.3 Z M2.7 17.1 3.9 15.9 8.1 20.1 6.9 21.3 Z",
-            "collection" => "M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2zm-5 12H9v-2h6v2zm5-7H4V4h16v3z",
-            "more" => "M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z",
-            "telescope" => "M2.2 11.2 15.1 4.1c.5-.3 1.1-.1 1.4.4l1.5 2.7c.3.5.1 1.1-.4 1.4L4.7 15.7c-.5.3-1.1.1-1.4-.4l-1.5-2.7c-.3-.5-.1-1.1.4-1.4z M18.6 4.7l1.9-1c.4-.2.9-.1 1.1.3l1.1 2c.2.4.1.9-.3 1.1l-1.9 1c-.4.2-.9.1-1.1-.3l-1.1-2c-.2-.4 0-.9.3-1.1z M11.1 14.6l1.9-1 .9 1.6-4.6 6.6c-.2.3-.6.4-.9.2l-.5-.3c-.3-.2-.4-.6-.2-.9l3.4-6.2z M13.6 15.9l1.4-.8 3.6 6.1c.2.3.1.7-.2.9l-.5.3c-.3.2-.7.1-.9-.2l-3.4-6.3z",
-            "pencil" => "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z",
-            _ => "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z",
-        };
+            private readonly View _first, _second;
+            public IconToggle(string firstSlot, string secondSlot, double size)
+            {
+                InputTransparent = true;
+                HorizontalOptions = LayoutOptions.Center;
+                VerticalOptions = LayoutOptions.Center;
+                _first = Icon(firstSlot, size);
+                _second = Icon(secondSlot, size);
+                _second.IsVisible = false;
+                Children.Add(_first);
+                Children.Add(_second);
+            }
+            public void Show(bool second) { _first.IsVisible = !second; _second.IsVisible = second; }
+        }
 
         // Section header. Native: tight ALL-CAPS + hairline rule (magazine
         // look). Playful: a big rounded Baloo title with a short chunky accent
@@ -382,9 +363,9 @@ namespace dinospace
             return found;
         }
 
-        // The mascot if its art exists; otherwise the fallback sticker; if
-        // neither, an invisible box that holds the reserved space.
-        public static View Mascot(string slot, double height, string? fallbackSticker = null)
+        // The mascot if its art exists; otherwise the given hand-drawn icon
+        // slot; if neither has arrived, an invisible box holds the space.
+        public static View Mascot(string slot, double height, string? fallbackIcon = null)
         {
             if (HasImage(slot))
                 return new Image
@@ -396,8 +377,8 @@ namespace dinospace
                     VerticalOptions = LayoutOptions.Center,
                     InputTransparent = true
                 };
-            if (fallbackSticker != null)
-                return Sticker(fallbackSticker, height);
+            if (fallbackIcon != null)
+                return Icon(fallbackIcon, height);
             return new BoxView { HeightRequest = height, Color = Colors.Transparent, InputTransparent = true };
         }
 

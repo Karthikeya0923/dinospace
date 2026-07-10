@@ -52,7 +52,7 @@ namespace dinospace.Views
         private ScrollView _chatScroll = null!;
         private Entry _entry = null!;
         private Border _sendBtn = null!;
-        private Microsoft.Maui.Controls.Shapes.Path _sendIcon = null!;
+        private Ui.IconToggle _sendIcon = null!;
         private HorizontalStackLayout _suggestions = null!;
         private ScrollView _suggestionScroll = null!;
         private Grid _inputArea = null!;
@@ -134,10 +134,11 @@ namespace dinospace.Views
 
         private View BuildHeader()
         {
-            var back = new Label
+            var back = new Border
             {
-                Text = "‹", FontSize = 32, TextColor = Theme.TextPrimary,
-                VerticalOptions = LayoutOptions.Center, Padding = new Thickness(0, 0, 6, 2)
+                Content = Ui.Icon(Ui.IconBack, 24),
+                BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent,
+                Padding = new Thickness(0, 0, 6, 2), VerticalOptions = LayoutOptions.Center
             };
             Ui.OnTap(back, async (_, _) =>
             {
@@ -158,7 +159,7 @@ namespace dinospace.Views
                 WidthRequest = dotSize, HeightRequest = dotSize,
                 BackgroundColor = Ui.MultiplyAlpha(Theme.AccentNova, 0.18f),
                 Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = dotSize / 2 },
-                Content = Ui.Mascot("mascot_ask", 28, "st_bub_green_dots.png")
+                Content = Ui.Mascot("mascot_ask", 28, Ui.IconAsk)
             };
             var title = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
             title.Add(new Label { Text = "ask novasaur", FontFamily = Ui.Display, FontSize = 21, TextColor = Theme.TextPrimary });
@@ -189,7 +190,7 @@ namespace dinospace.Views
                 Padding = new Thickness(16, 0)
             };
 
-            _sendIcon = Ui.Icon(Ui.IconSend, 20, Theme.TextOnAccent);
+            _sendIcon = new Ui.IconToggle(Ui.IconSend, Ui.IconStop, 20);
             _sendBtn = new Border
             {
                 Content = _sendIcon,
@@ -278,7 +279,7 @@ namespace dinospace.Views
         private async void Answer(string question)
         {
             _busy = true;
-            Ui.SetIcon(_sendIcon, Ui.IconStop, Theme.TextOnAccent);
+            _sendIcon.Show(true);
             int myGen = ++_gen;
             StartThinking();
             _ = FailsafeAsync(myGen);   // hard guarantee: "thinking…" can never last forever
@@ -369,7 +370,7 @@ namespace dinospace.Views
             live.Text = answer;
             if (answer.Length > 0) { _messages.Add(new ChatMessage { IsUser = false, Text = answer }); SaveHistory(); }
             _busy = false;
-            Ui.SetIcon(_sendIcon, Ui.IconSend, Theme.TextOnAccent);
+            _sendIcon.Show(false);
             ShowSuggestions();
             _ = ScrollToEnd();
         }
@@ -415,7 +416,7 @@ namespace dinospace.Views
             _gen++;
             StopThinking();
             _busy = false;
-            Ui.SetIcon(_sendIcon, Ui.IconSend, Theme.TextOnAccent);
+            _sendIcon.Show(false);
             ShowSuggestions();
         }
 
@@ -492,7 +493,7 @@ namespace dinospace.Views
             string full = _revealSb.ToString().Trim();
             if (full.Length > 0) { _messages.Add(new ChatMessage { IsUser = false, Text = full }); SaveHistory(); }
             _revealLabel = null; _revealWords = null;
-            _busy = false; Ui.SetIcon(_sendIcon, Ui.IconSend, Theme.TextOnAccent);
+            _busy = false; _sendIcon.Show(false);
             ShowSuggestions();
             _ = ScrollToEnd();
         }
@@ -601,7 +602,7 @@ namespace dinospace.Views
             _revealTimer?.Stop();
             _revealActive = false; _revealLabel = null; _revealWords = null;
             StopThinking();
-            _busy = false; Ui.SetIcon(_sendIcon, Ui.IconSend, Theme.TextOnAccent);
+            _busy = false; _sendIcon.Show(false);
             _messages.Clear();
             _lastEntities.Clear();
             Preferences.Remove(HistoryKey);

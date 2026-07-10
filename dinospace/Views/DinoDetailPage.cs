@@ -13,7 +13,7 @@ namespace dinospace.Views
     public class DinoDetailPage : ContentPage
     {
         private readonly Dinosaur _d;
-        private Microsoft.Maui.Controls.Shapes.Path _saveIcon = null!;
+        private Ui.IconToggle _saveIcon = null!;
         private Color Accent => Theme.Accent;
 
         public DinoDetailPage(Dinosaur d)
@@ -31,7 +31,7 @@ namespace dinospace.Views
             stack.Add(new Label
             {
                 Text = _d.Name,
-                FontFamily = Ui.Display, FontSize = Ui.S(28), LineHeight = 1.05,
+                FontFamily = Ui.Display, FontSize = Ui.S(30), LineHeight = 1.05,
                 TextColor = Theme.TextPrimary
             });
             if (!string.IsNullOrWhiteSpace(_d.Pronunciation))
@@ -43,7 +43,7 @@ namespace dinospace.Views
 
             stack.Add(DetailUi.TagChips(_d.Diet, _d.Era));
 
-            stack.Add(DetailUi.EntryImage(_d.ImageFile, _d.Name, grass: true));
+            stack.Add(DetailUi.EntryImage(_d.ImageFile, _d.Name));
 
             stack.Add(DetailUi.StatRows(new[]
             {
@@ -92,7 +92,7 @@ namespace dinospace.Views
         {
             bool nowSaved = SavedStore.ToggleDino(_d.Name);
             AppSettings.LongPress();
-            Ui.SetIcon(_saveIcon, nowSaved ? Ui.IconStar : Ui.IconStarLine, nowSaved ? Ui.StarGold : Theme.TextPrimary);
+            _saveIcon.Show(nowSaved);
         }
     }
 }

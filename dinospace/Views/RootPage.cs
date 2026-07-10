@@ -18,7 +18,7 @@ namespace dinospace.Views
     public class RootPage : ContentPage
     {
         private readonly List<(string label, string icon, View view)> _tabs = new();
-        private readonly List<Microsoft.Maui.Controls.Shapes.Path> _navIcons = new();
+        private readonly List<View> _navIcons = new();
         private readonly List<Label> _navLabels = new();
         private Grid _content = null!;
         private int _current = -1;
@@ -65,9 +65,9 @@ namespace dinospace.Views
             // encyclopedia, battles, collection, more — all lowercase,
             // all line icons.
             _tabs.Add(("home", Ui.IconHome, new HomeView(GoToTab)));
-            _tabs.Add(("encyclopedia", Ui.IconBook, new SearchView()));
-            _tabs.Add(("battles", Ui.IconSwords, new BattleView()));
-            _tabs.Add(("collection", Ui.IconSaved, new SavedView()));
+            _tabs.Add(("encyclopedia", Ui.IconEncyclopedia, new SearchView()));
+            _tabs.Add(("battles", Ui.IconBattles, new BattleView()));
+            _tabs.Add(("collection", Ui.IconCollection, new SavedView()));
             _tabs.Add(("more", Ui.IconMore, new MoreView()));
 
             Build();
@@ -124,7 +124,8 @@ namespace dinospace.Views
             for (int i = 0; i < _tabs.Count; i++)
             {
                 int index = i;
-                var icon = Ui.Icon(_tabs[i].icon, iconSize, Theme.TextHint);
+                var icon = Ui.Icon(_tabs[i].icon, iconSize);
+                icon.Opacity = 0.45;
                 var label = new Label
                 {
                     Text = _tabs[i].label,
@@ -183,18 +184,14 @@ namespace dinospace.Views
 
         private void SyncNav()
         {
-            // Playful marks the active tab in its deep-olive ink (the bar
-            // stays flat, like the design sheet); Native tints it with the
-            // theme accent.
-            bool playful = AppLayout.Playful;
+            // Hand-drawn icons can't be re-tinted, so the active tab shows at
+            // full strength while the rest sit back; the label carries the
+            // deep-olive ink like the design sheet.
             for (int i = 0; i < _tabs.Count; i++)
             {
                 bool on = i == _current;
-                string icon = on && _tabs[i].icon == Ui.IconSaved ? Ui.IconSavedFill : _tabs[i].icon;
-                Color active = playful ? Theme.TextPrimary : Theme.Accent;
-
-                Ui.SetIcon(_navIcons[i], icon, on ? active : Theme.TextHint);
-                _navLabels[i].TextColor = on ? active : Theme.TextHint;
+                _navIcons[i].Opacity = on ? 1.0 : 0.45;
+                _navLabels[i].TextColor = on ? Theme.TextPrimary : Theme.TextHint;
                 _navLabels[i].FontAttributes = on ? FontAttributes.Bold : FontAttributes.None;
                 if (i < _navCells.Count)
                     _navCells[i].BackgroundColor = Colors.Transparent;

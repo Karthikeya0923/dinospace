@@ -5,10 +5,11 @@ using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
-    // The "more" tab, straight from the design sheet: a centred lowercase
-    // title and a two-column grid of outlined tiles — scan sky, ask novasaur,
-    // dino battle, draw entry, encyclopedia, quiz, collections and saved —
-    // with settings as one wide tile across the bottom.
+    // The "more" tab, straight from the design sheet: a big centred
+    // lowercase title and a two-column grid of tiles — scan sky, ask
+    // novasaur, dino battle, draw entry, encyclopedia, quiz, collections and
+    // saved — with settings as one wide tile reaching the bottom of the
+    // page. The grid stretches so there is no dead space under settings.
     public class MoreView : ContentView, ITabView
     {
         public MoreView() => Build();
@@ -21,45 +22,43 @@ namespace dinospace.Views
             {
                 Text = "more",
                 FontFamily = Ui.Display,
-                FontSize = Ui.S(24),
+                FontSize = Ui.S(32),
                 TextColor = Theme.TextPrimary,
                 HorizontalOptions = LayoutOptions.Center,
                 HorizontalTextAlignment = TextAlignment.Center,
-                Margin = new Thickness(18, 18, 18, 6)
+                Margin = new Thickness(18, 14, 18, 4)
             };
 
-            var grid = new Grid { ColumnSpacing = 14, RowSpacing = 14, Padding = new Thickness(18, 8, 18, 24) };
+            var grid = new Grid { ColumnSpacing = 14, RowSpacing = 14, Padding = new Thickness(18, 8, 18, 16) };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            for (int r = 0; r < 5; r++) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            // Four star-sized tile rows plus a shorter settings row: together
+            // they stretch to fill whatever height the page has.
+            for (int r = 0; r < 4; r++) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(0.62, GridUnitType.Star) });
 
-            grid.Add(Tile(Ui.Sticker("st_telescope.png", 32), "scan sky", async () => await Nav.Push(() => new SkyViewPage())), 0, 0);
-            grid.Add(Tile(Ui.Mascot("mascot_ask", 32, "st_bub_green_dots.png"), "ask novasaur", async () => await Nav.Push(() => new NovaPage())), 1, 0);
-            grid.Add(Tile(PathIcon(Ui.IconSwords), "dino battle", () => { RootPage.Current?.SwitchTab(2); return System.Threading.Tasks.Task.CompletedTask; }), 0, 1);
-            grid.Add(Tile(PathIcon(Ui.IconPencil), "draw entry", async () => await Nav.Push(() => new CreationsPage())), 1, 1);
-            grid.Add(Tile(PathIcon(Ui.IconBook), "encyclopedia", () => { RootPage.Current?.SwitchTab(1); return System.Threading.Tasks.Task.CompletedTask; }), 0, 2);
-            grid.Add(Tile(Ui.Sticker("st_icon_question.png", 32), "quiz", async () => await Nav.Push(() => new QuizSetupPage())), 1, 2);
-            grid.Add(Tile(Ui.Sticker("st_badge_star.png", 32), "collections", async () => await Nav.Push(() => new CollectionsListPage())), 0, 3);
-            grid.Add(Tile(PathIcon(Ui.IconSaved), "saved", () => { RootPage.Current?.SwitchTab(3); return System.Threading.Tasks.Task.CompletedTask; }), 1, 3);
+            grid.Add(Tile(Ui.Icon(Ui.IconScanSky, 44), "scan sky", async () => await Nav.Push(() => new SkyViewPage())), 0, 0);
+            grid.Add(Tile(Ui.Mascot("mascot_ask", 44, Ui.IconAsk), "ask novasaur", async () => await Nav.Push(() => new NovaPage())), 1, 0);
+            grid.Add(Tile(Ui.Icon(Ui.IconBattles, 44), "dino battle", () => { RootPage.Current?.SwitchTab(2); return System.Threading.Tasks.Task.CompletedTask; }), 0, 1);
+            grid.Add(Tile(Ui.Icon(Ui.IconDraw, 44), "draw entry", async () => await Nav.Push(() => new CreationsPage())), 1, 1);
+            grid.Add(Tile(Ui.Icon(Ui.IconEncyclopedia, 44), "encyclopedia", () => { RootPage.Current?.SwitchTab(1); return System.Threading.Tasks.Task.CompletedTask; }), 0, 2);
+            grid.Add(Tile(Ui.Icon(Ui.IconQuiz, 44), "quiz", async () => await Nav.Push(() => new QuizSetupPage())), 1, 2);
+            grid.Add(Tile(Ui.Icon(Ui.IconCollections, 44), "collections", async () => await Nav.Push(() => new CollectionsListPage())), 0, 3);
+            grid.Add(Tile(Ui.Icon(Ui.IconCollection, 44), "saved", () => { RootPage.Current?.SwitchTab(3); return System.Threading.Tasks.Task.CompletedTask; }), 1, 3);
 
-            // settings: one wide tile across both columns, like the sheet's
-            // long panel — lives down here instead of a gear in the corner.
-            var settings = Tile(PathIcon(Ui.IconSettings), "settings",
+            // settings: one wide tile across both columns, reaching the
+            // bottom of the page like the sheet's long panel.
+            var settings = Tile(Ui.Icon(Ui.IconSettings, 36), "settings",
                 async () => await Nav.Push(() => new HostPage("", new SettingsView())), wide: true);
             grid.Add(settings, 0, 4);
             Grid.SetColumnSpan((BindableObject)settings, 2);
 
-            var stack = new VerticalStackLayout { Spacing = 0 };
-            stack.Add(title);
-            stack.Add(grid);
-            Content = new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
-        }
-
-        private static View PathIcon(string name)
-        {
-            var ic = Ui.Icon(name, 30, Theme.TextPrimary);
-            ic.HorizontalOptions = LayoutOptions.Center;
-            return ic;
+            var root = new Grid { RowSpacing = 0 };
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
+            root.Add(title, 0, 0);
+            root.Add(grid, 0, 1);
+            Content = root;
         }
 
         private View Tile(View icon, string label, Func<System.Threading.Tasks.Task> onTap, bool wide = false)
@@ -72,9 +71,9 @@ namespace dinospace.Views
                 // icon and text side by side, centred in the long panel
                 var row = new HorizontalStackLayout
                 {
-                    Spacing = 12,
-                    Padding = new Thickness(10, 18),
-                    HorizontalOptions = LayoutOptions.Center
+                    Spacing = 14,
+                    HorizontalOptions = LayoutOptions.Center,
+                    VerticalOptions = LayoutOptions.Center
                 };
                 icon.VerticalOptions = LayoutOptions.Center;
                 row.Add(icon);
@@ -82,7 +81,7 @@ namespace dinospace.Views
                 {
                     Text = label,
                     FontFamily = Ui.Display,
-                    FontSize = Ui.S(15),
+                    FontSize = Ui.S(19),
                     TextColor = Theme.TextPrimary,
                     VerticalOptions = LayoutOptions.Center
                 });
@@ -92,18 +91,18 @@ namespace dinospace.Views
             {
                 var col = new VerticalStackLayout
                 {
-                    Spacing = 10,
-                    Padding = new Thickness(10, 20),
-                    HorizontalOptions = LayoutOptions.Fill
+                    Spacing = 12,
+                    HorizontalOptions = LayoutOptions.Fill,
+                    VerticalOptions = LayoutOptions.Center
                 };
-                var iconBox = new Grid { HeightRequest = 32 };
+                var iconBox = new Grid { HeightRequest = 44 };
                 iconBox.Add(icon);
                 col.Add(iconBox);
                 col.Add(new Label
                 {
                     Text = label,
                     FontFamily = Ui.Display,
-                    FontSize = Ui.S(15),
+                    FontSize = Ui.S(17),
                     TextColor = Theme.TextPrimary,
                     HorizontalTextAlignment = TextAlignment.Center
                 });

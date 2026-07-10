@@ -12,7 +12,7 @@ namespace dinospace.Views
     public class SpaceDetailPage : ContentPage
     {
         private readonly SpaceObject _s;
-        private Microsoft.Maui.Controls.Shapes.Path _saveIcon = null!;
+        private Ui.IconToggle _saveIcon = null!;
         private Color Accent => Theme.Accent;
 
         public SpaceDetailPage(SpaceObject s)
@@ -30,7 +30,7 @@ namespace dinospace.Views
             stack.Add(new Label
             {
                 Text = _s.Name,
-                FontFamily = Ui.Display, FontSize = Ui.S(28), LineHeight = 1.05,
+                FontFamily = Ui.Display, FontSize = Ui.S(30), LineHeight = 1.05,
                 TextColor = Theme.TextPrimary
             });
             if (!string.IsNullOrWhiteSpace(_s.Pronunciation))
@@ -42,7 +42,7 @@ namespace dinospace.Views
 
             stack.Add(DetailUi.TagChips(_s.TypeLabel));
 
-            stack.Add(DetailUi.EntryImage(_s.ImageFile, _s.Name, grass: false));
+            stack.Add(DetailUi.EntryImage(_s.ImageFile, _s.Name));
 
             var rows = new List<(string, string)> { ("Type", _s.TypeLabel) };
             rows.Add((_s.Stat1Label, _s.Stat1Value));
@@ -88,7 +88,7 @@ namespace dinospace.Views
         {
             bool nowSaved = SavedStore.ToggleSpace(_s.Name);
             AppSettings.LongPress();
-            Ui.SetIcon(_saveIcon, nowSaved ? Ui.IconStar : Ui.IconStarLine, nowSaved ? Ui.StarGold : Theme.TextPrimary);
+            _saveIcon.Show(nowSaved);
         }
     }
 }

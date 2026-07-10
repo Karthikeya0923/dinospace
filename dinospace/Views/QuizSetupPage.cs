@@ -24,7 +24,7 @@ namespace dinospace.Views
         {
             var stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(18, 4, 18, 28) };
 
-            stack.Add(new Label { Text = "quiz time", FontFamily = Ui.Display, FontSize = Ui.S(30), TextColor = Theme.TextPrimary });
+            stack.Add(new Label { Text = "quiz time", FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary });
             stack.Add(new Label
             {
                 Text = "Pick a topic and how many questions you're up for.",

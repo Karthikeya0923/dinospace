@@ -24,7 +24,7 @@ namespace dinospace.Views
             {
                 Text = "settings",
                 FontFamily = Ui.Display,
-                FontSize = Ui.S(24),
+                FontSize = Ui.S(32),
                 TextColor = Theme.TextPrimary,
                 HorizontalOptions = LayoutOptions.Center,
                 Margin = new Thickness(0, 8, 0, 8)
@@ -33,12 +33,12 @@ namespace dinospace.Views
             stack.Add(ProfileCard());
 
             stack.Add(Group(
-                IconRow(Ui.IconSun, "Appearance", async () => await Nav.Push(() => new ThemesPage())),
+                IconRow(Ui.IconAppearance, "Appearance", async () => await Nav.Push(() => new ThemesPage())),
                 SoundRow(),
-                IconRow(Ui.IconChat, "NovaSaur AI", async () => await Nav.Push(() => new HostPage("", NovaAiBody()))),
-                IconRow(Ui.IconLock, "Privacy", OpenPrivacy),
-                IconRow(Ui.IconInfo, "About DinoSpace", ShowAbout),
-                IconRow(Ui.IconMail, "Contact us", OpenFeedback)));
+                IconRow(Ui.IconNovaAi, "NovaSaur AI", async () => await Nav.Push(() => new HostPage("", NovaAiBody()))),
+                IconRow(Ui.IconPrivacy, "Privacy", OpenPrivacy),
+                IconRow(Ui.IconAbout, "About DinoSpace", ShowAbout),
+                IconRow(Ui.IconContact, "Contact us", OpenFeedback)));
 
             stack.Add(Group(DangerRow("Reset progress & bookmarks", ConfirmReset)));
 
@@ -52,8 +52,9 @@ namespace dinospace.Views
             Content = new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
         }
 
-        // The explorer card: the mascot's circle (once its art lands) beside
-        // the explorer name, exactly like the sheet's settings page.
+        // Your card: the profile picture (mascot_pfp.png once it's drawn,
+        // an empty circle until then) beside "You". Tapping it opens the
+        // profile page with everything the app knows about your journey.
         private View ProfileCard()
         {
             var face = new Border
@@ -62,21 +63,26 @@ namespace dinospace.Views
                 BackgroundColor = Theme.AccentSoft,
                 Stroke = Theme.Hairline.WithAlpha(0.5f), StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 27 },
-                Content = Ui.Mascot("mascot_ask", 34, "st_badge_star.png"),
+                Content = Ui.Mascot("mascot_pfp", 36),
                 VerticalOptions = LayoutOptions.Center
             };
 
             var who = new VerticalStackLayout { Spacing = 1, VerticalOptions = LayoutOptions.Center };
-            who.Add(new Label { Text = "Nova Explorer", FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
+            who.Add(new Label { Text = "You", FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
             who.Add(new Label { Text = "Junior Dino Explorer", FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), TextColor = Theme.TextSecondary });
+
+            var chev = Ui.Icon(Ui.IconChevron, 20);
+            chev.VerticalOptions = LayoutOptions.Center;
 
             var grid = new Grid { ColumnSpacing = 14 };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             grid.Add(face, 0, 0);
             grid.Add(who, 1, 0);
+            grid.Add(chev, 2, 0);
 
-            return new Border
+            var card = new Border
             {
                 Content = grid, BackgroundColor = Theme.Surface,
                 Stroke = Theme.CardStroke, StrokeThickness = 1.2,
@@ -84,6 +90,9 @@ namespace dinospace.Views
                 Padding = new Thickness(16, 14), Margin = new Thickness(0, 0, 0, 4),
                 Shadow = Theme.CardShadow()
             };
+            Ui.OnTap(card, async (_, _) => await Nav.Push(() => new ProfilePage()));
+            Ui.Describe(card, "Open your profile");
+            return card;
         }
 
         // One rounded card holding a run of rows with faint dividers.
@@ -108,7 +117,7 @@ namespace dinospace.Views
         private View IconRow(string icon, string title, Action onTap)
         {
             var grid = RowShell(icon, title);
-            var chev = Ui.Icon(Ui.IconChevron, 20, Theme.TextHint);
+            var chev = Ui.Icon(Ui.IconChevron, 20);
             chev.VerticalOptions = LayoutOptions.Center;
             grid.Add(chev, 2, 0);
             Ui.OnTap(grid, (_, _) => onTap());
@@ -129,14 +138,14 @@ namespace dinospace.Views
                 AppSettings.HapticLevel = e.Value ? 2 : 0;
                 if (e.Value) AppSettings.Tap();
             };
-            var grid = RowShell(Ui.IconSpeaker, "Sound & haptics");
+            var grid = RowShell(Ui.IconSound, "Sound & haptics");
             grid.Add(sw, 2, 0);
             return grid;
         }
 
         private Grid RowShell(string icon, string title)
         {
-            var ic = Ui.Icon(icon, 22, Theme.TextSecondary);
+            var ic = Ui.Icon(icon, 22);
             ic.VerticalOptions = LayoutOptions.Center;
 
             var grid = new Grid { Padding = new Thickness(0, 15), ColumnSpacing = 14 };
@@ -169,7 +178,7 @@ namespace dinospace.Views
         private static View NovaAiBody()
         {
             var col = new VerticalStackLayout { Spacing = 12, Padding = new Thickness(18, 4, 18, 28) };
-            col.Add(new Label { Text = "novasaur ai", FontFamily = Ui.Display, FontSize = Ui.S(24), TextColor = Theme.TextPrimary, HorizontalOptions = LayoutOptions.Center });
+            col.Add(new Label { Text = "novasaur ai", FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary, HorizontalOptions = LayoutOptions.Center });
             col.Add(new Label
             {
                 Text = "NovaSaur answers instantly from its encyclopedia. Add the optional on-device AI model and open-ended questions get full streamed answers — still completely offline.",
@@ -188,10 +197,8 @@ namespace dinospace.Views
         {
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null) return;
-            int seen = StatsStore.DinosSeen() + StatsStore.SpaceSeen();
-            int total = DinoData.All.Count + SpaceData.All.Count;
             await page.DisplayAlertAsync("DinoSpace v1.0",
-                $"A fully offline prehistoric & space encyclopedia with its own on-device AI and a live sky scanner.\n\nYou've discovered {seen} of {total} entries so far. Keep exploring!",
+                "A fully offline prehistoric & space encyclopedia with its own on-device AI and a live sky scanner.",
                 "OK");
         }
 

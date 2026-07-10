@@ -101,7 +101,7 @@ namespace dinospace.Views
             // this, and they mix into any list right alongside the built-ins.
             foreach (var c in CreationStore.All())
                 if (q.Length == 0 || Retriever.Normalize(c.Name).Contains(q))
-                    _items.Add(new EntryRow { Image = c.ImagePath, Title = c.Name, Meta = "★ " + c.MetaLine, Data = c, DrawingBg = c.CanvasColor });
+                    _items.Add(new EntryRow { Image = c.ImagePath, Title = c.Name, Meta = c.MetaLine, Data = c, DrawingBg = c.CanvasColor });
 
             foreach (var d in DinoData.All.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
                 if (q.Length == 0 || Retriever.Normalize(d.Name).Contains(q))

@@ -215,7 +215,7 @@ namespace dinospace.Views
             if (!string.IsNullOrEmpty(meta))
                 info.Add(new Label { Text = meta, FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextSecondary, MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation });
 
-            var chevron = Ui.Icon(Ui.IconChevron, 22, Theme.TextHint);
+            var chevron = Ui.Icon(Ui.IconChevron, 22);
             chevron.VerticalOptions = LayoutOptions.Center;
 
             var row = new Grid { ColumnSpacing = 12, Padding = new Thickness(2, 10) };
@@ -254,8 +254,8 @@ namespace dinospace.Views
             // saved rows carry the gold star from the design sheet instead
             // of a chevron
             var chevron = goldStar
-                ? Ui.Icon(Ui.IconStar, 22, Ui.StarGold)
-                : Ui.Icon(Ui.IconChevron, 22, PlayfulKit.HueFor(title));
+                ? Ui.Icon(Ui.IconStar, 22)
+                : Ui.Icon(Ui.IconChevron, 22);
             chevron.VerticalOptions = LayoutOptions.Center;
 
             var row = new Grid { ColumnSpacing = 13, Padding = new Thickness(10, 9) };

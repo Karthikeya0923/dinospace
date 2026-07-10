@@ -41,11 +41,11 @@ namespace dinospace
         // pastel colour, sage cards, deep-olive ink. No texture behind text.
         private static readonly Palette PastelP = new()
         {
-            Bg = Color.FromArgb("#EEF1E2"),
-            BgRaised = Color.FromArgb("#F5F7EA"),
-            Surface = Color.FromArgb("#FAFBF1"),
-            SurfaceAlt = Color.FromArgb("#E2E9D0"),
-            SurfaceSunken = Color.FromArgb("#E6EBD7"),
+            Bg = Color.FromArgb("#E9EDDA"),
+            BgRaised = Color.FromArgb("#F0F3E0"),
+            Surface = Color.FromArgb("#F4F6E3"),
+            SurfaceAlt = Color.FromArgb("#DFE6C9"),
+            SurfaceSunken = Color.FromArgb("#E0E6CD"),
             Hairline = Color.FromArgb("#B9C4A4"),
             HairlineSoft = Color.FromArgb("#D3DCBF"),
             TextPrimary = Color.FromArgb("#48523C"),

@@ -38,7 +38,7 @@ namespace dinospace.Views
         private void Refresh()
         {
             _stack.Children.Clear();
-            _stack.Add(new Label { Text = "your creations", FontFamily = Ui.Display, FontSize = Ui.S(30), TextColor = Theme.TextPrimary });
+            _stack.Add(new Label { Text = "your creations", FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary });
             _stack.Add(new Label
             {
                 Text = "Draw your own creatures and space objects, give them stats, and battle the ones you make.",

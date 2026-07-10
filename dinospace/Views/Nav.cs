@@ -54,7 +54,7 @@ namespace dinospace.Views
 
         private static View Scaffold(string title, View content, bool wrapInScroll, out ScrollView scroll)
         {
-            var backIcon = Ui.Icon(Ui.IconBack, 24, Theme.TextPrimary);
+            var backIcon = Ui.Icon(Ui.IconBack, 24);
             var back = new Border
             {
                 Content = backIcon,

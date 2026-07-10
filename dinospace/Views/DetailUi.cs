@@ -15,9 +15,9 @@ namespace dinospace.Views
         // The design sheet's page header: back arrow left, the lowercase
         // section name centred, and a save star on the right that turns gold.
         public static View HeaderBar(string section, bool saved, Action onBack, Action onSave,
-            out Microsoft.Maui.Controls.Shapes.Path saveIcon)
+            out Ui.IconToggle saveIcon)
         {
-            var back = Ui.Icon(Ui.IconBack, 24, Theme.TextPrimary);
+            var back = Ui.Icon(Ui.IconBack, 24);
             var backWrap = new Border
             {
                 Content = back, WidthRequest = 44, HeightRequest = 44,
@@ -29,12 +29,13 @@ namespace dinospace.Views
             var title = new Label
             {
                 Text = Ui.T(section),
-                FontFamily = Ui.Display, FontSize = Ui.S(20), TextColor = Theme.TextPrimary,
+                FontFamily = Ui.Display, FontSize = Ui.S(22), TextColor = Theme.TextPrimary,
                 HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center,
                 HorizontalTextAlignment = TextAlignment.Center
             };
 
-            saveIcon = Ui.Icon(saved ? Ui.IconStar : Ui.IconStarLine, 26, saved ? Ui.StarGold : Theme.TextPrimary);
+            saveIcon = new Ui.IconToggle(Ui.IconStarOutline, Ui.IconStar, 26);
+            saveIcon.Show(saved);
             var saveWrap = new Border
             {
                 Content = saveIcon, WidthRequest = 44, HeightRequest = 44,
@@ -54,10 +55,9 @@ namespace dinospace.Views
         }
 
         // The entry's picture, centred on the page itself like the design
-        // sheet — no photo box. Cartoon art (transparent PNGs) floats on the
-        // paper; creatures get little grass tufts under their feet. Entries
-        // whose art hasn't arrived yet show the starfield placeholder card.
-        public static View EntryImage(string image, string title, bool grass)
+        // sheet — no photo box, nothing else around it. Entries whose art
+        // hasn't arrived yet show the starfield placeholder card.
+        public static View EntryImage(string image, string title)
         {
             string baseName = image.EndsWith(".png") ? image[..^4] : image;
             if (!Ui.HasImage(baseName))
@@ -79,16 +79,6 @@ namespace dinospace.Views
 
             var g = new Grid { HeightRequest = 244 };
             g.Add(img);
-            if (grass)
-            {
-                var g1 = Ui.Sticker("st_grass1.png", 30);
-                g1.HorizontalOptions = LayoutOptions.Start; g1.VerticalOptions = LayoutOptions.End;
-                g1.Margin = new Thickness(26, 0, 0, 0);
-                var g2 = Ui.Sticker("st_grass3.png", 26);
-                g2.HorizontalOptions = LayoutOptions.End; g2.VerticalOptions = LayoutOptions.End;
-                g2.Margin = new Thickness(0, 0, 30, 4);
-                g.Add(g1); g.Add(g2);
-            }
             return g;
         }
 

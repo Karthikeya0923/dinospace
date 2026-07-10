@@ -30,7 +30,7 @@ namespace dinospace.Views
             {
                 Text = "Collections",
                 FontFamily = Ui.Display,
-                FontSize = Ui.S(30),
+                FontSize = Ui.S(32),
                 TextColor = Theme.TextPrimary
             });
             stack.Add(new Label
@@ -67,7 +67,7 @@ namespace dinospace.Views
                 Spacing = 10, HorizontalOptions = LayoutOptions.Center,
                 Children =
                 {
-                    new Label { Text = "＋", FontFamily = Ui.Display, FontSize = Ui.S(22), TextColor = Theme.Accent, VerticalOptions = LayoutOptions.Center },
+                    Ui.Icon(Ui.IconPlus, 22),
                     new Label { Text = "Make your own list", FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.Accent, VerticalOptions = LayoutOptions.Center }
                 }
             };
@@ -93,7 +93,7 @@ namespace dinospace.Views
             info.Add(new Label { Text = title, FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
             info.Add(new Label { Text = subtitle, FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), TextColor = Theme.TextSecondary });
 
-            var chevron = Ui.Icon(Ui.IconChevron, 24, Theme.TextHint);
+            var chevron = Ui.Icon(Ui.IconChevron, 24);
             chevron.VerticalOptions = LayoutOptions.Center;
 
             var grid = new Grid { ColumnSpacing = 12 };

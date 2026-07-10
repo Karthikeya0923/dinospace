@@ -97,7 +97,7 @@ namespace dinospace.Views
             var name = new Label
             {
                 Text = _report.Moon.PhaseName,
-                FontFamily = Ui.Display, FontSize = Ui.S(26),
+                FontFamily = Ui.Display, FontSize = Ui.S(32),
                 TextColor = Color.FromArgb("#F5F1E4"),
                 HorizontalOptions = LayoutOptions.Center
             };
@@ -253,7 +253,7 @@ namespace dinospace.Views
                 FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), LineHeight = 1.3, TextColor = Theme.TextSecondary
             });
 
-            var chevron = Ui.Icon(Ui.IconChevron, 24, Theme.TextHint);
+            var chevron = Ui.Icon(Ui.IconChevron, 24);
             chevron.VerticalOptions = LayoutOptions.Center;
 
             var grid = new Grid { ColumnSpacing = 12 };

@@ -78,6 +78,11 @@ namespace dinospace
 
         public static int QuizBest(string mode) => Preferences.Get($"quiz_best_{mode}", 0);
 
+        // Lifetime totals for one topic — everything ever answered, not just
+        // the last run. Used by the profile page.
+        public static (int correct, int answered) QuizTotals(string mode)
+            => (Preferences.Get($"quiz_correct_{mode}", 0), Preferences.Get($"quiz_answered_{mode}", 0));
+
         public static void ClearProgress()
         {
             foreach (var d in DinoData.All) Preferences.Remove($"views_{d.Name}");

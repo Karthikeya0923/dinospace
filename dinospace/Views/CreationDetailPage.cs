@@ -112,7 +112,7 @@ namespace dinospace.Views
         {
             var back = new Border
             {
-                Content = Ui.Icon(Ui.IconBack, 22, Colors.White),
+                Content = Ui.Icon(Ui.IconBack, 22),
                 WidthRequest = 42, HeightRequest = 42,
                 BackgroundColor = Color.FromArgb("#8A000000"), Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 21 },

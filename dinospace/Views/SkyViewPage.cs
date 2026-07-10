@@ -17,9 +17,9 @@ namespace dinospace.Views
     // 1,700 catalogue stars, the Milky Way band, constellation figures, the
     // full Messier + Caldwell deep-sky catalogues, planets with their real
     // looks, a phase-correct moon, and shooting stars that follow tonight's
-    // active meteor shower. A target card at the top names whatever's under
-    // the crosshair; a time slider scrubs the sky up to 12 hours either way.
-    // No camera? A painted twilight-aware sky stands in.
+    // active meteor shower. Only what is genuinely up right now is drawn,
+    // and the target card names something only when the crosshair is truly
+    // on it. No camera? A painted twilight-aware sky stands in.
     public class SkyViewPage : ContentPage
     {
         private double _lat, _lon;
@@ -31,21 +31,19 @@ namespace dinospace.Views
         // chrome
         private Label _targetName = null!, _targetKind = null!, _targetBlurb = null!;
         private Border _targetCard = null!, _learnBtn = null!, _askBtn = null!;
-        private Label _hint = null!, _timeLabel = null!;
-        private Slider _timeSlider = null!;
+        private Label _hint = null!;
         private GraphicsView _compass = null!;
         private readonly CompassRoseDrawable _rose = new();
         private SpaceObject? _learnTarget;
 
         private double _az = 180, _alt = 30;
-        private double _timeOffsetHours;
         private bool _sensorMode, _cameraOn;
         private bool _starting;
         private int _tick;
         private IDispatcherTimer? _timer;
         private CancellationTokenSource? _camCts;
 
-        private DateTime SkyUtc => DateTime.UtcNow.AddHours(_timeOffsetHours);
+        private DateTime SkyUtc => DateTime.UtcNow;
 
         public SkyViewPage()
         {
@@ -81,7 +79,7 @@ namespace dinospace.Views
             _view.GestureRecognizers.Add(pan);
 
             // ----- top bar: close · title · darkness toggle -----
-            var close = ChromeButton(Ui.Icon(Ui.IconClose, 22, Colors.White));
+            var close = ChromeButton(Ui.Icon(Ui.IconClose, 22));
             Ui.OnTap(close, async (_, _) =>
             {
                 try { if (Shell.Current.Navigation.NavigationStack.Count > 1) await Shell.Current.Navigation.PopAsync(); } catch { }
@@ -163,44 +161,6 @@ namespace dinospace.Views
             // ----- compass rose (bottom-left) -----
             _compass = new GraphicsView { Drawable = _rose, WidthRequest = 76, HeightRequest = 76, InputTransparent = true, HorizontalOptions = LayoutOptions.Start, VerticalOptions = LayoutOptions.End, Margin = new Thickness(16, 0, 0, 86) };
 
-            // ----- time-travel slider (bottom-centre) -----
-            _timeLabel = new Label
-            {
-                Text = "Now", FontFamily = Ui.Fonts, FontSize = Ui.S(12), FontAttributes = FontAttributes.Bold,
-                TextColor = Colors.White, VerticalOptions = LayoutOptions.Center, WidthRequest = 58,
-                HorizontalTextAlignment = TextAlignment.Center
-            };
-            _timeSlider = new Slider
-            {
-                Minimum = -12, Maximum = 12, Value = 0, WidthRequest = 190,
-                MinimumTrackColor = Color.FromArgb("#E7BC4F"), MaximumTrackColor = Color.FromArgb("#4A4636"),
-                ThumbColor = Colors.White, VerticalOptions = LayoutOptions.Center
-            };
-            _timeSlider.ValueChanged += (_, e) =>
-            {
-                // snap to half hours so the label reads cleanly
-                double v = Math.Round(e.NewValue * 2) / 2.0;
-                _timeOffsetHours = v;
-                _drawable.TimeOffsetHours = v;
-                _timeLabel.Text = v == 0 ? "Now" : $"{(v > 0 ? "+" : "")}{v:0.#} h";
-            };
-            Ui.Describe(_timeSlider, "Time travel: scrub the sky up to 12 hours forward or back");
-            var timeRow = new HorizontalStackLayout
-            {
-                Spacing = 4,
-                Children = { _timeSlider, _timeLabel }
-            };
-            var timeCard = new Border
-            {
-                Content = timeRow,
-                BackgroundColor = Color.FromArgb("#8A161A10"),
-                Stroke = Color.FromArgb("#44A89B6E"), StrokeThickness = 1,
-                StrokeShape = new RoundRectangle { CornerRadius = 18 },
-                Padding = new Thickness(12, 2),
-                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.End,
-                Margin = new Thickness(0, 0, 0, 34)
-            };
-
             // ----- bottom hint -----
             _hint = new Label
             {
@@ -218,7 +178,6 @@ namespace dinospace.Views
             _root.Add(topBar);
             _root.Add(_targetCard);
             _root.Add(_compass);
-            _root.Add(timeCard);
             _root.Add(_hint);
             Content = _root;
             Shell.SetNavBarIsVisible(this, false);
@@ -370,6 +329,7 @@ namespace dinospace.Views
                         await _camera.StartCameraPreview(_camCts.Token);
                         _cameraOn = true;
                         _drawable.CameraBehind = true;         // overlay goes transparent, no painted sky
+                        MakeCameraFill(_camera.Handler?.PlatformView);
                     }
                     catch
                     {
@@ -385,6 +345,27 @@ namespace dinospace.Views
                 StopCamera();
             }
             finally { _starting = false; }
+        }
+
+        // The native preview letterboxes by default — two black pillars
+        // beside a 4:3 frame. Centre-crop instead so the camera really fills
+        // the whole screen, like every AR viewfinder.
+        private static void MakeCameraFill(object? platformView)
+        {
+#if ANDROID
+            try
+            {
+                if (platformView is AndroidX.Camera.View.PreviewView pv)
+                {
+                    pv.SetScaleType(AndroidX.Camera.View.PreviewView.ScaleType.FillCenter);
+                    return;
+                }
+                if (platformView is Android.Views.ViewGroup vg)
+                    for (int i = 0; i < vg.ChildCount; i++)
+                        MakeCameraFill(vg.GetChildAt(i));
+            }
+            catch { }
+#endif
         }
 
         private void StopCamera()
@@ -485,12 +466,16 @@ namespace dinospace.Views
             string? name = null, kind = null, blurb = null;
             SpaceObject? entry = null;
 
-            // Candidates compete on angular distance minus a priority bonus:
-            // the moon and planets are what people actually point phones at,
-            // so they win unless something else is clearly closer. Anonymous
-            // faint stars used to claim an 8° radius each, which made half
-            // the sky read "A distant sun" — now they only speak up when the
-            // crosshair is basically on top of one.
+            // Whether stars can actually be seen right now — daylight names
+            // only the sun, moon and planets.
+            var (sunRa0, sunDec0) = SkyCalc.SunRaDec(jd);
+            var (sunAltNow, _) = SkyCalc.AltAz(sunRa0, sunDec0, _lat, _lon, utc);
+            bool skyDark = sunAltNow < -6;
+
+            // Candidates compete on angular distance minus a small priority
+            // bonus, and every radius is tight: the card only ever names
+            // something the crosshair is really on. Nothing close enough?
+            // The card stays hidden.
             double bestScore = double.MaxValue;
             void Consider(double sep, double maxSep, double bonus, string n, string k, string? b, SpaceObject? e)
             {
@@ -501,15 +486,14 @@ namespace dinospace.Views
                 name = n; kind = k; blurb = b; entry = e;
             }
 
-            // the moon — by far the most prominent thing in the night sky, and
-            // the thing people actually point phones at: give it a wide net so
-            // ordinary compass slop still names it correctly
+            // the moon — a little extra reach over the planets because it is
+            // big, but still only when the crosshair is close
             var (mra, mdec) = SkyCalc.MoonRaDec(jd);
             var (mAlt, mAz) = SkyCalc.AltAz(mra, mdec, _lat, _lon, utc);
-            if (mAlt > -5)
+            if (mAlt > -2)
             {
                 var e = SpaceData.ByName("Moon");
-                Consider(SkyMap.Separation(mAlt, mAz, _alt, _az), 10, 4.0,
+                Consider(SkyMap.Separation(mAlt, mAz, _alt, _az), 6, 2.0,
                          "Moon", "Earth's moon", e?.ShortDescription, e);
             }
 
@@ -518,64 +502,65 @@ namespace dinospace.Views
             {
                 var (ra, dec, _) = SkyCalc.PlanetRaDec(b, jd);
                 var (alt, az) = SkyCalc.AltAz(ra, dec, _lat, _lon, utc);
-                if (alt <= -5) continue;
+                if (alt <= -2) continue;
                 var e = SpaceData.ByName(b.ToString());
-                Consider(SkyMap.Separation(alt, az, _alt, _az), 6, 1.5,
+                Consider(SkyMap.Separation(alt, az, _alt, _az), 4, 1.0,
                          b.ToString(), "Planet", e?.ShortDescription, e);
             }
 
-            // the sun (matters when the time slider drags the view into day)
+            // the sun, during the day
             var (sra, sdec) = SkyCalc.SunRaDec(jd);
             var (sAlt, sAz) = SkyCalc.AltAz(sra, sdec, _lat, _lon, utc);
             if (sAlt > -2)
             {
                 var e = SpaceData.ByName("Sun");
-                Consider(SkyMap.Separation(sAlt, sAz, _alt, _az), 8, 3.0,
+                Consider(SkyMap.Separation(sAlt, sAz, _alt, _az), 5, 1.5,
                          "Sun", "Our star", e?.ShortDescription, e);
             }
 
-            // catalogue stars: named ones within 3°, anonymous only when the
-            // crosshair is right on them (1.2°) and they're reasonably bright
-            var stars = SkyCatalog.Stars;
-            var sv = SkyMap.StarVectors;
-            for (int i = 0; i < stars.Length; i++)
+            // catalogue stars — only NAMED stars, only after dark, and only
+            // when the crosshair is right on one. Anonymous stars never claim
+            // the card any more.
+            if (skyDark)
             {
-                var s = stars[i];
-                if (s.Mag > _drawable.LimitMag) break;      // sorted by brightness
-                bool named = s.Name.Length > 0;
-                if (!named && s.Mag > 4.0) continue;
-                var (n, e, u) = frame.Horizon(sv[i * 3], sv[i * 3 + 1], sv[i * 3 + 2]);
-                if (u < -0.09) continue;
-                double sep = SepTo(n, e, u);
-                Consider(sep, named ? 3.0 : 1.2, named ? -s.Mag * 0.15 : -0.6,
-                         named ? s.Name : "A distant sun",
-                         $"Star · {s.Colour()}",
-                         named
-                             ? $"Magnitude {s.Mag:0.0#} — one of the stars bright enough to carry a name."
-                             : $"Magnitude {s.Mag:0.0#} — a sun many light-years away.",
-                         null);
+                var stars = SkyCatalog.Stars;
+                var sv = SkyMap.StarVectors;
+                for (int i = 0; i < stars.Length; i++)
+                {
+                    var s = stars[i];
+                    if (s.Mag > _drawable.LimitMag) break;      // sorted by brightness
+                    if (s.Name.Length == 0) continue;
+                    var (n, e, u) = frame.Horizon(sv[i * 3], sv[i * 3 + 1], sv[i * 3 + 2]);
+                    if (u < 0) continue;
+                    double sep = SepTo(n, e, u);
+                    Consider(sep, 2.5, -s.Mag * 0.15,
+                             s.Name,
+                             $"Star · {s.Colour()}",
+                             $"Magnitude {s.Mag:0.0#} — one of the stars bright enough to carry a name.",
+                             null);
+                }
+
+                // deep sky: the full Messier + Caldwell catalogues
+                var dsos = SkyDeepSkyCatalog.All;
+                var dv = DsoVectors;
+                for (int i = 0; i < dsos.Length; i++)
+                {
+                    var d = dsos[i];
+                    if (d.Mag > _drawable.DsoLimitMag && d.Mag < 90) continue;
+                    if (d.Mag >= 90 && _drawable.DsoLimitMag < 7) continue;   // dark nebulae need dark skies
+                    var (n, e, u) = frame.Horizon(dv[i * 3], dv[i * 3 + 1], dv[i * 3 + 2]);
+                    if (u < 0.03) continue;
+                    Consider(SepTo(n, e, u), 2.0, -0.3,
+                             d.Name, d.Kind, d.Blurb, SpaceData.ByName(d.Name.Split(" (")[0]));
+                }
             }
 
-            // deep sky: the full Messier + Caldwell catalogues
-            var dsos = SkyDeepSkyCatalog.All;
-            var dv = DsoVectors;
-            for (int i = 0; i < dsos.Length; i++)
-            {
-                var d = dsos[i];
-                if (d.Mag > _drawable.DsoLimitMag && d.Mag < 90) continue;
-                if (d.Mag >= 90 && _drawable.DsoLimitMag < 7) continue;   // dark nebulae need dark skies
-                var (n, e, u) = frame.Horizon(dv[i * 3], dv[i * 3 + 1], dv[i * 3 + 2]);
-                if (u < 0.03) continue;
-                Consider(SepTo(n, e, u), 2.5, -0.3,
-                         d.Name, d.Kind, d.Blurb, SpaceData.ByName(d.Name.Split(" (")[0]));
-            }
-
-            // fall back to the constellation region (all 88, not just figures).
-            // Kept tight: naming a constellation 25° away is how the moon got
-            // called "Aries" — better to say nothing than the wrong thing.
+            // fall back to the constellation region (all 88, not just
+            // figures) — but only when the crosshair is close to its heart.
+            // Better to say nothing than name something 20° away.
             if (name == null)
             {
-                Constellation? nearest = null; double bestSep = 15;
+                Constellation? nearest = null; double bestSep = 8;
                 foreach (var c in SkyData.All)
                 {
                     var (alt, az) = SkyCalc.AltAz(c.RaHours * 15.0, c.DecDeg, _lat, _lon, utc);
@@ -643,7 +628,6 @@ namespace dinospace.Views
         public double Lat, Lon;
         public double CenterAz = 180, CenterAlt = 30;
         public double FovDeg = 95;
-        public double TimeOffsetHours;
         public bool CameraBehind;
         public float LimitMag = 5.05f;
         public float DsoLimitMag = 6.6f;
@@ -655,7 +639,7 @@ namespace dinospace.Views
 
         public void Draw(ICanvas canvas, RectF rect)
         {
-            var utc = DateTime.UtcNow.AddHours(TimeOffsetHours);
+            var utc = DateTime.UtcNow;
             var v = new SkyMap.View(Lat, Lon, utc, CenterAz, CenterAlt, FovDeg, Math.Max(rect.Width, rect.Height));
             var frame = new SkyMap.LocalFrame(Lat, Lon, utc);
             long nowMs = Environment.TickCount64;
@@ -689,14 +673,15 @@ namespace dinospace.Views
                 canvas.FillRectangle(rect);
             }
 
-            // The overlay ALWAYS draws the full sky — stars, figures, deep
-            // sky, the lot. Hiding them in daylight made the page look broken
-            // and empty; pointing the phone up should always show what's
-            // there, day or night. Only meteors keep the darkness rule.
+            // Only what is genuinely visible right now: stars, deep sky and
+            // the Milky Way appear after dark. The sun, moon, planets and the
+            // constellation figures stay day and night — so pointing up
+            // always shows where everything is, without pretending you can
+            // see stars at noon.
             bool skyDark = sunAlt < -6;
 
             // ---- the Milky Way: a soft band of overlapping glows ----
-            if (MilkyWayStrength > 0.01f)
+            if (skyDark && MilkyWayStrength > 0.01f)
             {
                 var band = SkyMap.MilkyWayBand;
                 float glowScale = (float)(v.SizePx / v.MaxR) / 2f;
@@ -756,6 +741,7 @@ namespace dinospace.Views
                 }
 
             // ---- the whole catalogue: soft halo + core, colour by temperature ----
+            if (skyDark)
             {
                 var stars = SkyCatalog.Stars;
                 var sv = SkyMap.StarVectors;
@@ -792,6 +778,7 @@ namespace dinospace.Views
             }
 
             // ---- deep sky: the full Messier + Caldwell catalogues ----
+            if (skyDark)
             {
                 var dsos = SkyDeepSkyCatalog.All;
                 for (int i = 0; i < dsos.Length; i++)
@@ -893,6 +880,8 @@ namespace dinospace.Views
                 SkyCalc.Body.Venus => (Color.FromArgb("#F5EDD6"), 7f),
                 SkyCalc.Body.Mars => (Color.FromArgb("#E8845A"), 5.5f),
                 SkyCalc.Body.Jupiter => (Color.FromArgb("#E8C9A0"), 8f),
+                SkyCalc.Body.Uranus => (Color.FromArgb("#BFE8E4"), 5f),
+                SkyCalc.Body.Neptune => (Color.FromArgb("#8FB4F0"), 5f),
                 _ => (Color.FromArgb("#EFD9A7"), 6.5f),   // Saturn
             };
 

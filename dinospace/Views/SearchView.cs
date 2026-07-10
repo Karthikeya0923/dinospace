@@ -57,13 +57,13 @@ namespace dinospace.Views
             header.Add(new Label
             {
                 Text = "encyclopedia",
-                FontFamily = Ui.Display, FontSize = Ui.S(24), TextColor = Theme.TextPrimary,
+                FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary,
                 HorizontalOptions = LayoutOptions.Center, Margin = new Thickness(0, 2, 0, 0)
             });
 
             _entry = new Entry { Placeholder = Ui.T("Search creatures, planets, stars…"), BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Search };
             _entry.TextChanged += (_, e) => { _query = e.NewTextValue ?? ""; Refresh(); };
-            var glass = Ui.Icon(Ui.IconSearch, 22, Theme.TextHint);
+            var glass = Ui.Icon(Ui.IconSearch, 22);
             glass.VerticalOptions = LayoutOptions.Center;
             var field = new Grid { ColumnSpacing = 8, Padding = new Thickness(14, 0) };
             field.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -189,7 +189,7 @@ namespace dinospace.Views
             var info = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };
             info.Add(title); info.Add(meta);
 
-            var chevron = Ui.Icon(Ui.IconChevron, 22, Theme.TextHint);
+            var chevron = Ui.Icon(Ui.IconChevron, 22);
             chevron.VerticalOptions = LayoutOptions.Center;
 
             var row = new Grid { ColumnSpacing = 12, Padding = new Thickness(2, 10) };
@@ -225,7 +225,7 @@ namespace dinospace.Views
             var info = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };
             info.Add(title); info.Add(meta);
 
-            var chevron = Ui.Icon(Ui.IconChevron, 22, PlayfulKit.Tab(1));
+            var chevron = Ui.Icon(Ui.IconChevron, 22);
             chevron.VerticalOptions = LayoutOptions.Center;
 
             var row = new Grid { ColumnSpacing = 13, Padding = new Thickness(10, 9) };

@@ -47,7 +47,7 @@ namespace dinospace.Views
         private void Build()
         {
             var stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(16, 4, 16, 24) };
-            stack.Add(new Label { Text = Ui.T("Dino Battle"), FontFamily = Ui.Display, FontSize = Ui.S(26), TextColor = Theme.TextPrimary });
+            stack.Add(new Label { Text = Ui.T("Dino Battle"), FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary });
             stack.Add(new Label { Text = "Choose two creatures and see who would come out on top.", FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), TextColor = Theme.TextSecondary });
 
             _arena = new Grid { ColumnSpacing = 10, Margin = new Thickness(0, 6) };
@@ -98,9 +98,7 @@ namespace dinospace.Views
                 Stroke = _includeMine ? Colors.Transparent : Theme.Hairline, StrokeThickness = 1.5,
                 StrokeShape = new RoundRectangle { CornerRadius = 8 },
                 VerticalOptions = LayoutOptions.Center,
-                Content = _includeMine
-                    ? new Label { Text = "✓", FontSize = 16, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
-                    : null
+                Content = _includeMine ? Ui.Icon(Ui.IconCorrect, 18) : null
             };
 
             var label = new VerticalStackLayout { Spacing = 1, VerticalOptions = LayoutOptions.Center };
@@ -142,7 +140,7 @@ namespace dinospace.Views
                     Spacing = 8, VerticalOptions = LayoutOptions.Center, HorizontalOptions = LayoutOptions.Center,
                     Children =
                     {
-                        new Label { Text = "+", FontFamily = Ui.Display, FontSize = 34, TextColor = Theme.TextHint, HorizontalTextAlignment = TextAlignment.Center },
+                        Ui.Icon(Ui.IconPlus, 34),
                         new Label { Text = "Choose", FontFamily = Ui.Fonts, FontSize = 13, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center }
                     }
                 };
@@ -216,7 +214,7 @@ namespace dinospace.Views
                 HorizontalOptions = LayoutOptions.Center,
                 Children =
                 {
-                    Ui.Sticker("st_icon_star.png", 24),
+                    Ui.Icon(Ui.IconStar, 24),
                     new Label
                     {
                         Text = $"{winner.Name} wins!",

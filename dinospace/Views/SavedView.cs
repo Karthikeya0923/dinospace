@@ -21,7 +21,7 @@ namespace dinospace.Views
                 stack.Add(new Label
                 {
                     Text = "saved",
-                    FontFamily = Ui.Display, FontSize = Ui.S(24), TextColor = Theme.TextPrimary,
+                    FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary,
                     HorizontalOptions = LayoutOptions.Center, Margin = new Thickness(0, 2, 0, 0)
                 });
             else
@@ -56,7 +56,7 @@ namespace dinospace.Views
                 var empty = new VerticalStackLayout { Spacing = 12, Padding = new Thickness(10, 40), HorizontalOptions = LayoutOptions.Center };
                 // the sleepy mascot's spot (mascot_empty.png); a thought
                 // bubble sticker holds the space until the art lands
-                empty.Add(Ui.Mascot("mascot_empty", 110, "st_bub_thought.png"));
+                empty.Add(Ui.Mascot("mascot_empty", 110));
                 empty.Add(new Label
                 {
                     Text = "Nothing saved yet.",

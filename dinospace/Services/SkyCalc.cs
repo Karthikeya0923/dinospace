@@ -218,7 +218,7 @@ namespace dinospace
 
         // ---------- planets (NASA JPL approximate elements, 1800-2050) ----------
 
-        public enum Body { Mercury, Venus, Mars, Jupiter, Saturn }
+        public enum Body { Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune }
 
         // a (au), e, I (deg), L (deg), longitude of perihelion (deg), longitude
         // of ascending node (deg) — J2000 value and per-century rate.
@@ -235,19 +235,16 @@ namespace dinospace
             new[] { 5.20288700, -0.00011607, 0.04838624, -0.00013253, 1.30439695, -0.00183714, 34.39644051, 3034.74612775, 14.72847983, 0.21252668, 100.47390909, 0.20469106 },
             // Saturn
             new[] { 9.53667594, -0.00125060, 0.05386179, -0.00050991, 2.48599187, 0.00193609, 49.95424423, 1222.49362201, 92.59887831, -0.41897216, 113.66242448, -0.28867794 },
+            // Uranus
+            new[] { 19.18916464, -0.00196176, 0.04725744, -0.00004397, 0.77263783, -0.00242939, 313.23810451, 428.48202785, 170.95427630, 0.40805281, 74.01692503, 0.04240589 },
+            // Neptune
+            new[] { 30.06992276, 0.00026291, 0.00859048, 0.00005105, 1.77004347, 0.00035372, -55.12002969, 218.45945325, 44.96476227, -0.32241464, 131.78422574, -0.00508664 },
         };
 
         // Earth-Moon barycentre, same table — needed to go heliocentric → geocentric.
         private static readonly double[] EarthElements =
             { 1.00000261, 0.00000562, 0.01671123, -0.00004392, -0.00001531, -0.01294668, 100.46457166, 35999.37244981, 102.93768193, 0.32327364, 0.0, 0.0 };
 
-        // Uranus and Neptune (same JPL table). Not in the Body enum — you
-        // can't spot them without a telescope, so the "planets above you"
-        // features skip them — but distance questions still deserve real math.
-        private static readonly double[] UranusElements =
-            { 19.18916464, -0.00196176, 0.04725744, -0.00004397, 0.77263783, -0.00242939, 313.23810451, 428.48202785, 170.95427630, 0.40805281, 74.01692503, 0.04240589 };
-        private static readonly double[] NeptuneElements =
-            { 30.06992276, 0.00026291, 0.00859048, 0.00005105, 1.77004347, 0.00035372, -55.12002969, 218.45945325, 44.96476227, -0.32241464, 131.78422574, -0.00508664 };
 
         // Heliocentric ecliptic position (au) from mean elements at time t.
         private static (double x, double y, double z) Heliocentric(double[] el, double t)
@@ -324,8 +321,8 @@ namespace dinospace
                 case "mars": return Heliocentric(Elements[(int)Body.Mars], t);
                 case "jupiter": return Heliocentric(Elements[(int)Body.Jupiter], t);
                 case "saturn": return Heliocentric(Elements[(int)Body.Saturn], t);
-                case "uranus": return Heliocentric(UranusElements, t);
-                case "neptune": return Heliocentric(NeptuneElements, t);
+                case "uranus": return Heliocentric(Elements[(int)Body.Uranus], t);
+                case "neptune": return Heliocentric(Elements[(int)Body.Neptune], t);
                 default: return null;
             }
         }

@@ -30,7 +30,7 @@ namespace dinospace.Views
             {
                 Text = _list.Title,
                 Placeholder = "Name your list",
-                FontFamily = Ui.Display, FontSize = Ui.S(28),
+                FontFamily = Ui.Display, FontSize = Ui.S(32),
                 TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint,
                 BackgroundColor = Colors.Transparent
             };
@@ -109,7 +109,7 @@ namespace dinospace.Views
                 info.Add(new Label { Text = name, FontFamily = Ui.Display, FontSize = Ui.S(16.5), TextColor = Theme.TextPrimary });
                 info.Add(new Label { Text = meta, FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), TextColor = Theme.TextSecondary });
 
-                var remove = Ui.Icon(Ui.IconClose, 20, Theme.TextHint);
+                var remove = Ui.Icon(Ui.IconClose, 20);
                 var removeWrap = new Border
                 {
                     Content = remove, WidthRequest = 38, HeightRequest = 38,

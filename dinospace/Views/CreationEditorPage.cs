@@ -141,7 +141,7 @@ namespace dinospace.Views
         {
             var back = new Border
             {
-                Content = Ui.Icon(Ui.IconBack, 24, StudioText),
+                Content = Ui.Icon(Ui.IconBack, 24),
                 BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent,
                 Padding = new Thickness(6, 8, 12, 8)
             };
@@ -155,7 +155,7 @@ namespace dinospace.Views
                 VerticalOptions = LayoutOptions.Center
             };
 
-            var nextLabel = new Label { Text = Ui.T("Next  ›"), FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, VerticalTextAlignment = TextAlignment.Center };
+            var nextLabel = new Label { Text = Ui.T("Next"), FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, VerticalTextAlignment = TextAlignment.Center };
             var next = new Border
             {
                 Content = nextLabel, BackgroundColor = StudioAccent, Stroke = Colors.Transparent,
@@ -293,7 +293,7 @@ namespace dinospace.Views
                 WidthRequest = 34, HeightRequest = 34, BackgroundColor = Color.FromRgb(_cr, _cg, _cb),
                 StrokeThickness = 3, Stroke = Color.FromArgb("#22000000"),
                 StrokeShape = new RoundRectangle { CornerRadius = 17 },
-                Content = Ui.Sticker("st_ic_plus.png", 15)
+                Content = Ui.Icon(Ui.IconPlus, 15)
             };
             Ui.OnTap(_customSwatch, (_, _) => { _mixer.IsVisible = !_mixer.IsVisible; PickColor(Color.FromRgb(_cr, _cg, _cb)); });
             swatchRow.Add(_customSwatch);
@@ -535,7 +535,7 @@ namespace dinospace.Views
             // Top bar back-arrow returns to the drawing step (not out of the page).
             var back = new Border
             {
-                Content = Ui.Icon(Ui.IconBack, 24, Theme.TextPrimary),
+                Content = Ui.Icon(Ui.IconBack, 24),
                 BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent,
                 Padding = new Thickness(6, 8, 12, 8), HorizontalOptions = LayoutOptions.Start
             };
@@ -559,7 +559,7 @@ namespace dinospace.Views
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
 
-            Border Pill(string sticker, string text, CreationKind kind)
+            Border Pill(string text, CreationKind kind)
             {
                 bool on = _kind == kind;
                 var label = new Label
@@ -568,14 +568,11 @@ namespace dinospace.Views
                     TextColor = on ? Theme.TextOnAccent : Theme.TextSecondary,
                     VerticalTextAlignment = TextAlignment.Center
                 };
-                var inner = new HorizontalStackLayout
-                {
-                    Spacing = 8, HorizontalOptions = LayoutOptions.Center,
-                    Children = { Ui.Sticker(sticker, 20), label }
-                };
+                label.HorizontalOptions = LayoutOptions.Center;
+                label.HorizontalTextAlignment = TextAlignment.Center;
                 var b = new Border
                 {
-                    Content = inner,
+                    Content = label,
                     BackgroundColor = on ? Theme.Accent : Theme.Surface,
                     Stroke = on ? Colors.Transparent : Theme.HairlineSoft, StrokeThickness = 1,
                     StrokeShape = new RoundRectangle { CornerRadius = AppLayout.ButtonRadius }, Padding = new Thickness(10, 12)
@@ -583,8 +580,8 @@ namespace dinospace.Views
                 return b;
             }
 
-            var dino = Pill("st_volcano.png", "Dinosaur", CreationKind.Dinosaur);
-            var space = Pill("st_saturn_small.png", "Space object", CreationKind.Space);
+            var dino = Pill("Dinosaur", CreationKind.Dinosaur);
+            var space = Pill("Space object", CreationKind.Space);
             Ui.OnTap(dino, (_, _) => { if (_kind != CreationKind.Dinosaur) { _kind = CreationKind.Dinosaur; RebuildKind(); } });
             Ui.OnTap(space, (_, _) => { if (_kind != CreationKind.Space) { _kind = CreationKind.Space; RebuildKind(); } });
             row.Add(dino, 0, 0);

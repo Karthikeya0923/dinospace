@@ -53,7 +53,7 @@ namespace dinospace.Views
 
         private void Build()
         {
-            var back = new Label { Text = "‹", FontSize = 32, TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center, Padding = new Thickness(4, 0, 12, 0) };
+            var back = new Border { Content = Ui.Icon(Ui.IconBack, 24), BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent, VerticalOptions = LayoutOptions.Center, Padding = new Thickness(4, 0, 12, 0) };
             Ui.OnTap(back, async (_, _) => await Close());
 
             _counter = new Label { FontFamily = Ui.Fonts, FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center };
@@ -178,11 +178,17 @@ namespace dinospace.Views
             }
 
             // explanation card
-            var head = new Label
+            var headText = new Label
             {
-                Text = correct ? "✓ Correct!" : "✗ Not quite",
+                Text = correct ? "Correct!" : "Not quite",
                 FontFamily = Ui.Display, FontSize = Ui.S(18),
-                TextColor = correct ? Theme.Success : Theme.Danger
+                TextColor = correct ? Theme.Success : Theme.Danger,
+                VerticalOptions = LayoutOptions.Center
+            };
+            var head = new HorizontalStackLayout
+            {
+                Spacing = 8,
+                Children = { Ui.Icon(correct ? Ui.IconCorrect : Ui.IconWrong, 20), headText }
             };
             var expl = new Label { Text = q.Explanation, FontFamily = Ui.Fonts, FontSize = Ui.S(14), LineHeight = 1.4, TextColor = Theme.TextPrimary };
             var col = new VerticalStackLayout { Spacing = 8, Children = { head, expl } };
