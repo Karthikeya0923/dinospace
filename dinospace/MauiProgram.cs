@@ -14,8 +14,10 @@ namespace dinospace
                 .UseMauiCommunityToolkitCamera()
                 .ConfigureFonts(fonts =>
                 {
-                    // Baloo -> rounded storybook headlines; Nunito -> body.
-                    fonts.AddFont("Nunito-Regular.ttf", "Nunito");
+                    // One rounded family everywhere, straight from the design
+                    // sheet: Baloo 2 Bold for headlines, Baloo 2 Medium for
+                    // body text — no plain "Arial-looking" sans anywhere.
+                    fonts.AddFont("Baloo2-Medium.ttf", "Body");
                     fonts.AddFont("Baloo2-Bold.ttf", "Baloo");
                 });
 

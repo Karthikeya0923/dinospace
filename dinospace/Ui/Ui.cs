@@ -11,10 +11,10 @@ namespace dinospace
     // white cards with soft shadows.
     public static class Ui
     {
-        // Font families are layout-aware: the Playful layout swaps the serif
-        // display for rounded Baloo. Body stays Nunito in both.
+        // One rounded family everywhere: Baloo 2 Bold for display text,
+        // Baloo 2 Medium (registered as "Body") for everything else.
         public static string Fonts => AppLayout.BodyFont;          // body sans
-        public static string Display => AppLayout.DisplayFont;     // DM Serif / Baloo
+        public static string Display => AppLayout.DisplayFont;     // Baloo
         public static string DisplayItalic => AppLayout.DisplayItalicFont;
         // Icon names -> vector geometry (see IconData). Drawn as Paths, not a
         // font, because icon fonts render as tofu boxes on some Android builds.
@@ -42,6 +42,16 @@ namespace dinospace
         public const string IconMore = "more";
         public const string IconTelescope = "telescope";
         public const string IconPencil = "pencil";
+        public const string IconStarLine = "starline";
+        public const string IconSun = "sun";
+        public const string IconSpeaker = "speaker";
+        public const string IconLock = "lock";
+        public const string IconInfo = "info";
+        public const string IconMail = "mail";
+
+        // The save-star gold, same in every theme (it reads on light paper
+        // and on the dark painted themes alike).
+        public static readonly Color StarGold = Color.FromArgb("#E7BC4F");
 
         public static double Scale => AppSettings.FontScale;
         public static double S(double size) => size * Scale;
@@ -121,6 +131,12 @@ namespace dinospace
             "chevron" => "M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z",
             "close" => "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
             "star" => "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z",
+            "starline" => "M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z",
+            "sun" => "M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z",
+            "speaker" => "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z",
+            "lock" => "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z",
+            "info" => "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z",
+            "mail" => "M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z",
             "swap" => "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z",
             "bolt" => "M12 2.02c-5.51 0-9.98 4.47-9.98 9.98s4.47 9.98 9.98 9.98 9.98-4.47 9.98-9.98S17.51 2.02 12 2.02zM11.48 20v-6.26H8L13 4v6.26h3.35L11.48 20z",
             "list" => "M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z",

@@ -13,7 +13,7 @@ namespace dinospace
         // ---- fonts ----
         public static string DisplayFont => "Baloo";
         public static string DisplayItalicFont => "Baloo";
-        public static string BodyFont => "Nunito";
+        public static string BodyFont => "Body";
 
         // ---- shape & scale ----
         public static double CardRadius => 24;

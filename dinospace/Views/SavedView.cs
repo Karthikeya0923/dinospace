@@ -78,14 +78,14 @@ namespace dinospace.Views
                 var d = DinoData.ByName(name);
                 if (d == null) continue;
                 var dd = d;
-                _list.Add(EntryCards.ListRow(d.ImageFile, d.Name, $"{d.Diet} · {d.Era}", async () => await Nav.OpenDino(dd)));
+                _list.Add(EntryCards.ListRow(d.ImageFile, d.Name, $"{d.Diet} · {d.Era}", async () => await Nav.OpenDino(dd), goldStar: true));
             }
             foreach (var name in space)
             {
                 var s = SpaceData.ByName(name);
                 if (s == null) continue;
                 var ss = s;
-                _list.Add(EntryCards.ListRow(s.ImageFile, s.Name, $"{s.TypeLabel} · {s.Category}", async () => await Nav.OpenSpace(ss)));
+                _list.Add(EntryCards.ListRow(s.ImageFile, s.Name, $"{s.TypeLabel} · {s.Category}", async () => await Nav.OpenSpace(ss), goldStar: true));
             }
         }
     }

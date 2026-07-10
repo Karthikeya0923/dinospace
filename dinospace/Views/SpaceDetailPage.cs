@@ -6,12 +6,14 @@ using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
-    // Editorial profile for one space object.
+    // One space object, laid out exactly like the design sheet: centred
+    // "space" header with a save star, the name, a type tag, the art on the
+    // page, plain label/value stats, then About and the deeper sections.
     public class SpaceDetailPage : ContentPage
     {
         private readonly SpaceObject _s;
         private Microsoft.Maui.Controls.Shapes.Path _saveIcon = null!;
-        private Color Accent => AppLayout.Playful ? PlayfulKit.HueFor(_s.Name) : Theme.Accent;
+        private Color Accent => Theme.Accent;
 
         public SpaceDetailPage(SpaceObject s)
         {
@@ -23,18 +25,31 @@ namespace dinospace.Views
 
         private void Build()
         {
-            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(18, 16, 18, 30) };
+            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(20, 4, 20, 30) };
 
-            stack.Add(DetailUi.TitleBlock(_s.Name, _s.Pronunciation,
-                $"{_s.Subtitle}  ·  {_s.TypeLabel}"));
-
-            stack.Add(DetailUi.StatChipRow(new (string, string, Color)[]
+            stack.Add(new Label
             {
-                (_s.Stat1Label, _s.Stat1Value, Accent),
-                (_s.Stat2Label, _s.Stat2Value, Accent),
-                (_s.Stat3Label, _s.Stat3Value, Accent),
-                (_s.Stat4Label, _s.Stat4Value, Accent),
-            }));
+                Text = _s.Name,
+                FontFamily = Ui.Display, FontSize = Ui.S(28), LineHeight = 1.05,
+                TextColor = Theme.TextPrimary
+            });
+            if (!string.IsNullOrWhiteSpace(_s.Pronunciation))
+                stack.Add(new Label
+                {
+                    Text = _s.Pronunciation, FontFamily = Ui.Fonts, FontSize = Ui.S(13.5),
+                    TextColor = Theme.TextSecondary, Margin = new Thickness(0, -12, 0, 0)
+                });
+
+            stack.Add(DetailUi.TagChips(_s.TypeLabel));
+
+            stack.Add(DetailUi.EntryImage(_s.ImageFile, _s.Name, grass: false));
+
+            var rows = new List<(string, string)> { ("Type", _s.TypeLabel) };
+            rows.Add((_s.Stat1Label, _s.Stat1Value));
+            rows.Add((_s.Stat2Label, _s.Stat2Value));
+            rows.Add((_s.Stat3Label, _s.Stat3Value));
+            rows.Add((_s.Stat4Label, _s.Stat4Value));
+            stack.Add(DetailUi.StatRows(rows));
 
             stack.Add(DetailUi.Section("About", _s.AboutText, Accent));
             stack.Add(DetailUi.Section("Key features", _s.KeyFeaturesText, Accent));
@@ -52,17 +67,16 @@ namespace dinospace.Views
 
             stack.Add(DetailUi.AskNovaButton(_s.Name));
 
-            var scrollContent = new VerticalStackLayout { Spacing = 0 };
-            scrollContent.Add(DetailUi.Hero(_s.ImageFile, _s.Name));
-            scrollContent.Add(stack);
+            var header = DetailUi.HeaderBar("space",
+                SavedStore.IsSpaceSaved(_s.Name), OnBack, OnSave, out _saveIcon);
 
-            var scroll = new ScrollView { Content = scrollContent, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
-            var topBar = DetailUi.TopBar(SavedStore.IsSpaceSaved(_s.Name), OnBack, OnSave, out _saveIcon);
-            ((View)topBar).VerticalOptions = LayoutOptions.Start;
+            var main = new Grid { RowSpacing = 0 };
+            main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
+            main.Add(header, 0, 0);
+            main.Add(new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never }, 0, 1);
 
-            var root = Ui.PageRoot(scroll);
-            root.Add(topBar);
-            Content = root;
+            Content = Ui.PageRoot(main);
         }
 
         private async void OnBack()
@@ -74,7 +88,7 @@ namespace dinospace.Views
         {
             bool nowSaved = SavedStore.ToggleSpace(_s.Name);
             AppSettings.LongPress();
-            Ui.SetIcon(_saveIcon, nowSaved ? Ui.IconSavedFill : Ui.IconSaved, nowSaved ? Theme.Accent : Microsoft.Maui.Graphics.Colors.White);
+            Ui.SetIcon(_saveIcon, nowSaved ? Ui.IconStar : Ui.IconStarLine, nowSaved ? Ui.StarGold : Theme.TextPrimary);
         }
     }
 }

@@ -196,9 +196,9 @@ namespace dinospace.Views
         }
 
         // Compact list row for Search and Saved: thumb, serif name, meta, chevron.
-        public static View ListRow(string image, string title, string meta, Action onTap)
+        public static View ListRow(string image, string title, string meta, Action onTap, bool goldStar = false)
         {
-            if (AppLayout.Playful) return PlayfulListRow(image, title, meta, onTap);
+            if (AppLayout.Playful) return PlayfulListRow(image, title, meta, onTap, goldStar);
             var thumbGrid = new Grid();
             thumbGrid.Add(ArtFallback(title, 20, stars: false));
             thumbGrid.Add(new Image { Source = image, Aspect = Aspect.AspectFill, WidthRequest = 54, HeightRequest = 54 });
@@ -235,7 +235,7 @@ namespace dinospace.Views
 
         // Playful list row: a rounded, tappable "pill card" with a bright round
         // thumbnail and a chunky name — no thin hairline rows.
-        private static View PlayfulListRow(string image, string title, string meta, Action onTap)
+        private static View PlayfulListRow(string image, string title, string meta, Action onTap, bool goldStar = false)
         {
             var thumbGrid = new Grid();
             thumbGrid.Add(PlayfulArt(title, 22));
@@ -251,7 +251,11 @@ namespace dinospace.Views
             if (!string.IsNullOrEmpty(meta))
                 info.Add(new Label { Text = meta, FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextSecondary, MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation });
 
-            var chevron = Ui.Icon(Ui.IconChevron, 22, PlayfulKit.HueFor(title));
+            // saved rows carry the gold star from the design sheet instead
+            // of a chevron
+            var chevron = goldStar
+                ? Ui.Icon(Ui.IconStar, 22, Ui.StarGold)
+                : Ui.Icon(Ui.IconChevron, 22, PlayfulKit.HueFor(title));
             chevron.VerticalOptions = LayoutOptions.Center;
 
             var row = new Grid { ColumnSpacing = 13, Padding = new Thickness(10, 9) };

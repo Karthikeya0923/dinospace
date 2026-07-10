@@ -151,8 +151,8 @@ namespace dinospace.Services
             string n = NameOf(subject);
             string[] songs =
             {
-                $"🎵 Oh, {n}, {n}, stomping through the stars,\nWaving to the comets, saying hi to Mars!\nSpin around the galaxy, never say goodbye —\n{n}'s the coolest explorer in the sky! 🎵",
-                $"🎵 We're going on an adventure, me and {n} too,\nUp past the Moon where the sky turns blue,\nCounting all the shooting stars, one, two, three —\nThere's a whole big universe for you and me! 🎵",
+                $"Oh, {n}, {n}, stomping through the stars,\nWaving to the comets, saying hi to Mars!\nSpin around the galaxy, never say goodbye —\n{n}'s the coolest explorer in the sky!",
+                $"We're going on an adventure, me and {n} too,\nUp past the Moon where the sky turns blue,\nCounting all the shooting stars, one, two, three —\nThere's a whole big universe for you and me!",
             };
             return Pick(songs);
         }
@@ -190,7 +190,7 @@ namespace dinospace.Services
 
         private static readonly string[] Jokes =
         {
-            "What do you call a dinosaur that is sleeping? A dino-SNORE! 😴",
+            "What do you call a dinosaur that is sleeping? A dino-SNORE!",
             "Why can't you hear a pterodactyl going to the bathroom? Because the 'P' is silent!",
             "What do you call a dinosaur with an amazing vocabulary? A thesaurus!",
             "How do you know if there's a dinosaur under your bed? Your nose touches the ceiling!",

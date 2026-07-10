@@ -1,79 +1,92 @@
 using System;
 using System.Linq;
 using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Media;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
-    // The Settings tab, magazine-style: serif rows separated by hairlines
-    // under quiet ALL-CAPS section headers.
+    // Settings, straight from the design sheet: a profile card up top, then
+    // one rounded group of icon rows — appearance, sound, novasaur ai,
+    // privacy, about — each with a little line icon and a chevron.
     public class SettingsView : ContentView, ITabView
     {
-        private Label _journey = null!;
-        private HorizontalStackLayout _sizePills = null!;
-
         public SettingsView() => Build();
 
-        public void OnSelected() => RefreshJourney();
+        public void OnSelected() { }
 
         private void Build()
         {
-            var stack = new VerticalStackLayout { Spacing = 6, Padding = new Thickness(18, 16, 18, 28) };
+            var stack = new VerticalStackLayout { Spacing = 10, Padding = new Thickness(18, 8, 18, 28) };
 
             stack.Add(new Label
             {
-                Text = Ui.T("Settings"),
+                Text = "settings",
                 FontFamily = Ui.Display,
-                FontSize = Ui.S(28),
+                FontSize = Ui.S(24),
                 TextColor = Theme.TextPrimary,
-                Margin = new Thickness(0, 0, 0, 6)
+                HorizontalOptions = LayoutOptions.Center,
+                Margin = new Thickness(0, 8, 0, 8)
             });
 
-            // Your journey
-            stack.Add(Ui.SectionHeader("Your journey"));
-            _journey = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(14.5), LineHeight = 1.5, TextColor = Theme.TextPrimary };
-            if (AppLayout.Playful)
-                stack.Add(new Border
-                {
-                    Content = _journey, BackgroundColor = Ui.MultiplyAlpha(PlayfulKit.Tab(0), 0.14f),
-                    Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 20 },
-                    Padding = new Thickness(16, 14), Margin = new Thickness(0, 6, 0, 2)
-                });
-            else { _journey.Margin = new Thickness(0, 10, 0, 8); stack.Add(_journey); }
+            stack.Add(ProfileCard());
 
-            // Visuals — themes and type size.
-            stack.Add(Ui.SectionHeader("Visuals"));
             stack.Add(Group(
-                LinkRow("Choose a theme", CurrentThemeName(), async () => await Nav.Push(() => new ThemesPage())),
-                TextSizeRow()));
+                IconRow(Ui.IconSun, "Appearance", async () => await Nav.Push(() => new ThemesPage())),
+                SoundRow(),
+                IconRow(Ui.IconChat, "NovaSaur AI", async () => await Nav.Push(() => new HostPage("", NovaAiBody()))),
+                IconRow(Ui.IconLock, "Privacy", OpenPrivacy),
+                IconRow(Ui.IconInfo, "About DinoSpace", ShowAbout),
+                IconRow(Ui.IconMail, "Contact us", OpenFeedback)));
 
-            // NovaSaur AI — install, pause/resume, or remove the optional model.
-            stack.Add(Ui.SectionHeader("NovaSaur AI"));
-            stack.Add(new NovaModelCard(hideWhenInstalled: false) { Margin = new Thickness(0, 8, 0, 4) });
-
-            // General
-            stack.Add(Ui.SectionHeader("General"));
-            stack.Add(Group(
-                HapticRow(),
-                LinkRow("Contact us", "dinospace.app@gmail.com", OpenFeedback),
-                DangerRow("Reset progress & bookmarks", ConfirmReset)));
+            stack.Add(Group(DangerRow("Reset progress & bookmarks", ConfirmReset)));
 
             stack.Add(new Label
             {
-                Text = "DinoSpace v1.0",
+                Text = "dinospace v1.0",
                 FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint,
-                HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(0, 22, 0, 0)
+                HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(0, 16, 0, 0)
             });
 
             Content = new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
-            RefreshJourney();
         }
 
-        // A settings group. Playful wraps the rows in one rounded card with
-        // faint dividers; the classic layout keeps flat hairline-separated rows.
+        // The explorer card: the mascot's circle (once its art lands) beside
+        // the explorer name, exactly like the sheet's settings page.
+        private View ProfileCard()
+        {
+            var face = new Border
+            {
+                WidthRequest = 54, HeightRequest = 54,
+                BackgroundColor = Theme.AccentSoft,
+                Stroke = Theme.Hairline.WithAlpha(0.5f), StrokeThickness = 1,
+                StrokeShape = new RoundRectangle { CornerRadius = 27 },
+                Content = Ui.Mascot("mascot_ask", 34, "st_badge_star.png"),
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            var who = new VerticalStackLayout { Spacing = 1, VerticalOptions = LayoutOptions.Center };
+            who.Add(new Label { Text = "Nova Explorer", FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
+            who.Add(new Label { Text = "Junior Dino Explorer", FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), TextColor = Theme.TextSecondary });
+
+            var grid = new Grid { ColumnSpacing = 14 };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            grid.Add(face, 0, 0);
+            grid.Add(who, 1, 0);
+
+            return new Border
+            {
+                Content = grid, BackgroundColor = Theme.Surface,
+                Stroke = Theme.CardStroke, StrokeThickness = 1.2,
+                StrokeShape = new RoundRectangle { CornerRadius = 20 },
+                Padding = new Thickness(16, 14), Margin = new Thickness(0, 0, 0, 4),
+                Shadow = Theme.CardShadow()
+            };
+        }
+
+        // One rounded card holding a run of rows with faint dividers.
         private static View Group(params View[] rows)
         {
             var col = new VerticalStackLayout { Spacing = 0 };
@@ -82,179 +95,104 @@ namespace dinospace.Views
                 col.Add(rows[i]);
                 if (i < rows.Length - 1) col.Add(new BoxView { HeightRequest = 1, Color = Theme.HairlineSoft });
             }
-            if (!AppLayout.Playful) return col;
             return new Border
             {
-                Content = col, BackgroundColor = Theme.Surface, Stroke = Colors.Transparent,
+                Content = col, BackgroundColor = Theme.Surface,
+                Stroke = Theme.CardStroke, StrokeThickness = 1.2,
                 StrokeShape = new RoundRectangle { CornerRadius = 20 }, Padding = new Thickness(16, 2),
                 Margin = new Thickness(0, 4), Shadow = Theme.CardShadow()
             };
         }
 
-        private static Label RowTitle(string text) => new()
+        // icon · title · chevron, like every row on the sheet.
+        private View IconRow(string icon, string title, Action onTap)
         {
-            Text = text,
-            FontFamily = Ui.Display,
-            FontSize = Ui.S(19),
-            TextColor = Theme.TextPrimary,
-            VerticalOptions = LayoutOptions.Center
-        };
-
-        private View SwitchRow(string title, string caption, bool value, Action<bool> onChange)
-        {
-            var sw = new Switch { IsToggled = value, OnColor = Theme.Accent, ThumbColor = Colors.White, VerticalOptions = LayoutOptions.Center };
-            sw.Toggled += (_, e) => onChange(e.Value);
-
-            var text = new VerticalStackLayout { Spacing = 3, VerticalOptions = LayoutOptions.Center };
-            text.Add(RowTitle(title));
-            if (!string.IsNullOrEmpty(caption))
-                text.Add(new Label { Text = caption, FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint });
-
-            var grid = new Grid { Padding = new Thickness(0, 14), ColumnSpacing = 12 };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.Add(text, 0, 0);
-            grid.Add(sw, 1, 0);
+            var grid = RowShell(icon, title);
+            var chev = Ui.Icon(Ui.IconChevron, 20, Theme.TextHint);
+            chev.VerticalOptions = LayoutOptions.Center;
+            grid.Add(chev, 2, 0);
+            Ui.OnTap(grid, (_, _) => onTap());
             return grid;
         }
 
-        private static string CurrentThemeName()
+        // icon · title · toggle. Haptics on/off (medium strength when on).
+        private View SoundRow()
         {
-            foreach (var s in Theme.Wallpapers)
-                if (s.Id == Theme.CurrentId) return s.Name;
-            return Theme.Wallpapers[0].Name;
-        }
-
-        // Off / Light / Medium / Strong — a toggle wasn't enough, people feel
-        // vibration very differently phone to phone.
-        private HorizontalStackLayout _hapticPills = null!;
-
-        private View HapticRow()
-        {
-            _hapticPills = new HorizontalStackLayout { Spacing = 8 };
-            BuildHapticPills();
-
-            var col = new VerticalStackLayout { Spacing = 10, Padding = new Thickness(0, 14) };
-            col.Add(RowTitle("Haptic feedback"));
-            col.Add(new Label { Text = "How strong taps and saves feel.", FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint });
-            col.Add(_hapticPills);
-            return col;
-        }
-
-        private void BuildHapticPills()
-        {
-            _hapticPills.Children.Clear();
-            string[] labels = { "Off", "Light", "Medium", "Strong" };
-            for (int i = 0; i < labels.Length; i++)
+            var sw = new Switch
             {
-                int idx = i;
-                bool active = AppSettings.HapticLevel == i;
-                var label = new Label
-                {
-                    Text = labels[i],
-                    FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold,
-                    TextColor = active ? Theme.TextOnAccent : Theme.ChipText,
-                    HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
-                };
-                var pill = new Border
-                {
-                    Content = label, MinimumWidthRequest = 62, HeightRequest = 40,
-                    BackgroundColor = active ? Theme.Accent : Theme.ChipBg,
-                    Stroke = Colors.Transparent,
-                    StrokeShape = new RoundRectangle { CornerRadius = 12 },
-                    Padding = new Thickness(10, 0)
-                };
-                // haptic:false — the demo pulse below is the feedback here.
-                Ui.OnTap(pill, (_, _) =>
-                {
-                    AppSettings.HapticLevel = idx;
-                    BuildHapticPills();
-                    AppSettings.Tap();   // let them feel the level they just picked
-                }, haptic: false);
-                _hapticPills.Add(pill);
-            }
-        }
-
-        private View TextSizeRow()
-        {
-            _sizePills = new HorizontalStackLayout { Spacing = 8 };
-            BuildSizePills();
-
-            var col = new VerticalStackLayout { Spacing = 10, Padding = new Thickness(0, 14) };
-            col.Add(RowTitle("Text size"));
-            col.Add(new Label { Text = "Applies to entries, search, and quizzes.", FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint });
-            col.Add(_sizePills);
-            return col;
-        }
-
-        private void BuildSizePills()
-        {
-            _sizePills.Children.Clear();
-            string[] labels = { "S", "M", "L", "XL" };
-            for (int i = 0; i < labels.Length; i++)
+                IsToggled = AppSettings.Haptics,
+                OnColor = Theme.Accent, ThumbColor = Colors.White,
+                VerticalOptions = LayoutOptions.Center
+            };
+            sw.Toggled += (_, e) =>
             {
-                int idx = i;
-                bool active = AppSettings.TextSizeIndex == i;
-                var label = new Label
-                {
-                    Text = labels[i],
-                    FontFamily = Ui.Fonts, FontSize = 14, FontAttributes = FontAttributes.Bold,
-                    TextColor = active ? Theme.TextOnAccent : Theme.ChipText,
-                    HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
-                };
-                var pill = new Border
-                {
-                    Content = label, WidthRequest = 52, HeightRequest = 40,
-                    BackgroundColor = active ? Theme.Accent : Theme.ChipBg,
-                    Stroke = Colors.Transparent,
-                    StrokeShape = new RoundRectangle { CornerRadius = 12 }
-                };
-                Ui.OnTap(pill, (_, _) => { AppSettings.TextSizeIndex = idx; BuildSizePills(); });
-                _sizePills.Add(pill);
-            }
+                AppSettings.HapticLevel = e.Value ? 2 : 0;
+                if (e.Value) AppSettings.Tap();
+            };
+            var grid = RowShell(Ui.IconSpeaker, "Sound & haptics");
+            grid.Add(sw, 2, 0);
+            return grid;
         }
 
-        private View LinkRow(string title, string value, Action onTap)
+        private Grid RowShell(string icon, string title)
         {
-            var val = new Label { Text = value, FontFamily = Ui.Fonts, FontSize = Ui.S(13), TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.Center };
-            var grid = new Grid { Padding = new Thickness(0, 14), ColumnSpacing = 10 };
+            var ic = Ui.Icon(icon, 22, Theme.TextSecondary);
+            ic.VerticalOptions = LayoutOptions.Center;
+
+            var grid = new Grid { Padding = new Thickness(0, 15), ColumnSpacing = 14 };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(26) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.Add(RowTitle(title), 0, 0);
-            grid.Add(val, 1, 0);
-            Ui.OnTap(grid, (_, _) => onTap());
+            grid.Add(ic, 0, 0);
+            grid.Add(new Label
+            {
+                Text = title, FontFamily = Ui.Display, FontSize = Ui.S(16.5),
+                TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center
+            }, 1, 0);
             return grid;
         }
 
         private View DangerRow(string title, Action onTap)
         {
-            var label = new Label
+            var grid = new Grid { Padding = new Thickness(0, 15) };
+            grid.Add(new Label
             {
                 Text = title,
-                FontFamily = Ui.Display, FontSize = Ui.S(19),
+                FontFamily = Ui.Display, FontSize = Ui.S(16.5),
                 TextColor = Theme.Danger, VerticalOptions = LayoutOptions.Center
-            };
-            var grid = new Grid { Padding = new Thickness(0, 14) };
-            grid.Add(label);
+            });
             Ui.OnTap(grid, (_, _) => onTap());
             return grid;
         }
 
-        private void RefreshJourney()
+        // The NovaSaur model manager, hosted on its own pushed page.
+        private static View NovaAiBody()
         {
-            int dinos = StatsStore.DinosSeen();
-            int space = StatsStore.SpaceSeen();
-            int saved = SavedStore.Count;
-            int streak = StatsStore.Streak();
-            string mostViewed = StatsStore.MostViewedName();
+            var col = new VerticalStackLayout { Spacing = 12, Padding = new Thickness(18, 4, 18, 28) };
+            col.Add(new Label { Text = "novasaur ai", FontFamily = Ui.Display, FontSize = Ui.S(24), TextColor = Theme.TextPrimary, HorizontalOptions = LayoutOptions.Center });
+            col.Add(new Label
+            {
+                Text = "NovaSaur answers instantly from its encyclopedia. Add the optional on-device AI model and open-ended questions get full streamed answers — still completely offline.",
+                FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), LineHeight = 1.4, TextColor = Theme.TextSecondary
+            });
+            col.Add(new NovaModelCard(hideWhenInstalled: false));
+            return new ScrollView { Content = col };
+        }
 
-            var sb = new System.Text.StringBuilder();
-            sb.Append($"You've explored {dinos} of {DinoData.All.Count} prehistoric creatures and {space} of {SpaceData.All.Count} space objects, ");
-            sb.Append($"and saved {saved} {(saved == 1 ? "favourite" : "favourites")}. ");
-            if (!string.IsNullOrEmpty(mostViewed)) sb.Append($"Your most-viewed entry is {mostViewed}. ");
-            if (streak > 1) sb.Append($"You're on a {streak}-day streak — keep it going!");
-            else sb.Append("Come back tomorrow to start a streak!");
-            _journey.Text = sb.ToString();
+        private async void OpenPrivacy()
+        {
+            try { await Launcher.OpenAsync("https://github.com/Karthikeya0923/dinospace/blob/main/PRIVACY_POLICY.md"); } catch { }
+        }
+
+        private async void ShowAbout()
+        {
+            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+            if (page == null) return;
+            int seen = StatsStore.DinosSeen() + StatsStore.SpaceSeen();
+            int total = DinoData.All.Count + SpaceData.All.Count;
+            await page.DisplayAlertAsync("DinoSpace v1.0",
+                $"A fully offline prehistoric & space encyclopedia with its own on-device AI and a live sky scanner.\n\nYou've discovered {seen} of {total} entries so far. Keep exploring!",
+                "OK");
         }
 
         private async void OpenFeedback()
@@ -273,7 +211,6 @@ namespace dinospace.Views
             StatsStore.ClearProgress();
             SavedStore.ClearAll();
             NovaView.DeleteSavedChat();
-            RefreshJourney();
         }
     }
 }

@@ -24,22 +24,22 @@ namespace dinospace
             public required float ShadowAlpha;
         }
 
-        // One selectable look: a palette, a wallpaper, and how heavy a wash
-        // the wallpaper needs before text sits comfortably on it.
+        // One selectable look: a palette, an optional wallpaper, and how heavy
+        // a wash the wallpaper needs before text sits comfortably on it.
         public sealed class Spec
         {
             public required string Id;
             public required string Name;
             public required string Blurb;
-            public required string Wallpaper;  // file in Resources/Images
+            public string? Wallpaper;          // file in Resources/Images; null = plain colour
             public required bool Dark;         // status-bar icon contrast
             public required float Dim;         // readability wash strength
             internal Palette P = null!;
         }
 
-        // The signature look: warm cream paper scattered with little gold
-        // stars, sage cards, deep-olive ink. Straight from the design sheet.
-        private static readonly Palette StarsP = new()
+        // The signature look, exactly the design sheet's page: one plain soft
+        // pastel colour, sage cards, deep-olive ink. No texture behind text.
+        private static readonly Palette PastelP = new()
         {
             Bg = Color.FromArgb("#EEF1E2"),
             BgRaised = Color.FromArgb("#F5F7EA"),
@@ -114,33 +114,6 @@ namespace dinospace
             ShadowAlpha = 0.07f
         };
 
-        // The bedtime page: deep navy night, pale warm ink, starlight-gold
-        // accents. Everything that is olive-on-cream by day flips to
-        // cream-on-navy so nothing ever sits black-on-black.
-        private static readonly Palette NightP = new()
-        {
-            Bg = Color.FromArgb("#1C2733"),
-            BgRaised = Color.FromArgb("#22303F"),
-            Surface = Color.FromArgb("#2A3A4C"),
-            SurfaceAlt = Color.FromArgb("#35485F"),
-            SurfaceSunken = Color.FromArgb("#16202B"),
-            Hairline = Color.FromArgb("#47596D"),
-            HairlineSoft = Color.FromArgb("#38495B"),
-            TextPrimary = Color.FromArgb("#F1F3E7"),
-            TextSecondary = Color.FromArgb("#C4CFD8"),
-            TextHint = Color.FromArgb("#91A1B0"),
-            TextOnAccent = Color.FromArgb("#2A3040"),
-            Accent = Color.FromArgb("#E8CD8C"),
-            AccentSoft = Color.FromArgb("#3B4757"),
-            Success = Color.FromArgb("#9CD08A"),
-            Danger = Color.FromArgb("#FF8A76"),
-            ChipBg = Color.FromArgb("#35485F"),
-            ChipText = Color.FromArgb("#DCE4EB"),
-            ImgPlaceholder = Color.FromArgb("#22303F"),
-            CardStroke = Color.FromArgb("#47596D"),
-            ShadowAlpha = 0f
-        };
-
         // theme5 — the hand-painted twilight artwork a friend made for the
         // app (purple mountains, ember forest, cream planet). Deep plum with
         // a warm cream-gold accent pulled straight from the painting.
@@ -168,19 +141,18 @@ namespace dinospace
             ShadowAlpha = 0f
         };
 
-        // Every look, in display order. Starry paper is the default.
+        // Every look, in display order. The plain pastel page is the default.
         public static readonly IReadOnlyList<Spec> Wallpapers = new List<Spec>
         {
-            new() { Id = "stars", Name = "starry paper", Blurb = "warm cream paper with little gold stars", Wallpaper = "wall_stars.png", Dark = false, Dim = 0.06f, P = StarsP },
-            new() { Id = "grid", Name = "meadow grid", Blurb = "a soft sage graph-paper page", Wallpaper = "wall_grid.png", Dark = false, Dim = 0.28f, P = GridP },
-            new() { Id = "clouds", Name = "daydream clouds", Blurb = "pale drifting clouds, calm and quiet", Wallpaper = "wall_clouds.png", Dark = false, Dim = 0.12f, P = CloudsP },
-            new() { Id = "night", Name = "night sky", Blurb = "deep navy night full of tiny stars", Wallpaper = "wall_night.png", Dark = true, Dim = 0.22f, P = NightP },
+            new() { Id = "pastel", Name = "soft pastel", Blurb = "the app's own plain pastel page", Wallpaper = null, Dark = false, Dim = 0f, P = PastelP },
+            new() { Id = "grid", Name = "meadow grid", Blurb = "a soft sage graph-paper page", Wallpaper = "wall_grid.png", Dark = false, Dim = 0f, P = GridP },
+            new() { Id = "clouds", Name = "daydream clouds", Blurb = "pale drifting clouds, calm and quiet", Wallpaper = "wall_clouds.png", Dark = false, Dim = 0f, P = CloudsP },
             new() { Id = "dinospace", Name = "dinospace", Blurb = "the hand-painted twilight made for the app", Wallpaper = "theme5.png", Dark = true, Dim = 0.72f, P = DinoP },
         };
 
         private static Spec _spec = null!;
         public static bool IsDark { get; private set; }
-        public static string CurrentId { get; private set; } = "stars";
+        public static string CurrentId { get; private set; } = "pastel";
         public static string? Wallpaper { get; private set; }
 
         // Applies whatever the user last chose. Ids from older builds map onto
@@ -189,10 +161,9 @@ namespace dinospace
         {
             string id = Services.AppSettings.ThemeId switch
             {
-                "theme5" or "theme7" => "dinospace",
-                "theme2" or "theme3" or "theme4" => "night",
-                "stars" or "grid" or "clouds" or "night" or "dinospace" => Services.AppSettings.ThemeId,
-                _ => "stars",
+                "theme5" or "theme7" or "night" or "theme2" or "theme3" or "theme4" => "dinospace",
+                "pastel" or "grid" or "clouds" or "dinospace" => Services.AppSettings.ThemeId,
+                _ => "pastel",
             };
 
             Spec pick = Wallpapers[0];
@@ -236,9 +207,9 @@ namespace dinospace
 
         // A wash drawn between the wallpaper and the content so text stays
         // readable no matter how busy the art is.
-        public static Color WallpaperDim => Bg.WithAlpha(_spec?.Dim ?? 0.06f);
+        public static Color WallpaperDim => Bg.WithAlpha(_spec?.Dim ?? 0f);
 
-        private static Palette _p = StarsP;
+        private static Palette _p = PastelP;
 
         // ---- tokens (live views of the current palette) ----
         public static Color Bg => _p.Bg;

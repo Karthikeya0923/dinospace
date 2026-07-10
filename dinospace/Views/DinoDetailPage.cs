@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Maui.Controls;
@@ -7,16 +6,15 @@ using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
-    // Editorial profile for one prehistoric creature: clean hero, serif
-    // headline, quick stats, stat bars, deep sections, related, and the
-    // Nova/battle actions at the end.
+    // One prehistoric creature, laid out exactly like the design sheet:
+    // centred section header with a save star, the name, two coloured tags,
+    // the art floating on the page with grass at its feet, plain label/value
+    // stats, then About and the deeper sections.
     public class DinoDetailPage : ContentPage
     {
         private readonly Dinosaur _d;
         private Microsoft.Maui.Controls.Shapes.Path _saveIcon = null!;
-        // Each creature gets its own bright colour in the Playful layout so its
-        // stat bars and stat bubbles feel personal; classic keeps the theme gold.
-        private Color Accent => AppLayout.Playful ? PlayfulKit.HueFor(_d.Name) : Theme.Accent;
+        private Color Accent => Theme.Accent;
 
         public DinoDetailPage(Dinosaur d)
         {
@@ -28,12 +26,35 @@ namespace dinospace.Views
 
         private void Build()
         {
-            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(18, 16, 18, 30) };
+            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(20, 4, 20, 30) };
 
-            stack.Add(DetailUi.TitleBlock(_d.Name, _d.Pronunciation,
-                $"“{_d.Meaning}”  ·  {_d.Diet}  ·  {_d.Era}"));
+            stack.Add(new Label
+            {
+                Text = _d.Name,
+                FontFamily = Ui.Display, FontSize = Ui.S(28), LineHeight = 1.05,
+                TextColor = Theme.TextPrimary
+            });
+            if (!string.IsNullOrWhiteSpace(_d.Pronunciation))
+                stack.Add(new Label
+                {
+                    Text = _d.Pronunciation, FontFamily = Ui.Fonts, FontSize = Ui.S(13.5),
+                    TextColor = Theme.TextSecondary, Margin = new Thickness(0, -12, 0, 0)
+                });
 
-            stack.Add(StatBars());
+            stack.Add(DetailUi.TagChips(_d.Diet, _d.Era));
+
+            stack.Add(DetailUi.EntryImage(_d.ImageFile, _d.Name, grass: true));
+
+            stack.Add(DetailUi.StatRows(new[]
+            {
+                ("Length", _d.Length),
+                ("Height", _d.Height),
+                ("Weight", _d.Weight),
+                ("Top speed", _d.Speed),
+                ("Bite force", _d.BiteForce),
+                ("Diet", _d.Diet),
+                ("Habitat", _d.Category),
+            }));
 
             stack.Add(DetailUi.Section("About", _d.AboutText, Accent));
             stack.Add(DetailUi.Section("Key features", _d.KeyFeaturesText, Accent));
@@ -50,35 +71,16 @@ namespace dinospace.Views
             stack.Add(DetailUi.AskNovaButton(_d.Name));
             stack.Add(Ui.GhostButton("Battle this creature", async (_, _) => await Nav.Push(() => new BattlePage(_d))));
 
-            var scrollContent = new VerticalStackLayout { Spacing = 0 };
-            scrollContent.Add(DetailUi.Hero(_d.ImageFile, _d.Name));
-            scrollContent.Add(stack);
+            var header = DetailUi.HeaderBar("prehistoric creatures",
+                SavedStore.IsDinoSaved(_d.Name), OnBack, OnSave, out _saveIcon);
 
-            var scroll = new ScrollView { Content = scrollContent, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
-            var topBar = DetailUi.TopBar(SavedStore.IsDinoSaved(_d.Name), OnBack, OnSave, out _saveIcon);
-            ((View)topBar).VerticalOptions = LayoutOptions.Start;
+            var main = new Grid { RowSpacing = 0 };
+            main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
+            main.Add(header, 0, 0);
+            main.Add(new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never }, 0, 1);
 
-            var root = Ui.PageRoot(scroll);
-            root.Add(topBar);
-            Content = root;
-        }
-
-        private View StatBars()
-        {
-            double maxLen = DinoData.All.Max(x => Num(x.Length));
-            double maxH = DinoData.All.Max(x => Num(x.Height));
-            double maxW = DinoData.All.Max(x => Num(x.Weight));
-            double maxS = DinoData.All.Max(x => Num(x.Speed));
-            double maxBite = DinoData.All.Max(x => Num(x.BiteForce));
-
-            var col = new VerticalStackLayout { Spacing = 14 };
-            col.Add(Ui.SectionHeader("How it measures up"));
-            if (Num(_d.Length) > 0) col.Add(Ui.StatBar("Length", _d.Length, Num(_d.Length) / maxLen, Accent));
-            if (Num(_d.Height) > 0) col.Add(Ui.StatBar("Height", _d.Height, Num(_d.Height) / maxH, Accent));
-            if (Num(_d.Weight) > 0) col.Add(Ui.StatBar("Weight", _d.Weight, Num(_d.Weight) / maxW, Accent));
-            if (Num(_d.Speed) > 0) col.Add(Ui.StatBar("Top speed", _d.Speed, Num(_d.Speed) / maxS, Accent));
-            if (Num(_d.BiteForce) > 0 && maxBite > 0) col.Add(Ui.StatBar("Bite force", _d.BiteForce, Num(_d.BiteForce) / maxBite, Accent));
-            return col;
+            Content = Ui.PageRoot(main);
         }
 
         private async void OnBack()
@@ -90,19 +92,7 @@ namespace dinospace.Views
         {
             bool nowSaved = SavedStore.ToggleDino(_d.Name);
             AppSettings.LongPress();
-            Ui.SetIcon(_saveIcon, nowSaved ? Ui.IconSavedFill : Ui.IconSaved, nowSaved ? Theme.Accent : Microsoft.Maui.Graphics.Colors.White);
-        }
-
-        private static double Num(string s)
-        {
-            if (string.IsNullOrWhiteSpace(s)) return 0;
-            var sb = new StringBuilder(); bool started = false;
-            foreach (char c in s.Replace(",", ""))
-            {
-                if (char.IsDigit(c) || (c == '.' && started)) { sb.Append(c); started = true; }
-                else if (started) break;
-            }
-            return sb.Length > 0 && double.TryParse(sb.ToString(), out var v) ? v : 0;
+            Ui.SetIcon(_saveIcon, nowSaved ? Ui.IconStar : Ui.IconStarLine, nowSaved ? Ui.StarGold : Theme.TextPrimary);
         }
     }
 }

@@ -29,6 +29,13 @@ namespace dinospace.Views
         public List<PointF> Points { get; } = new();
         public bool Dirty = true;                // set while the stroke is growing
 
+        // Fill strokes: the flooded region as a canvas-sized transparent
+        // image, so fill paints exactly the enclosed shape that was tapped —
+        // never the whole canvas. Null region = flood the whole canvas
+        // (nothing enclosed the tap).
+        public byte[]? RegionPng;
+        public Microsoft.Maui.Graphics.IImage? RegionImage;
+
         private List<PointF>? _smooth;
         private int _cachedCount = -1;
 
@@ -181,7 +188,10 @@ namespace dinospace.Views
         }
     }
 
-    // Renders the whole drawing onto the on-screen canvas.
+    // Renders the whole drawing onto the on-screen canvas. Background is the
+    // page's paper colour — it's what the eraser paints and what the canvas
+    // shows behind the drawing — but the EXPORTED PNG is transparent, so
+    // creations blend into every page like the built-in cartoon entries.
     public class PaintDrawable : IDrawable
     {
         public List<Stroke> Strokes { get; } = new();
@@ -192,7 +202,20 @@ namespace dinospace.Views
             canvas.Antialias = true;
             canvas.FillColor = Background;
             canvas.FillRectangle(rect);
-            foreach (var s in Strokes) BrushEngine.Draw(canvas, s, Background);
+            foreach (var s in Strokes)
+            {
+                if (s.Kind == BrushKind.Fill)
+                {
+                    if (s.RegionImage != null)
+                        canvas.DrawImage(s.RegionImage, rect.Left, rect.Top, rect.Width, rect.Height);
+                    else
+                    {
+                        canvas.FillColor = s.Color;
+                        canvas.FillRectangle(rect);
+                    }
+                }
+                else BrushEngine.Draw(canvas, s, Background);
+            }
         }
     }
 
@@ -263,6 +286,8 @@ namespace dinospace.Views
     // geometry mirrors BrushEngine exactly so the saved image matches the canvas.
     public static class CreationCanvas
     {
+        // The saved PNG has a TRANSPARENT background — the drawing floats on
+        // whatever page shows it, exactly like the built-in cartoon entries.
         public static bool ExportPng(PaintDrawable paint, double viewWidth, double viewHeight, double density, string path)
         {
 #if ANDROID
@@ -272,10 +297,23 @@ namespace dinospace.Views
                 int h = Math.Max(1, (int)(viewHeight * density));
                 using var bitmap = Android.Graphics.Bitmap.CreateBitmap(w, h, Android.Graphics.Bitmap.Config.Argb8888!);
                 using var acanvas = new Android.Graphics.Canvas(bitmap);
-                acanvas.DrawColor(ToA(paint.Background));
 
                 float d = (float)density;
-                foreach (var s in paint.Strokes) DrawStrokeA(acanvas, s, paint.Background, d);
+                foreach (var s in paint.Strokes)
+                {
+                    if (s.Kind == BrushKind.Fill)
+                    {
+                        if (s.RegionPng != null)
+                        {
+                            using var region = Android.Graphics.BitmapFactory.DecodeByteArray(s.RegionPng, 0, s.RegionPng.Length);
+                            if (region != null)
+                                acanvas.DrawBitmap(region, null, new Android.Graphics.Rect(0, 0, w, h), null);
+                        }
+                        else acanvas.DrawColor(ToA(s.Color));
+                        continue;
+                    }
+                    DrawStrokeA(acanvas, s, paint.Background, d, eraseClear: true);
+                }
 
                 using var fs = System.IO.File.Create(path);
                 bitmap.Compress(Android.Graphics.Bitmap.CompressFormat.Png!, 100, fs);
@@ -288,8 +326,101 @@ namespace dinospace.Views
 #endif
         }
 
+        // Flood-fills the enclosed region under the tap and returns it as a
+        // fill stroke (undoable like any other stroke). The current drawing is
+        // rasterised, the tapped colour-region is traced with a scanline fill,
+        // and only those pixels become the fill — a circle fills as a circle.
+        public static Stroke? MakeFillStroke(PaintDrawable paint, double viewWidth, double viewHeight, PointF tap, Color color)
+        {
 #if ANDROID
-        private static void DrawStrokeA(Android.Graphics.Canvas canvas, Stroke s, Color background, float d)
+            try
+            {
+                int w = Math.Max(1, (int)viewWidth);
+                int h = Math.Max(1, (int)viewHeight);
+                int tx = Math.Clamp((int)tap.X, 0, w - 1);
+                int ty = Math.Clamp((int)tap.Y, 0, h - 1);
+
+                // rasterise the drawing as it looks on screen (paper included)
+                using var snap = Android.Graphics.Bitmap.CreateBitmap(w, h, Android.Graphics.Bitmap.Config.Argb8888!);
+                using (var c = new Android.Graphics.Canvas(snap))
+                {
+                    c.DrawColor(ToA(paint.Background));
+                    foreach (var s in paint.Strokes)
+                    {
+                        if (s.Kind == BrushKind.Fill)
+                        {
+                            if (s.RegionPng != null)
+                            {
+                                using var region = Android.Graphics.BitmapFactory.DecodeByteArray(s.RegionPng, 0, s.RegionPng.Length);
+                                if (region != null)
+                                    c.DrawBitmap(region, null, new Android.Graphics.Rect(0, 0, w, h), null);
+                            }
+                            else c.DrawColor(ToA(s.Color));
+                        }
+                        else DrawStrokeA(c, s, paint.Background, 1f);
+                    }
+                }
+
+                int[] px = new int[w * h];
+                snap.GetPixels(px, 0, w, 0, 0, w, h);
+
+                int target = px[ty * w + tx];
+                const int tol = 48;
+                bool Match(int p)
+                {
+                    int dr = ((p >> 16) & 0xFF) - ((target >> 16) & 0xFF);
+                    int dg = ((p >> 8) & 0xFF) - ((target >> 8) & 0xFF);
+                    int db = (p & 0xFF) - (target & 0xFF);
+                    return dr > -tol && dr < tol && dg > -tol && dg < tol && db > -tol && db < tol;
+                }
+
+                int fill = (0xFF << 24) | ((int)(color.Red * 255) << 16) | ((int)(color.Green * 255) << 8) | (int)(color.Blue * 255);
+                var mask = new int[w * h];
+                var seen = new bool[w * h];
+                var stack = new System.Collections.Generic.Stack<int>();
+                stack.Push(ty * w + tx);
+                seen[ty * w + tx] = true;
+                int count = 0;
+                while (stack.Count > 0)
+                {
+                    int i = stack.Pop();
+                    if (!Match(px[i])) continue;
+                    mask[i] = fill;
+                    count++;
+                    int x = i % w, y = i / w;
+                    if (x > 0 && !seen[i - 1]) { seen[i - 1] = true; stack.Push(i - 1); }
+                    if (x < w - 1 && !seen[i + 1]) { seen[i + 1] = true; stack.Push(i + 1); }
+                    if (y > 0 && !seen[i - w]) { seen[i - w] = true; stack.Push(i - w); }
+                    if (y < h - 1 && !seen[i + w]) { seen[i + w] = true; stack.Push(i + w); }
+                }
+                if (count == 0) return null;
+
+                using var regionBmp = Android.Graphics.Bitmap.CreateBitmap(w, h, Android.Graphics.Bitmap.Config.Argb8888!);
+                regionBmp.SetPixels(mask, 0, w, 0, 0, w, h);
+                using var ms = new System.IO.MemoryStream();
+                regionBmp.Compress(Android.Graphics.Bitmap.CompressFormat.Png!, 100, ms);
+                regionBmp.Recycle();
+                byte[] png = ms.ToArray();
+
+                Microsoft.Maui.Graphics.IImage? img = null;
+                try
+                {
+                    using var rs = new System.IO.MemoryStream(png);
+                    img = Microsoft.Maui.Graphics.Platform.PlatformImage.FromStream(rs);
+                }
+                catch { }
+
+                return new Stroke { Kind = BrushKind.Fill, Color = color, RegionPng = png, RegionImage = img };
+            }
+            catch { return null; }
+#else
+            // no rasteriser off-Android: fall back to a whole-canvas fill
+            return new Stroke { Kind = BrushKind.Fill, Color = color };
+#endif
+        }
+
+#if ANDROID
+        private static void DrawStrokeA(Android.Graphics.Canvas canvas, Stroke s, Color background, float d, bool eraseClear = false)
         {
             var pts = s.Smoothed();
             if (pts.Count == 0) return;
@@ -297,6 +428,10 @@ namespace dinospace.Views
             float w = PaintMath.EffectiveWidth(s) * d;
 
             using var pnt = new Android.Graphics.Paint { AntiAlias = true };
+            // On the transparent export the eraser truly erases; on the
+            // in-editor snapshot it paints the paper back in, like on screen.
+            if (s.Kind == BrushKind.Eraser && eraseClear)
+                pnt.SetXfermode(new Android.Graphics.PorterDuffXfermode(Android.Graphics.PorterDuff.Mode.Clear!));
             pnt.SetStyle(Android.Graphics.Paint.Style.Stroke);
             pnt.StrokeCap = s.Kind == BrushKind.Highlighter ? Android.Graphics.Paint.Cap.Square : Android.Graphics.Paint.Cap.Round;
             pnt.StrokeJoin = Android.Graphics.Paint.Join.Round;

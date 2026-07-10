@@ -103,12 +103,12 @@ namespace dinospace.Views
 
             // ----- target card (top-right, under the bar) -----
             _targetName = new Label { FontFamily = Ui.Display, FontSize = Ui.S(19), TextColor = Colors.White };
-            _targetKind = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), TextColor = Color.FromArgb("#B9A9E8") };
-            _targetBlurb = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(12), LineHeight = 1.35, TextColor = Color.FromArgb("#D5DAE8"), MaxLines = 3, LineBreakMode = LineBreakMode.TailTruncation };
+            _targetKind = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), TextColor = Color.FromArgb("#E8CD8C") };
+            _targetBlurb = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(12), LineHeight = 1.35, TextColor = Color.FromArgb("#E4E2D2"), MaxLines = 3, LineBreakMode = LineBreakMode.TailTruncation };
             var learnLabel = new Label
             {
                 Text = "Learn more", FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), FontAttributes = FontAttributes.Bold,
-                TextColor = Color.FromArgb("#C9B8F0"), HorizontalTextAlignment = TextAlignment.Center
+                TextColor = Color.FromArgb("#F2E8C8"), HorizontalTextAlignment = TextAlignment.Center
             };
             _learnBtn = new Border
             {
@@ -124,7 +124,7 @@ namespace dinospace.Views
             var askLabel = new Label
             {
                 Text = "Ask NovaSaur", FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), FontAttributes = FontAttributes.Bold,
-                TextColor = Color.FromArgb("#C9B8F0"), HorizontalTextAlignment = TextAlignment.Center
+                TextColor = Color.FromArgb("#F2E8C8"), HorizontalTextAlignment = TextAlignment.Center
             };
             _askBtn = new Border
             {
@@ -150,8 +150,8 @@ namespace dinospace.Views
             _targetCard = new Border
             {
                 Content = targetCol,
-                BackgroundColor = Color.FromArgb("#B3141024"),
-                Stroke = Color.FromArgb("#443C5C80"), StrokeThickness = 1,
+                BackgroundColor = Color.FromArgb("#B3161A10"),
+                Stroke = Color.FromArgb("#44A89B6E"), StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 16 },
                 Padding = new Thickness(14, 12),
                 MaximumWidthRequest = 280,
@@ -173,7 +173,7 @@ namespace dinospace.Views
             _timeSlider = new Slider
             {
                 Minimum = -12, Maximum = 12, Value = 0, WidthRequest = 190,
-                MinimumTrackColor = Color.FromArgb("#8B6BFF"), MaximumTrackColor = Color.FromArgb("#3C3560"),
+                MinimumTrackColor = Color.FromArgb("#E7BC4F"), MaximumTrackColor = Color.FromArgb("#4A4636"),
                 ThumbColor = Colors.White, VerticalOptions = LayoutOptions.Center
             };
             _timeSlider.ValueChanged += (_, e) =>
@@ -193,8 +193,8 @@ namespace dinospace.Views
             var timeCard = new Border
             {
                 Content = timeRow,
-                BackgroundColor = Color.FromArgb("#8A141024"),
-                Stroke = Color.FromArgb("#443C5C80"), StrokeThickness = 1,
+                BackgroundColor = Color.FromArgb("#8A161A10"),
+                Stroke = Color.FromArgb("#44A89B6E"), StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 18 },
                 Padding = new Thickness(12, 2),
                 HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.End,
@@ -206,7 +206,7 @@ namespace dinospace.Views
             {
                 Text = "…",
                 FontFamily = Ui.Fonts, FontSize = Ui.S(12.5),
-                TextColor = Color.FromArgb("#B9BDD1"),
+                TextColor = Color.FromArgb("#C9C8B4"),
                 HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.End,
                 Margin = new Thickness(60, 0, 60, 8),
                 HorizontalTextAlignment = TextAlignment.Center
@@ -265,8 +265,12 @@ namespace dinospace.Views
 
                     // A drifting or offset overlay is nearly always a compass
                     // that wants calibrating — tell the user how to fix it.
+                    // Until a real location fix lands, say that instead of
+                    // confidently naming the wrong sky.
                     if (_tick % 20 == 0 && _sensorMode)
-                        _hint.Text = _pointing?.NeedsCalibration == true
+                        _hint.Text = !_locationReal
+                            ? "Finding your location — names sharpen in a moment"
+                            : _pointing?.NeedsCalibration == true
                             ? "Compass needs calibrating — wave your phone in a big figure-8"
                             : "Point your phone at the sky — names appear as you aim";
                 };
@@ -292,18 +296,27 @@ namespace dinospace.Views
         }
 
         private bool _locationTried;
+        private bool _locationReal;
         private async System.Threading.Tasks.Task RefreshLocationAsync()
         {
+            // Keeps retrying on every appearance until a real fix lands — a
+            // one-shot attempt used to leave the whole sky anchored to the
+            // fallback guess if the first try raced the permission dialog.
             if (_locationTried) return;
             _locationTried = true;
-            var loc = await SkyService.RequestDeviceLocationAsync();
-            if (loc == null) return;
-            if (Math.Abs(loc.Lat - _lat) < 0.05 && Math.Abs(loc.Lon - _lon) < 0.05) return;
-            _lat = loc.Lat; _lon = loc.Lon;
-            _drawable.Lat = _lat; _drawable.Lon = _lon;
-            // Magnetic declination depends on where you are — restart the
-            // pointing sensor so azimuths are true-north for the new spot.
-            if (_sensorMode) { StopSensor(); StartSensor(); }
+            try
+            {
+                var loc = await SkyService.RequestDeviceLocationAsync();
+                if (loc == null) { _locationTried = false; return; }
+                _locationReal = true;
+                if (Math.Abs(loc.Lat - _lat) < 0.05 && Math.Abs(loc.Lon - _lon) < 0.05) return;
+                _lat = loc.Lat; _lon = loc.Lon;
+                _drawable.Lat = _lat; _drawable.Lon = _lon;
+                // Magnetic declination depends on where you are — restart the
+                // pointing sensor so azimuths are true-north for the new spot.
+                if (_sensorMode) { StopSensor(); StartSensor(); }
+            }
+            catch { _locationTried = false; }
         }
 
         // Scanning the sky is a two-hands, phone-up activity — landscape gives
@@ -676,10 +689,14 @@ namespace dinospace.Views
                 canvas.FillRectangle(rect);
             }
 
-            bool skyDark = sunAlt < -6;   // stars stop rendering in daylight
+            // The overlay ALWAYS draws the full sky — stars, figures, deep
+            // sky, the lot. Hiding them in daylight made the page look broken
+            // and empty; pointing the phone up should always show what's
+            // there, day or night. Only meteors keep the darkness rule.
+            bool skyDark = sunAlt < -6;
 
             // ---- the Milky Way: a soft band of overlapping glows ----
-            if (skyDark && MilkyWayStrength > 0.01f)
+            if (MilkyWayStrength > 0.01f)
             {
                 var band = SkyMap.MilkyWayBand;
                 float glowScale = (float)(v.SizePx / v.MaxR) / 2f;
@@ -710,8 +727,7 @@ namespace dinospace.Views
             canvas.DrawPath(horizon);
 
             // ---- constellation figures with glow lines ----
-            if (skyDark)
-                foreach (var f in SkyMap.Figures)
+            foreach (var f in SkyMap.Figures)
                 {
                     var pts = new (float x, float y, bool ok)[f.Stars.Length];
                     for (int i = 0; i < f.Stars.Length; i++)
@@ -740,7 +756,6 @@ namespace dinospace.Views
                 }
 
             // ---- the whole catalogue: soft halo + core, colour by temperature ----
-            if (skyDark)
             {
                 var stars = SkyCatalog.Stars;
                 var sv = SkyMap.StarVectors;
@@ -777,7 +792,6 @@ namespace dinospace.Views
             }
 
             // ---- deep sky: the full Messier + Caldwell catalogues ----
-            if (skyDark)
             {
                 var dsos = SkyDeepSkyCatalog.All;
                 for (int i = 0; i < dsos.Length; i++)

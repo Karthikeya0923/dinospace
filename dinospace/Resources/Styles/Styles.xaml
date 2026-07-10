@@ -7,13 +7,13 @@
          these cover the platform controls (entries, pages, indicators). -->
 
     <Style TargetType="Label">
-        <Setter Property="FontFamily" Value="Nunito" />
+        <Setter Property="FontFamily" Value="Body" />
         <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
         <Setter Property="FontSize" Value="15" />
     </Style>
 
     <Style TargetType="Entry">
-        <Setter Property="FontFamily" Value="Nunito" />
+        <Setter Property="FontFamily" Value="Body" />
         <Setter Property="FontSize" Value="15" />
         <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
         <Setter Property="PlaceholderColor" Value="{StaticResource TextHint}" />
@@ -22,7 +22,7 @@
     </Style>
 
     <Style TargetType="Editor">
-        <Setter Property="FontFamily" Value="Nunito" />
+        <Setter Property="FontFamily" Value="Body" />
         <Setter Property="FontSize" Value="15" />
         <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
         <Setter Property="PlaceholderColor" Value="{StaticResource TextHint}" />
@@ -30,7 +30,7 @@
     </Style>
 
     <Style TargetType="SearchBar">
-        <Setter Property="FontFamily" Value="Nunito" />
+        <Setter Property="FontFamily" Value="Body" />
         <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
         <Setter Property="PlaceholderColor" Value="{StaticResource TextHint}" />
         <Setter Property="CancelButtonColor" Value="{StaticResource Accent}" />
@@ -38,7 +38,7 @@
     </Style>
 
     <Style TargetType="Button">
-        <Setter Property="FontFamily" Value="Nunito" />
+        <Setter Property="FontFamily" Value="Body" />
         <Setter Property="FontSize" Value="15" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor" Value="{StaticResource TextOnAccent}" />

@@ -12,30 +12,128 @@ namespace dinospace.Views
     // below it, caps+rule section headers with body text on the paper.
     public static class DetailUi
     {
-        // Plain hero image. No overlays, no gradient boxes — the photo breathes.
-        // Playful rounds the bottom corners so the hero reads like a big
-        // friendly card, with a bright gradient stand-in until art arrives.
-        public static View Hero(string image, string title)
+        // The design sheet's page header: back arrow left, the lowercase
+        // section name centred, and a save star on the right that turns gold.
+        public static View HeaderBar(string section, bool saved, Action onBack, Action onSave,
+            out Microsoft.Maui.Controls.Shapes.Path saveIcon)
         {
-            var img = new Image { Source = image, Aspect = Aspect.AspectFill, HorizontalOptions = LayoutOptions.Fill, VerticalOptions = LayoutOptions.Fill };
-            Ui.Describe(img, title);
-
-            if (AppLayout.Playful)
+            var back = Ui.Icon(Ui.IconBack, 24, Theme.TextPrimary);
+            var backWrap = new Border
             {
-                var g = new Grid { HeightRequest = 300 };
-                g.Add(EntryCards.PlayfulArt(title, 64));
-                g.Add(img);
+                Content = back, WidthRequest = 44, HeightRequest = 44,
+                BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent
+            };
+            Ui.OnTap(backWrap, (_, _) => onBack());
+            Ui.Describe(backWrap, "Go back");
+
+            var title = new Label
+            {
+                Text = Ui.T(section),
+                FontFamily = Ui.Display, FontSize = Ui.S(20), TextColor = Theme.TextPrimary,
+                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center,
+                HorizontalTextAlignment = TextAlignment.Center
+            };
+
+            saveIcon = Ui.Icon(saved ? Ui.IconStar : Ui.IconStarLine, 26, saved ? Ui.StarGold : Theme.TextPrimary);
+            var saveWrap = new Border
+            {
+                Content = saveIcon, WidthRequest = 44, HeightRequest = 44,
+                BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent
+            };
+            Ui.OnTap(saveWrap, (_, _) => onSave());
+            Ui.Describe(saveWrap, saved ? "Remove from saved" : "Save this entry");
+
+            var grid = new Grid { Padding = new Thickness(8, 10) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(56) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(56) });
+            grid.Add(backWrap, 0, 0);
+            grid.Add(title, 1, 0);
+            grid.Add(saveWrap, 2, 0);
+            return grid;
+        }
+
+        // The entry's picture, centred on the page itself like the design
+        // sheet — no photo box. Cartoon art (transparent PNGs) floats on the
+        // paper; creatures get little grass tufts under their feet. Entries
+        // whose art hasn't arrived yet show the starfield placeholder card.
+        public static View EntryImage(string image, string title, bool grass)
+        {
+            string baseName = image.EndsWith(".png") ? image[..^4] : image;
+            if (!Ui.HasImage(baseName))
+            {
                 return new Border
                 {
-                    Content = g, HeightRequest = 300, Stroke = Colors.Transparent,
-                    StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(0, 0, 30, 30) }
+                    Content = EntryCards.PlayfulArt(title, 54),
+                    HeightRequest = 210, Stroke = Colors.Transparent,
+                    StrokeShape = new RoundRectangle { CornerRadius = 24 }
                 };
             }
 
-            var grid = new Grid { HeightRequest = 320 };
-            grid.Add(EntryCards.ArtFallback(title, 56));
-            grid.Add(img);
-            return grid;
+            var img = new Image
+            {
+                Source = image, Aspect = Aspect.AspectFit,
+                HeightRequest = 230, HorizontalOptions = LayoutOptions.Center
+            };
+            Ui.Describe(img, title);
+
+            var g = new Grid { HeightRequest = 244 };
+            g.Add(img);
+            if (grass)
+            {
+                var g1 = Ui.Sticker("st_grass1.png", 30);
+                g1.HorizontalOptions = LayoutOptions.Start; g1.VerticalOptions = LayoutOptions.End;
+                g1.Margin = new Thickness(26, 0, 0, 0);
+                var g2 = Ui.Sticker("st_grass3.png", 26);
+                g2.HorizontalOptions = LayoutOptions.End; g2.VerticalOptions = LayoutOptions.End;
+                g2.Margin = new Thickness(0, 0, 30, 4);
+                g.Add(g1); g.Add(g2);
+            }
+            return g;
+        }
+
+        // Simple label/value rows, exactly like the sheet's entry pages —
+        // no boxes, no bars.
+        public static View StatRows(IEnumerable<(string label, string value)> rows)
+        {
+            var col = new VerticalStackLayout { Spacing = 13, Margin = new Thickness(2, 4) };
+            foreach (var (label, value) in rows)
+            {
+                if (string.IsNullOrWhiteSpace(value)) continue;
+                var grid = new Grid { ColumnSpacing = 12 };
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                grid.Add(new Label { Text = label, FontFamily = Ui.Fonts, FontSize = Ui.S(14.5), TextColor = Theme.TextSecondary }, 0, 0);
+                grid.Add(new Label { Text = value, FontFamily = Ui.Fonts, FontSize = Ui.S(14.5), TextColor = Theme.TextPrimary, HorizontalOptions = LayoutOptions.End }, 1, 0);
+                col.Add(grid);
+            }
+            return col;
+        }
+
+        // The two little tags under the name — different colours, like the
+        // sheet ("Carnivore" quiet, "Late Cretaceous" green).
+        public static View TagChips(params string[] tags)
+        {
+            var row = new HorizontalStackLayout { Spacing = 8 };
+            for (int i = 0; i < tags.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(tags[i])) continue;
+                bool green = i % 2 == 1;
+                row.Add(new Border
+                {
+                    BackgroundColor = green ? Theme.AccentSoft : Theme.SurfaceAlt,
+                    Stroke = green ? Theme.Accent.WithAlpha(0.45f) : Theme.Hairline.WithAlpha(0.6f),
+                    StrokeThickness = 1,
+                    StrokeShape = new RoundRectangle { CornerRadius = 100 },
+                    Padding = new Thickness(13, 6),
+                    Content = new Label
+                    {
+                        Text = tags[i], FontFamily = Ui.Fonts, FontSize = Ui.S(12.5),
+                        TextColor = green ? Theme.Accent : Theme.ChipText
+                    }
+                });
+            }
+            return row;
         }
 
         // The headline block that sits under the hero.
@@ -185,40 +283,6 @@ namespace dinospace.Views
         public static View TitleRow(string title, Color accent) => Ui.SectionHeader(title);
 
         public static Border Card(View content) => Ui.Card(content);
-
-        // Floating over the hero: back left, bookmark right — white circles.
-        public static View TopBar(bool saved, Action onBack, Action onSave, out Microsoft.Maui.Controls.Shapes.Path saveIcon)
-        {
-            var back = RoundIcon(Ui.IconBack, Colors.White);
-            Ui.OnTap(back, (_, _) => onBack());
-            Ui.Describe(back, "Go back");
-
-            // Icons sit on a dark scrim circle, so white/gold always reads on
-            // top of the hero photo in both light and dark themes.
-            saveIcon = Ui.Icon(saved ? Ui.IconSavedFill : Ui.IconSaved, 22, saved ? Theme.Accent : Colors.White);
-            var saveBtn = RoundWrap(saveIcon);
-            Ui.OnTap(saveBtn, (_, _) => onSave());
-            Ui.Describe(saveBtn, saved ? "Remove bookmark" : "Save to bookmarks");
-
-            var grid = new Grid { Padding = new Thickness(12, 10) };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.Add(back, 0, 0);
-            grid.Add(saveBtn, 2, 0);
-            return grid;
-        }
-
-        private static Border RoundIcon(string glyph, Color color) => RoundWrap(Ui.Icon(glyph, 22, color));
-
-        private static Border RoundWrap(View content) => new()
-        {
-            Content = content,
-            WidthRequest = 42, HeightRequest = 42,
-            BackgroundColor = Color.FromArgb("#8A000000"),
-            Stroke = Colors.Transparent,
-            StrokeShape = new RoundRectangle { CornerRadius = 21 }
-        };
 
         public static View AskNovaButton(string name)
             => Ui.PrimaryButton($"ASK NOVASAUR ABOUT {name.ToUpperInvariant()}", async (_, _) =>

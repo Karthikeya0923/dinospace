@@ -43,8 +43,44 @@ namespace dinospace.Views
             foreach (var spec in Theme.Wallpapers)
                 stack.Add(WallpaperCard(spec));
 
+            // text size lives here on the appearance page now
+            stack.Add(Ui.SectionHeader("Text size"));
+            stack.Add(new Label { Text = "Applies to entries, search, and quizzes.", FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint });
+            _sizePills = new HorizontalStackLayout { Spacing = 8, Margin = new Thickness(0, 2, 0, 8) };
+            BuildSizePills();
+            stack.Add(_sizePills);
+
             var body = Nav.DetailScaffold("", stack, Theme.Accent, out _);
             Content = Ui.PageRoot(body);
+        }
+
+        private HorizontalStackLayout _sizePills = null!;
+
+        private void BuildSizePills()
+        {
+            _sizePills.Children.Clear();
+            string[] labels = { "S", "M", "L", "XL" };
+            for (int i = 0; i < labels.Length; i++)
+            {
+                int idx = i;
+                bool active = AppSettings.TextSizeIndex == i;
+                var label = new Label
+                {
+                    Text = labels[i],
+                    FontFamily = Ui.Fonts, FontSize = 14, FontAttributes = FontAttributes.Bold,
+                    TextColor = active ? Theme.TextOnAccent : Theme.ChipText,
+                    HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
+                };
+                var pill = new Border
+                {
+                    Content = label, WidthRequest = 52, HeightRequest = 40,
+                    BackgroundColor = active ? Theme.Accent : Theme.ChipBg,
+                    Stroke = Colors.Transparent,
+                    StrokeShape = new RoundRectangle { CornerRadius = 12 }
+                };
+                Ui.OnTap(pill, (_, _) => { AppSettings.TextSizeIndex = idx; BuildSizePills(); });
+                _sizePills.Add(pill);
+            }
         }
 
         private View WallpaperCard(Theme.Spec spec)
@@ -52,7 +88,8 @@ namespace dinospace.Views
             bool current = Theme.CurrentId == spec.Id;
 
             var thumb = new Grid { BackgroundColor = ThemePreviewBg(spec) };
-            thumb.Add(new Image { Source = spec.Wallpaper, Aspect = Aspect.AspectFill });
+            if (spec.Wallpaper != null)
+                thumb.Add(new Image { Source = spec.Wallpaper, Aspect = Aspect.AspectFill });
 
             var preview = new Border
             {
@@ -92,7 +129,6 @@ namespace dinospace.Views
 
         private static Color ThemePreviewBg(Theme.Spec spec) => spec.Id switch
         {
-            "night" => Color.FromArgb("#1C2733"),
             "dinospace" => Color.FromArgb("#221338"),
             _ => Color.FromArgb("#EEF1E2"),
         };

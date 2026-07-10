@@ -44,12 +44,13 @@ namespace dinospace.Views
         // theme. This is deliberate: on a dark theme the swatches and brush
         // previews used to vanish against the near-black surface. A light tray,
         // like every real paint app, keeps every colour clearly visible.
-        private static readonly Color StudioBg = Color.FromArgb("#E9ECF1");
-        private static readonly Color StudioCard = Colors.White;
-        private static readonly Color StudioText = Color.FromArgb("#2B2B33");
-        private static readonly Color StudioHint = Color.FromArgb("#6B7280");
-        private static readonly Color StudioLine = Color.FromArgb("#D2D7E0");
-        private static readonly Color StudioAccent = Color.FromArgb("#3E9BFF");
+        // The studio wears the same storybook page as the rest of the app.
+        private static Color StudioBg => Theme.Bg;
+        private static Color StudioCard => Theme.Surface;
+        private static Color StudioText => Theme.TextPrimary;
+        private static Color StudioHint => Theme.TextSecondary;
+        private static Color StudioLine => Theme.CardStroke;
+        private static Color StudioAccent => Theme.Accent;
 
         // Toolbar pieces we repaint on change.
         private readonly List<(Border border, Color color)> _swatches = new();
@@ -100,13 +101,16 @@ namespace dinospace.Views
         // ================= STEP 1: DRAW =================
         private View BuildDrawStep()
         {
-            _canvas = new GraphicsView { Drawable = _paint, BackgroundColor = Colors.White };
+            // Paper-coloured canvas — the saved PNG is transparent, so the
+            // drawing blends into every page like the built-in cartoon art.
+            _paint.Background = Theme.BgRaised;
+            _canvas = new GraphicsView { Drawable = _paint, BackgroundColor = Colors.Transparent };
             WireCanvas();
 
             var frame = new Border
             {
                 Content = _canvas,
-                BackgroundColor = Colors.White,
+                BackgroundColor = Theme.BgRaised,
                 Stroke = StudioLine, StrokeThickness = 1.5,
                 StrokeShape = new RoundRectangle { CornerRadius = 20 },
                 Padding = 0,
@@ -146,12 +150,12 @@ namespace dinospace.Views
 
             var title = new Label
             {
-                Text = _isNew ? "Draw it!" : "Edit drawing",
+                Text = Ui.T(_isNew ? "Draw it!" : "Edit drawing"),
                 FontFamily = Ui.Display, FontSize = Ui.S(20), TextColor = StudioText,
                 VerticalOptions = LayoutOptions.Center
             };
 
-            var nextLabel = new Label { Text = "Next  ›", FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold, TextColor = Colors.White, VerticalTextAlignment = TextAlignment.Center };
+            var nextLabel = new Label { Text = Ui.T("Next  ›"), FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, VerticalTextAlignment = TextAlignment.Center };
             var next = new Border
             {
                 Content = nextLabel, BackgroundColor = StudioAccent, Stroke = Colors.Transparent,
@@ -184,9 +188,15 @@ namespace dinospace.Views
 
                 if (_brush == BrushKind.Fill)
                 {
-                    _paint.Background = _color;
-                    _canvas.Invalidate();
-                    AppSettings.Tap();
+                    // fill exactly the enclosed shape under the finger — a
+                    // circle fills as a circle, and undo removes it again
+                    var fillStroke = CreationCanvas.MakeFillStroke(_paint, _canvas.Width, _canvas.Height, p, _color);
+                    if (fillStroke != null)
+                    {
+                        _paint.Strokes.Add(fillStroke);
+                        _canvas.Invalidate();
+                        AppSettings.Tap();
+                    }
                     return;
                 }
 
@@ -283,7 +293,7 @@ namespace dinospace.Views
                 WidthRequest = 34, HeightRequest = 34, BackgroundColor = Color.FromRgb(_cr, _cg, _cb),
                 StrokeThickness = 3, Stroke = Color.FromArgb("#22000000"),
                 StrokeShape = new RoundRectangle { CornerRadius = 17 },
-                Content = new Label { Text = "🎨", FontSize = 15, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
+                Content = Ui.Sticker("st_ic_plus.png", 15)
             };
             Ui.OnTap(_customSwatch, (_, _) => { _mixer.IsVisible = !_mixer.IsVisible; PickColor(Color.FromRgb(_cr, _cg, _cb)); });
             swatchRow.Add(_customSwatch);
@@ -294,9 +304,9 @@ namespace dinospace.Views
 
             // Undo / redo / clear.
             var actions = new HorizontalStackLayout { Spacing = 8, Padding = new Thickness(2, 0) };
-            actions.Add(ActionChip("↩  Undo", Undo));
-            actions.Add(ActionChip("↪  Redo", Redo));
-            actions.Add(ActionChip("🗑  Clear", ClearCanvas));
+            actions.Add(ActionChip("undo", Undo));
+            actions.Add(ActionChip("redo", Redo));
+            actions.Add(ActionChip("clear", ClearCanvas));
             col.Add(actions);
 
             RefreshTools();
@@ -379,8 +389,20 @@ namespace dinospace.Views
             return b;
         }
 
+        // A clear can be taken back with one Undo — accidentally wiping a
+        // masterpiece shouldn't mean starting over.
+        private List<Stroke>? _lastCleared;
+
         private void Undo()
         {
+            if (_paint.Strokes.Count == 0 && _lastCleared != null)
+            {
+                foreach (var s in _lastCleared) _paint.Strokes.Add(s);
+                _lastCleared = null;
+                _canvas.Invalidate();
+                AppSettings.Tap();
+                return;
+            }
             if (_paint.Strokes.Count == 0) return;
             var last = _paint.Strokes[^1];
             _paint.Strokes.RemoveAt(_paint.Strokes.Count - 1);
@@ -399,8 +421,9 @@ namespace dinospace.Views
 
         private void ClearCanvas()
         {
+            if (_paint.Strokes.Count == 0) return;
+            _lastCleared = new List<Stroke>(_paint.Strokes);
             _paint.Strokes.Clear();
-            _paint.Background = Colors.White;
             _redo.Clear();
             _canvas.Invalidate();
             AppSettings.Tap();
@@ -448,7 +471,7 @@ namespace dinospace.Views
             _previewDrawable.Source = _paint;
             _previewDrawable.SrcW = _canvasW;
             _previewDrawable.SrcH = _canvasH;
-            bool hasDrawing = _paint.Strokes.Count > 0 || _paint.Background != Colors.White;
+            bool hasDrawing = _paint.Strokes.Count > 0;
             _previewWrap.IsVisible = hasDrawing && _canvasW > 0;
             _previewWrap.BackgroundColor = _paint.Background;
             _preview.Invalidate();
@@ -484,7 +507,7 @@ namespace dinospace.Views
             _previewWrap = new Border
             {
                 Content = _preview, HeightRequest = 150,
-                BackgroundColor = Colors.White,
+                BackgroundColor = Theme.BgRaised,
                 Stroke = Theme.HairlineSoft, StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 16 },
                 IsVisible = false
@@ -536,18 +559,23 @@ namespace dinospace.Views
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
 
-            Border Pill(string text, CreationKind kind)
+            Border Pill(string sticker, string text, CreationKind kind)
             {
                 bool on = _kind == kind;
                 var label = new Label
                 {
                     Text = text, FontFamily = Ui.Fonts, FontSize = Ui.S(14), FontAttributes = FontAttributes.Bold,
                     TextColor = on ? Theme.TextOnAccent : Theme.TextSecondary,
-                    HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
+                    VerticalTextAlignment = TextAlignment.Center
+                };
+                var inner = new HorizontalStackLayout
+                {
+                    Spacing = 8, HorizontalOptions = LayoutOptions.Center,
+                    Children = { Ui.Sticker(sticker, 20), label }
                 };
                 var b = new Border
                 {
-                    Content = label,
+                    Content = inner,
                     BackgroundColor = on ? Theme.Accent : Theme.Surface,
                     Stroke = on ? Colors.Transparent : Theme.HairlineSoft, StrokeThickness = 1,
                     StrokeShape = new RoundRectangle { CornerRadius = AppLayout.ButtonRadius }, Padding = new Thickness(10, 12)
@@ -555,8 +583,8 @@ namespace dinospace.Views
                 return b;
             }
 
-            var dino = Pill("🦖  Dinosaur", CreationKind.Dinosaur);
-            var space = Pill("🪐  Space object", CreationKind.Space);
+            var dino = Pill("st_volcano.png", "Dinosaur", CreationKind.Dinosaur);
+            var space = Pill("st_saturn_small.png", "Space object", CreationKind.Space);
             Ui.OnTap(dino, (_, _) => { if (_kind != CreationKind.Dinosaur) { _kind = CreationKind.Dinosaur; RebuildKind(); } });
             Ui.OnTap(space, (_, _) => { if (_kind != CreationKind.Space) { _kind = CreationKind.Space; RebuildKind(); } });
             row.Add(dino, 0, 0);
@@ -776,8 +804,9 @@ namespace dinospace.Views
             if (_c.CreatedTicks == 0) _c.CreatedTicks = DateTime.UtcNow.Ticks;
 
             // Export the drawing to a PNG. If they didn't draw anything on an
-            // edit, keep the picture they already had.
-            if (_paint.Strokes.Count > 0 || _paint.Background != Colors.White)
+            // edit, keep the picture they already had. (Fills are strokes too,
+            // so an untouched canvas really is Strokes.Count == 0.)
+            if (_paint.Strokes.Count > 0)
             {
                 double w = _canvasW > 0 ? _canvasW : _canvas.Width;
                 double h = _canvasH > 0 ? _canvasH : _canvas.Height;
