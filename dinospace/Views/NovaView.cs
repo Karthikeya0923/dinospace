@@ -185,7 +185,7 @@ namespace dinospace.Views
             {
                 Content = _entry,
                 BackgroundColor = Theme.Surface,
-                Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 22 },
                 Padding = new Thickness(16, 0)
             };
@@ -537,7 +537,7 @@ namespace dinospace.Views
                 Content = label,
                 Padding = new Thickness(14, 11),
                 BackgroundColor = Theme.Surface,
-                Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(r, r, 4, r) },
                 HorizontalOptions = LayoutOptions.Start,
                 MaximumWidthRequest = 300

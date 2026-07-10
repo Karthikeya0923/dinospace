@@ -531,25 +531,36 @@ namespace dinospace.Views
                 }
             }
 
-            // fall back to the constellation region (all 88, not just
-            // figures) — after dark only, and only when the crosshair is
-            // close to its heart. Better to say nothing than the wrong thing.
+            // fall back to a constellation — but ONLY one whose stick-figure
+            // is actually drawn on screen right now, measured to the centre
+            // of its drawn stars. Invisible regions (Grus, Microscopium…)
+            // can never claim the card again.
             if (name == null && skyDark)
             {
-                Constellation? nearest = null; double bestSep = 8;
-                foreach (var c in SkyData.All)
+                string? bestFig = null; double bestPx = 170;
+                foreach (var f in SkyMap.Figures)
                 {
-                    var (alt, az) = SkyCalc.AltAz(c.RaHours * 15.0, c.DecDeg, _lat, _lon, utc);
-                    if (alt < -10) continue;
-                    double sep = SkyMap.Separation(alt, az, _alt, _az);
-                    if (sep < bestSep) { bestSep = sep; nearest = c; }
+                    double sx = 0, sy = 0; int n = 0;
+                    foreach (var st in f.Stars)
+                    {
+                        var (alt, az) = SkyCalc.AltAz(st.ra * 15.0, st.dec, _lat, _lon, utc);
+                        if (alt < 0) continue;
+                        var (x, y, vis) = SkyMap.Project(alt, az, view);
+                        if (!vis) continue;
+                        sx += x; sy += y; n++;
+                    }
+                    if (n < 3) continue;   // not meaningfully on screen
+                    double d = Math.Sqrt((sx / n - cxPx) * (sx / n - cxPx) + (sy / n - cyPx) * (sy / n - cyPx));
+                    if (d < bestPx) { bestPx = d; bestFig = f.Name; }
                 }
-                if (nearest != null)
+                if (bestFig != null)
                 {
-                    name = nearest.Name; kind = "Constellation"; blurb = nearest.Blurb + ".";
+                    name = bestFig; kind = "Constellation";
+                    var c = SkyData.All.FirstOrDefault(x => x.Name == bestFig);
+                    blurb = c != null ? c.Blurb + "." : "A constellation above you right now.";
                     // Only link when the encyclopedia truly has THIS
                     // constellation (like Orion) — never a lookalike entry.
-                    entry = SpaceData.ByName(nearest.Name);
+                    entry = SpaceData.ByName(bestFig);
                 }
             }
 

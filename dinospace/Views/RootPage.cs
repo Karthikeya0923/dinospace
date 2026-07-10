@@ -67,7 +67,7 @@ namespace dinospace.Views
             _tabs.Add(("home", Ui.IconHome, new HomeView(GoToTab)));
             _tabs.Add(("encyclopedia", Ui.IconEncyclopedia, new SearchView()));
             _tabs.Add(("battles", Ui.IconBattles, new BattleView()));
-            _tabs.Add(("collection", Ui.IconCollection, new SavedView()));
+            _tabs.Add(("saved", Ui.IconCollection, new SavedView()));
             _tabs.Add(("more", Ui.IconMore, new MoreView()));
 
             Build();

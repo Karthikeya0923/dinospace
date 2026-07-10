@@ -167,7 +167,7 @@ namespace dinospace.Views
 
             var card = new Border
             {
-                Content = col, BackgroundColor = Theme.Surface, Stroke = Colors.Transparent,
+                Content = col, BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 24 }, Padding = 0,
                 HeightRequest = 214, Shadow = Theme.CardShadow()
             };
@@ -268,7 +268,7 @@ namespace dinospace.Views
             var card = new Border
             {
                 Content = row, BackgroundColor = Theme.AccentSoft,
-                Stroke = Theme.TextPrimary.WithAlpha(0.4f), StrokeThickness = 1.4,
+                Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 20 }, Padding = 0,
                 Margin = new Thickness(0, 5), Shadow = Theme.CardShadow()
             };

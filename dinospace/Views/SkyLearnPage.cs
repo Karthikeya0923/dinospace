@@ -81,16 +81,11 @@ namespace dinospace.Views
             SwipeBack.Attach(this);
         }
 
-        // One moon phase: the drawn moon on a night-sky tile + name + meaning.
+        // One moon phase: Karthik's drawing of it on a night-sky tile +
+        // name + meaning. The slot is the phase name (fullmoon.png, ...).
         private static View PhaseRow(double elongation, string name, string meaning)
         {
-            var moon = new GraphicsView
-            {
-                Drawable = new MoonPhaseDrawable { ElongationDeg = elongation },
-                WidthRequest = 44, HeightRequest = 44,
-                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center,
-                InputTransparent = true
-            };
+            var moon = Ui.Icon(Ui.MoonSlot(name), 44);
             var tile = new Border
             {
                 Content = moon,

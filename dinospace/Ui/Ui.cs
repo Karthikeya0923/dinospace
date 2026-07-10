@@ -96,6 +96,12 @@ namespace dinospace
             TextColor = Theme.TextSecondary
         };
 
+        // A moon phase as a hand-drawn slot: "Waxing Gibbous" looks for
+        // waxinggibbous.png — one of the eight phase drawings. Blank until
+        // the art lands.
+        public static string MoonSlot(string phaseName)
+            => phaseName.Replace(" ", "").ToLowerInvariant();
+
         // A hand-drawn icon slot: the PNG if Karthik has drawn it yet, or an
         // invisible box that reserves exactly the same space until he has.
         public static View Icon(string slot, double size)
@@ -188,10 +194,24 @@ namespace dinospace
                 TextColor = Theme.TextPrimary,
                 VerticalOptions = LayoutOptions.End
             };
+            // The accent underline hugs the title and runs its FULL width —
+            // from the first letter to the last, never a short stub.
+            var underline = new Border
+            {
+                HeightRequest = 5, HorizontalOptions = LayoutOptions.Fill,
+                BackgroundColor = Theme.Accent, Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 3 }, Margin = new Thickness(1, 5, 1, 0)
+            };
+            var headWrap = new VerticalStackLayout
+            {
+                Spacing = 0, HorizontalOptions = LayoutOptions.Start,
+                Children = { head, underline }
+            };
+
             var grid = new Grid();
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            grid.Add(head, 0, 0);
+            grid.Add(headWrap, 0, 0);
             if (!string.IsNullOrEmpty(action))
             {
                 var link = new Label
@@ -202,13 +222,7 @@ namespace dinospace
                 if (onAction != null) OnTap(link, onAction);
                 grid.Add(link, 1, 0);
             }
-            var underline = new Border
-            {
-                WidthRequest = 42, HeightRequest = 5, HorizontalOptions = LayoutOptions.Start,
-                BackgroundColor = Theme.Accent, Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 3 }, Margin = new Thickness(2, 5, 0, 0)
-            };
-            return new VerticalStackLayout { Spacing = 0, Margin = new Thickness(0, 12, 0, 4), Children = { grid, underline } };
+            return new VerticalStackLayout { Spacing = 0, Margin = new Thickness(0, 12, 0, 4), Children = { grid } };
         }
 
         // ---------- cards ----------
@@ -221,7 +235,7 @@ namespace dinospace
             Content = content,
             BackgroundColor = Theme.Surface,
             Stroke = Theme.CardStroke,
-            StrokeThickness = 1,
+            StrokeThickness = 1.4,
             StrokeShape = new RoundRectangle { CornerRadius = radius < 0 ? AppLayout.CardRadius : radius },
             Padding = padding ?? new Thickness(16),
             Shadow = Theme.CardShadow()

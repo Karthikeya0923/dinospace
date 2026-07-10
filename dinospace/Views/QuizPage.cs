@@ -97,7 +97,7 @@ namespace dinospace.Views
             _body.Add(new Border
             {
                 Content = new Label { Text = q.Question, FontFamily = Ui.Display, FontSize = Ui.S(21), LineHeight = 1.3, TextColor = Theme.TextPrimary },
-                BackgroundColor = Theme.Surface, Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 18 }, Padding = new Thickness(18)
             });
 
@@ -127,7 +127,7 @@ namespace dinospace.Views
                 var badge = new Border
                 {
                     WidthRequest = 30, HeightRequest = 30,
-                    BackgroundColor = Theme.SurfaceAlt, Stroke = Colors.Transparent,
+                    BackgroundColor = Theme.SurfaceAlt, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                     StrokeShape = new RoundRectangle { CornerRadius = 9 }, VerticalOptions = LayoutOptions.Center,
                     Content = new Label { Text = letter, FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
                 };
@@ -141,7 +141,7 @@ namespace dinospace.Views
             var border = new Border
             {
                 Content = content,
-                BackgroundColor = Theme.Surface, Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 }, Padding = new Thickness(16, 14)
             };
             _answerBtns.Add((border, isRight));

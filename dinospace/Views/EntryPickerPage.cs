@@ -31,7 +31,7 @@ namespace dinospace.Views
             var searchWrap = new Border
             {
                 Content = search,
-                BackgroundColor = Theme.Surface, Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 }, Padding = new Thickness(4, 0),
                 Margin = new Thickness(16, 4, 16, 8)
             };

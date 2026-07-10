@@ -54,7 +54,7 @@ namespace dinospace.Views
                 {
                     Content = new Label { Text = "can't wait to see your discovery!", FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), TextColor = Theme.TextPrimary },
                     BackgroundColor = Theme.Surface,
-                    Stroke = Theme.CardStroke, StrokeThickness = 1.2,
+                    Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                     StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 18 },
                     Padding = new Thickness(14, 10), VerticalOptions = LayoutOptions.Center
                 };
@@ -128,7 +128,7 @@ namespace dinospace.Views
             var card = new Border
             {
                 Content = col,
-                BackgroundColor = Theme.Surface, Stroke = Colors.Transparent,
+                BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(8, 8, 8, 12),
                 Shadow = Theme.CardShadow()
             };

@@ -118,13 +118,9 @@ namespace dinospace.Views
                 Drawable = new StarFieldDrawable { Seed = DateTime.Now.DayOfYear },
                 InputTransparent = true
             };
-            var moon = new GraphicsView
-            {
-                Drawable = new MoonPhaseDrawable { ElongationDeg = _report.Moon.ElongationDeg },
-                WidthRequest = 150, HeightRequest = 150,
-                HorizontalOptions = LayoutOptions.Center,
-                InputTransparent = true
-            };
+            // Tonight's phase as one of Karthik's eight moon drawings
+            // (fullmoon.png, waxinggibbous.png, ...) — blank until it lands.
+            var moon = Ui.Icon(Ui.MoonSlot(_report.Moon.PhaseName), 150);
 
             var name = new Label
             {
@@ -225,13 +221,15 @@ namespace dinospace.Views
                 FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), LineHeight = 1.3, TextColor = Theme.TextSecondary
             });
 
+            // NovaSaur's own face once mascot_ask.png lands (the icon_ask
+            // slot covers until then) — never a random star.
             var dot = new Border
             {
                 WidthRequest = 38, HeightRequest = 38,
                 BackgroundColor = Ui.MultiplyAlpha(Theme.AccentNova, 0.18f),
                 Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 19 },
                 VerticalOptions = LayoutOptions.Center,
-                Content = new Image { Source = "st_icon_star.png", WidthRequest = 20, HeightRequest = 20, Aspect = Aspect.AspectFit, HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center }
+                Content = Ui.Mascot("mascot_ask", 22, Ui.IconAsk)
             };
 
             var grid = new Grid { ColumnSpacing = 12 };
@@ -429,66 +427,6 @@ namespace dinospace.Views
             }
             _report = SkyService.BuildReport(loc);
             Build();
-        }
-    }
-
-    // Draws the moon's disc with the correct lit shape for a given sun-moon
-    // elongation: crescent, quarter, gibbous or full, waxing lit on the right.
-    public class MoonPhaseDrawable : IDrawable
-    {
-        public double ElongationDeg;
-        public Color LitColor = Color.FromArgb("#F2ECD8");
-        public Color DarkColor = Color.FromArgb("#272E42");
-
-        public void Draw(ICanvas canvas, RectF rect)
-        {
-            float r = Math.Min(rect.Width, rect.Height) / 2f * 0.96f;
-            float cx = rect.Center.X, cy = rect.Center.Y;
-
-            canvas.Antialias = true;
-            canvas.FillColor = DarkColor;
-            canvas.FillCircle(cx, cy, r);
-
-            double e = ElongationDeg * Math.PI / 180.0;
-            double illum = (1 - Math.Cos(e)) / 2.0;
-            int side = ElongationDeg < 180 ? 1 : -1;      // waxing lights the right edge
-
-            if (illum > 0.005)
-            {
-                var path = new PathF();
-                const int N = 44;
-                // Down the lit limb (a half-circle), back up the terminator
-                // (a half-ellipse whose width follows the phase).
-                for (int i = 0; i <= N; i++)
-                {
-                    double th = -Math.PI / 2 + Math.PI * i / N;
-                    float x = cx + side * r * (float)Math.Cos(th);
-                    float y = cy + r * (float)Math.Sin(th);
-                    if (i == 0) path.MoveTo(x, y); else path.LineTo(x, y);
-                }
-                double b = r * Math.Cos(e);               // signed terminator half-width
-                for (int i = N; i >= 0; i--)
-                {
-                    double th = -Math.PI / 2 + Math.PI * i / N;
-                    float x = cx + side * (float)(b * Math.Cos(th));
-                    float y = cy + r * (float)Math.Sin(th);
-                    path.LineTo(x, y);
-                }
-                path.Close();
-                canvas.FillColor = LitColor;
-                canvas.FillPath(path);
-            }
-
-            // Faint craters give the disc some character.
-            canvas.FillColor = Colors.Black.WithAlpha(0.07f);
-            canvas.FillCircle(cx - r * 0.30f, cy - r * 0.25f, r * 0.16f);
-            canvas.FillCircle(cx + r * 0.22f, cy + r * 0.30f, r * 0.11f);
-            canvas.FillCircle(cx + r * 0.35f, cy - r * 0.35f, r * 0.08f);
-            canvas.FillCircle(cx - r * 0.15f, cy + r * 0.42f, r * 0.07f);
-
-            canvas.StrokeColor = Colors.White.WithAlpha(0.10f);
-            canvas.StrokeSize = 1.5f;
-            canvas.DrawCircle(cx, cy, r);
         }
     }
 

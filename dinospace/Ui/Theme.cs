@@ -59,7 +59,7 @@ namespace dinospace
             ChipBg = Color.FromArgb("#D2DCB6"),
             ChipText = Color.FromArgb("#55614A"),
             ImgPlaceholder = Color.FromArgb("#D8E0C1"),
-            CardStroke = Color.FromArgb("#C2CCAD"),
+            CardStroke = Color.FromArgb("#C2CCAD"),   // soft sage — THE one box outline
             ShadowAlpha = 0.07f
         };
 
@@ -86,7 +86,7 @@ namespace dinospace
             ChipBg = Color.FromArgb("#422B66"),
             ChipText = Color.FromArgb("#E7DBF5"),
             ImgPlaceholder = Color.FromArgb("#2C1B47"),
-            CardStroke = Color.FromArgb("#4E3775"),
+            CardStroke = Color.FromArgb("#4E3775"),   // soft plum — THE one box outline
             ShadowAlpha = 0f
         };
 

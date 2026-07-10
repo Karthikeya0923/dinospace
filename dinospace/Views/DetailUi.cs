@@ -236,7 +236,7 @@ namespace dinospace.Views
                     {
                         Content = new Label { Text = first, FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), LineHeight = 1.4, TextColor = Theme.TextPrimary },
                         BackgroundColor = Theme.Surface,
-                        Stroke = Theme.CardStroke, StrokeThickness = 1.2,
+                        Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                         StrokeShape = new RoundRectangle { CornerRadius = 18 },
                         Padding = new Thickness(14, 10),
                         VerticalOptions = LayoutOptions.Center

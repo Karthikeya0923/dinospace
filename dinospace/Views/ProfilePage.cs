@@ -115,7 +115,7 @@ namespace dinospace.Views
         private static Border Card(View content) => new()
         {
             Content = content, BackgroundColor = Theme.Surface,
-            Stroke = Theme.CardStroke, StrokeThickness = 1.2,
+            Stroke = Theme.CardStroke, StrokeThickness = 1.4,
             StrokeShape = new RoundRectangle { CornerRadius = 20 },
             Padding = new Thickness(16, 6), Margin = new Thickness(0, 2, 0, 4),
             Shadow = Theme.CardShadow()

@@ -76,7 +76,7 @@ namespace dinospace.Views
             {
                 Content = col,
                 BackgroundColor = Theme.Surface,
-                Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 16 },
                 Padding = new Thickness(16, 14),
                 Shadow = Theme.CardShadow()

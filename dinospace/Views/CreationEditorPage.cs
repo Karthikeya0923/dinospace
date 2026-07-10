@@ -508,7 +508,7 @@ namespace dinospace.Views
             {
                 Content = _preview, HeightRequest = 150,
                 BackgroundColor = Theme.BgRaised,
-                Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 16 },
                 IsVisible = false
             };
@@ -682,7 +682,7 @@ namespace dinospace.Views
             col.Add(new Border
             {
                 Content = entry, BackgroundColor = Theme.Surface,
-                Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 12 }, Padding = new Thickness(14, multiline ? 8 : 2),
                 MinimumHeightRequest = multiline ? 84 : 0
             });
@@ -698,7 +698,7 @@ namespace dinospace.Views
 
             Border Wrap(View e) => new()
             {
-                Content = e, BackgroundColor = Theme.Surface, Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                Content = e, BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 12 }, Padding = new Thickness(12, 2)
             };
             var grid = new Grid { ColumnSpacing = 8 };

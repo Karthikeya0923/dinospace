@@ -70,7 +70,7 @@ namespace dinospace.Views
             var card = new Border
             {
                 Content = grid,
-                BackgroundColor = Theme.Surface, Stroke = Theme.HairlineSoft, StrokeThickness = 1,
+                BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(10), Margin = new Thickness(0, 4)
             };
             Ui.OnTap(card, async (_, _) =>

@@ -65,7 +65,7 @@ namespace dinospace.Views
             field.Add(_entry, 1, 0);
             header.Add(new Border
             {
-                Content = field, BackgroundColor = Theme.Surface, Stroke = Theme.Hairline, StrokeThickness = 1.4,
+                Content = field, BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 }, MinimumHeightRequest = 52
             });
 
@@ -229,7 +229,7 @@ namespace dinospace.Views
 
             return new Border
             {
-                Content = row, BackgroundColor = Theme.Surface, Stroke = Colors.Transparent,
+                Content = row, BackgroundColor = Theme.AccentSoft, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 20 }, Padding = 0,
                 Margin = new Thickness(0, 5), Shadow = Theme.CardShadow()
             };
