@@ -69,11 +69,9 @@ namespace dinospace.Services
 
             // Curated knowledge nuggets for general topics.
             int budgetLeft = MaxNotesChars - sb.Length;
-            foreach (var n in MatchNuggets(normalizedQuestion))
+            if (BestNuggetMatch(normalizedQuestion).nugget is KnowledgeNugget kn && budgetLeft >= 120)
             {
-                if (budgetLeft < 120) break;
-                sb.AppendLine("• " + n.Fact);
-                budgetLeft -= n.Fact.Length + 3;
+                sb.AppendLine("• " + kn.Fact);
                 g.HasKnowledge = true;
             }
 
@@ -228,24 +226,35 @@ namespace dinospace.Services
         // The single best curated fact for a question, if any — used by
         // LocalAnswer to reply to general topics without the model.
         public static KnowledgeNugget? BestNugget(string normalizedQuestion)
-            => MatchNuggets(normalizedQuestion).FirstOrDefault();
+            => BestNuggetMatch(normalizedQuestion).nugget;
 
-        private static List<KnowledgeNugget> MatchNuggets(string q)
+        // The best nugget plus the longest keyword phrase that matched it.
+        // Callers use the phrase length to let a real topic ("first on the
+        // moon") outrank a passing mention of an entity ("moon").
+        public static (KnowledgeNugget? nugget, string keyword) BestNuggetMatch(string q)
         {
             string padded = " " + q + " ";
-            var matched = new List<(KnowledgeNugget n, int score)>();
+            KnowledgeNugget? best = null;
+            int bestScore = 0;
+            string bestKw = "";
             foreach (var n in KnowledgeBase.Nuggets)
             {
                 int score = 0;
+                string longest = "";
                 foreach (var kw in n.Keywords)
                 {
                     string k = Normalize(kw);
                     if (k.Length == 0) continue;
-                    if (padded.Contains(" " + k + " ") || padded.Contains(" " + k)) score += k.Split(' ').Length + k.Length / 6;
+                    if (padded.Contains(" " + k + " ") || padded.Contains(" " + k))
+                    {
+                        score += k.Split(' ').Length + k.Length / 6;
+                        if (longest.Length == 0 || k.Split(' ').Length > longest.Split(' ').Length)
+                            longest = k;
+                    }
                 }
-                if (score > 0) matched.Add((n, score));
+                if (score > bestScore) { bestScore = score; best = n; bestKw = longest; }
             }
-            return matched.OrderByDescending(x => x.score).Take(1).Select(x => x.n).ToList();
+            return (best, bestKw);
         }
 
         // ---------- superlatives ----------

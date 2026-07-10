@@ -60,7 +60,7 @@ namespace dinospace.Views
                 Content = backIcon,
                 BackgroundColor = Colors.Transparent,
                 Stroke = Colors.Transparent,
-                Padding = new Thickness(6, 8, 14, 8)
+                WidthRequest = 48, HeightRequest = 44
             };
             Ui.OnTap(back, async (_, _) =>
             {
@@ -68,20 +68,23 @@ namespace dinospace.Views
             });
             Ui.Describe(back, "Go back");
 
-            var bar = new Grid { Padding = new Thickness(10, 6, 16, 6), ColumnSpacing = 2 };
-            bar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            // One compact row right at the top: back arrow left, the page's
+            // big lowercase storybook title dead centre — no dead space.
+            var bar = new Grid { Padding = new Thickness(8, 2, 8, 0), ColumnSpacing = 0 };
+            bar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(52) });
             bar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            bar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(52) });
             bar.Add(back, 0, 0);
-            // Only show a nav-bar title when the page has no big in-content
-            // title of its own — avoids the duplicate title.
             if (!string.IsNullOrEmpty(title))
                 bar.Add(new Label
                 {
                     Text = Ui.T(title),
                     FontFamily = Ui.Display,
-                    FontSize = 19,
+                    FontSize = Ui.S(26),
                     TextColor = Theme.TextPrimary,
+                    HorizontalOptions = LayoutOptions.Center,
                     VerticalOptions = LayoutOptions.Center,
+                    HorizontalTextAlignment = TextAlignment.Center,
                     LineBreakMode = LineBreakMode.TailTruncation
                 }, 1, 0);
 

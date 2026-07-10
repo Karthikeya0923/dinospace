@@ -32,7 +32,6 @@ namespace dinospace.Views
         {
             var stack = new VerticalStackLayout { Spacing = 12, Padding = new Thickness(18, 4, 18, 28) };
 
-            stack.Add(new Label { Text = Ui.T("App themes"), FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary });
             stack.Add(new Label
             {
                 Text = "pick a page for every screen of dinospace — wallpaper, colours, the lot.",
@@ -50,7 +49,7 @@ namespace dinospace.Views
             BuildSizePills();
             stack.Add(_sizePills);
 
-            var body = Nav.DetailScaffold("", stack, Theme.Accent, out _);
+            var body = Nav.DetailScaffold("app themes", stack, Theme.Accent, out _);
             Content = Ui.PageRoot(body);
         }
 

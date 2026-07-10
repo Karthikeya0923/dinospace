@@ -12,14 +12,13 @@ using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
-    // Scan Sky — hold your phone up and the live camera view fills the screen
-    // with the whole naked-eye sky drawn over it exactly where it really is:
-    // 1,700 catalogue stars, the Milky Way band, constellation figures, the
-    // full Messier + Caldwell deep-sky catalogues, planets with their real
-    // looks, a phase-correct moon, and shooting stars that follow tonight's
-    // active meteor shower. Only what is genuinely up right now is drawn,
-    // and the target card names something only when the crosshair is truly
-    // on it. No camera? A painted twilight-aware sky stands in.
+    // Scan Sky — hold your phone up and the live camera view fills the
+    // screen with ONLY what is genuinely above you right now: the sun, the
+    // phase-correct moon, the planets, and — after dark — the bright named
+    // stars and the constellation figures they belong to. Nothing invented,
+    // nothing you couldn't really see. The target card names something only
+    // when the crosshair is truly on it. No camera? A painted twilight-aware
+    // sky stands in.
     public class SkyViewPage : ContentPage
     {
         private double _lat, _lon;
@@ -50,12 +49,6 @@ namespace dinospace.Views
             var where = SkyService.Cached;
             _lat = where.Lat; _lon = where.Lon;
             _drawable = new SkyViewDrawable { Lat = _lat, Lon = _lon };
-            // Always the full dark-site sky: every catalogue star, the Milky
-            // Way, all the deep-sky objects. The old city/suburb/dark toggle
-            // only ever hid stars and confused people.
-            _drawable.LimitMag = 5.6f;
-            _drawable.DsoLimitMag = 8.2f;
-            _drawable.MilkyWayStrength = 0.85f;
             Build();
         }
 
@@ -430,26 +423,6 @@ namespace dinospace.Views
 
         // ----- what's under the crosshair -----
 
-        private static double[]? _dsoVec;
-        private static double[] DsoVectors
-        {
-            get
-            {
-                if (_dsoVec == null)
-                {
-                    var all = SkyDeepSkyCatalog.All;
-                    var v = new double[all.Length * 3];
-                    for (int i = 0; i < all.Length; i++)
-                    {
-                        var (x, y, z) = SkyMap.UnitVectorOf(all[i].RaHours * 15.0, all[i].DecDeg);
-                        v[i * 3] = x; v[i * 3 + 1] = y; v[i * 3 + 2] = z;
-                    }
-                    _dsoVec = v;
-                }
-                return _dsoVec;
-            }
-        }
-
         private void UpdateTarget()
         {
             var utc = SkyUtc;
@@ -518,9 +491,8 @@ namespace dinospace.Views
                          "Sun", "Our star", e?.ShortDescription, e);
             }
 
-            // catalogue stars — only NAMED stars, only after dark, and only
-            // when the crosshair is right on one. Anonymous stars never claim
-            // the card any more.
+            // stars — only the bright NAMED ones you can genuinely see, only
+            // after dark, and only when the crosshair is right on one.
             if (skyDark)
             {
                 var stars = SkyCatalog.Stars;
@@ -528,7 +500,7 @@ namespace dinospace.Views
                 for (int i = 0; i < stars.Length; i++)
                 {
                     var s = stars[i];
-                    if (s.Mag > _drawable.LimitMag) break;      // sorted by brightness
+                    if (s.Mag > SkyViewDrawable.BrightStarMag) break;   // sorted by brightness
                     if (s.Name.Length == 0) continue;
                     var (n, e, u) = frame.Horizon(sv[i * 3], sv[i * 3 + 1], sv[i * 3 + 2]);
                     if (u < 0) continue;
@@ -539,26 +511,12 @@ namespace dinospace.Views
                              $"Magnitude {s.Mag:0.0#} — one of the stars bright enough to carry a name.",
                              null);
                 }
-
-                // deep sky: the full Messier + Caldwell catalogues
-                var dsos = SkyDeepSkyCatalog.All;
-                var dv = DsoVectors;
-                for (int i = 0; i < dsos.Length; i++)
-                {
-                    var d = dsos[i];
-                    if (d.Mag > _drawable.DsoLimitMag && d.Mag < 90) continue;
-                    if (d.Mag >= 90 && _drawable.DsoLimitMag < 7) continue;   // dark nebulae need dark skies
-                    var (n, e, u) = frame.Horizon(dv[i * 3], dv[i * 3 + 1], dv[i * 3 + 2]);
-                    if (u < 0.03) continue;
-                    Consider(SepTo(n, e, u), 2.0, -0.3,
-                             d.Name, d.Kind, d.Blurb, SpaceData.ByName(d.Name.Split(" (")[0]));
-                }
             }
 
             // fall back to the constellation region (all 88, not just
-            // figures) — but only when the crosshair is close to its heart.
-            // Better to say nothing than name something 20° away.
-            if (name == null)
+            // figures) — after dark only, and only when the crosshair is
+            // close to its heart. Better to say nothing than the wrong thing.
+            if (name == null && skyDark)
             {
                 Constellation? nearest = null; double bestSep = 8;
                 foreach (var c in SkyData.All)
@@ -617,25 +575,21 @@ namespace dinospace.Views
         };
     }
 
-    // One frame of the pointed-at sky: the Milky Way, 1,700 catalogue stars
-    // with real colours and twinkle, constellation figures, the Messier and
-    // Caldwell deep sky, planets drawn with their signature looks, a
-    // phase-correct textured moon, the sun, shooting stars, a horizon line
-    // and compass letters. Transparent when the camera shows behind; a
-    // twilight-aware painted sky otherwise.
+    // One frame of the pointed-at sky: the sun, a phase-correct moon, the
+    // planets drawn with their signature looks, and — after dark — the
+    // bright named stars and their constellation figures. A horizon line and
+    // compass letters anchor it. Transparent when the camera shows behind; a
+    // twilight-aware painted sky otherwise. Nothing fake, nothing invisible.
     public class SkyViewDrawable : IDrawable
     {
         public double Lat, Lon;
         public double CenterAz = 180, CenterAlt = 30;
         public double FovDeg = 95;
         public bool CameraBehind;
-        public float LimitMag = 5.05f;
-        public float DsoLimitMag = 6.6f;
-        public float MilkyWayStrength = 0.4f;
 
-        private readonly Random _rng = new();
-        private readonly List<(long bornMs, float x, float y, float dx, float dy)> _meteors = new();
-        private long _nextMeteorMs;
+        // The naked-eye cut for "a star worth drawing": every star this
+        // bright has a proper name and really is visible from a backyard.
+        public const float BrightStarMag = 2.2f;
 
         public void Draw(ICanvas canvas, RectF rect)
         {
@@ -647,7 +601,6 @@ namespace dinospace.Views
 
             Color lineC = Colors.White;
             Color labelC = Color.FromArgb("#EEF1F8");
-            Color dsoC = Color.FromArgb("#9AE8C8");
 
             double jd = SkyCalc.JulianDay(utc);
             var (sunRa, sunDec) = SkyCalc.SunRaDec(jd);
@@ -680,23 +633,6 @@ namespace dinospace.Views
             // see stars at noon.
             bool skyDark = sunAlt < -6;
 
-            // ---- the Milky Way: a soft band of overlapping glows ----
-            if (skyDark && MilkyWayStrength > 0.01f)
-            {
-                var band = SkyMap.MilkyWayBand;
-                float glowScale = (float)(v.SizePx / v.MaxR) / 2f;
-                foreach (var p in band)
-                {
-                    var (n, e, u) = frame.Horizon(p.X, p.Y, p.Z);
-                    if (u < -0.05) continue;
-                    var (x, y, vis) = SkyMap.ProjectVector(n, e, u, v);
-                    if (!vis) continue;
-                    float r = p.WidthDeg * (float)Math.PI / 180f * glowScale;
-                    canvas.FillColor = Color.FromArgb("#D9E4FF").WithAlpha(0.055f * p.Brightness * MilkyWayStrength / 0.4f * 0.4f + 0.028f * p.Brightness * MilkyWayStrength);
-                    canvas.FillCircle(x, y, r);
-                }
-            }
-
             // ---- horizon line with compass letters ----
             var horizon = new PathF();
             bool started = false;
@@ -711,8 +647,9 @@ namespace dinospace.Views
             canvas.StrokeSize = 1.6f;
             canvas.DrawPath(horizon);
 
-            // ---- constellation figures with glow lines ----
-            foreach (var f in SkyMap.Figures)
+            // ---- constellation figures with glow lines (night only) ----
+            if (skyDark)
+                foreach (var f in SkyMap.Figures)
                 {
                     var pts = new (float x, float y, bool ok)[f.Stars.Length];
                     for (int i = 0; i < f.Stars.Length; i++)
@@ -740,65 +677,30 @@ namespace dinospace.Views
                     }
                 }
 
-            // ---- the whole catalogue: soft halo + core, colour by temperature ----
+            // ---- the bright named stars — the ones you can really see ----
             if (skyDark)
             {
                 var stars = SkyCatalog.Stars;
                 var sv = SkyMap.StarVectors;
-                float t = nowMs % 100000 / 1000f;
                 for (int i = 0; i < stars.Length; i++)
                 {
                     var s = stars[i];
-                    if (s.Mag > LimitMag) break;   // catalogue is sorted brightest-first
+                    if (s.Mag > BrightStarMag) break;   // catalogue is sorted brightest-first
+                    if (s.Name.Length == 0) continue;
                     var (n, e, u) = frame.Horizon(sv[i * 3], sv[i * 3 + 1], sv[i * 3 + 2]);
                     if (u < -0.05) continue;
                     var (x, y, vis) = SkyMap.ProjectVector(n, e, u, v);
                     if (!vis) continue;
 
-                    float r = (float)Math.Max(0.7, 5.6 - s.Mag * 1.35);
+                    float r = (float)Math.Max(1.6, 5.6 - s.Mag * 1.35);
                     var core = s.Tint();
-                    float alpha = s.Mag < 2 ? 1f : Math.Max(0.35f, 1f - (s.Mag - 2f) * 0.16f);
-                    // the brightest stars twinkle very slightly
-                    if (s.Mag < 1.5) alpha *= 0.88f + 0.12f * (float)Math.Sin(t * 5 + i * 1.7);
-
-                    if (r > 1.6f)
-                    {
-                        canvas.FillColor = core.WithAlpha(0.20f * alpha);
-                        canvas.FillCircle(x, y, r * 2.5f);
-                    }
-                    canvas.FillColor = core.WithAlpha(alpha);
+                    canvas.FillColor = core.WithAlpha(0.20f);
+                    canvas.FillCircle(x, y, r * 2.5f);
+                    canvas.FillColor = core;
                     canvas.FillCircle(x, y, r);
-                    if (s.Name.Length > 0 && s.Mag < 1.6)
-                    {
-                        canvas.FontColor = labelC;
-                        canvas.FontSize = 12;
-                        canvas.DrawString(s.Name, x + 8, y + 4, HorizontalAlignment.Left);
-                    }
-                }
-            }
-
-            // ---- deep sky: the full Messier + Caldwell catalogues ----
-            if (skyDark)
-            {
-                var dsos = SkyDeepSkyCatalog.All;
-                for (int i = 0; i < dsos.Length; i++)
-                {
-                    var d = dsos[i];
-                    if (d.Mag > DsoLimitMag) continue;         // dark nebulae (mag 99) only at dark sites via card
-                    var (alt, az) = SkyCalc.AltAz(d.RaHours * 15.0, d.DecDeg, Lat, Lon, utc);
-                    if (alt < 3) continue;
-                    var (x, y, vis) = SkyMap.Project(alt, az, v);
-                    if (!vis) continue;
-                    var dia = new PathF();
-                    dia.MoveTo(x, y - 5); dia.LineTo(x + 5, y); dia.LineTo(x, y + 5); dia.LineTo(x - 5, y); dia.Close();
-                    canvas.StrokeColor = dsoC.WithAlpha(0.85f); canvas.StrokeSize = 1.3f;
-                    canvas.DrawPath(dia);
-                    if (d.Mag < 5.5)
-                    {
-                        canvas.FontColor = dsoC.WithAlpha(0.9f);
-                        canvas.FontSize = 11;
-                        canvas.DrawString(d.Name.Split(" (")[0], x + 8, y + 4, HorizontalAlignment.Left);
-                    }
+                    canvas.FontColor = labelC;
+                    canvas.FontSize = 12;
+                    canvas.DrawString(s.Name, x + 8, y + 4, HorizontalAlignment.Left);
                 }
             }
 
@@ -839,9 +741,6 @@ namespace dinospace.Views
                     canvas.DrawString("Sun", sx + 20, sy + 4, HorizontalAlignment.Left);
                 }
             }
-
-            // ---- shooting stars (radiant-aware during active showers) ----
-            if (skyDark) DrawMeteors(canvas, rect, v, utc, nowMs);
 
             // ---- compass letters along the horizon ----
             (string t, double az)[] cardinals = { ("N", 0), ("NE", 45), ("E", 90), ("SE", 135), ("S", 180), ("SW", 225), ("W", 270), ("NW", 315) };
@@ -973,53 +872,6 @@ namespace dinospace.Views
             canvas.DrawString("Moon", cx + r + 7, cy + 4, HorizontalAlignment.Left);
         }
 
-        // Shooting stars: sporadics on a quiet night; during an active shower
-        // they stream away from the real radiant, just like the real thing.
-        private void DrawMeteors(ICanvas canvas, RectF rect, SkyMap.View v, DateTime utc, long nowMs)
-        {
-            if (_nextMeteorMs == 0) _nextMeteorMs = nowMs + 3000;
-            var shower = MeteorShowers.ActiveOn(utc).OrderByDescending(s => s.Zhr).FirstOrDefault();
-
-            if (nowMs >= _nextMeteorMs && _meteors.Count < 3)
-            {
-                float x0 = rect.Width * (0.15f + 0.7f * (float)_rng.NextDouble());
-                float y0 = rect.Height * (0.12f + 0.6f * (float)_rng.NextDouble());
-                double ang;
-                if (shower != null)
-                {
-                    var (rAlt, rAz) = SkyCalc.AltAz(shower.RadiantRaHours * 15.0, shower.RadiantDecDeg, Lat, Lon, utc);
-                    var (rx, ry, _) = SkyMap.Project(Math.Max(rAlt, -10), rAz, v);
-                    ang = Math.Atan2(y0 - ry, x0 - rx);          // away from the radiant
-                }
-                else ang = _rng.NextDouble() * Math.PI * 2;
-                _meteors.Add((nowMs, x0, y0, (float)Math.Cos(ang), (float)Math.Sin(ang)));
-                // showers spit more often than quiet skies
-                int gap = shower != null ? 2500 + _rng.Next(5000) : 6000 + _rng.Next(12000);
-                _nextMeteorMs = nowMs + gap;
-            }
-
-            for (int i = _meteors.Count - 1; i >= 0; i--)
-            {
-                var mtr = _meteors[i];
-                float age = (nowMs - mtr.bornMs) / 650f;
-                if (age >= 1f) { _meteors.RemoveAt(i); continue; }
-                float speed = 260;
-                float hx = mtr.x + mtr.dx * speed * age;
-                float hy = mtr.y + mtr.dy * speed * age;
-                float fade = 1f - age;
-                // three-segment tail, brightest at the head
-                for (int s = 0; s < 3; s++)
-                {
-                    float t0 = Math.Max(0, age - 0.09f * (s + 1)), t1 = Math.Max(0, age - 0.09f * s);
-                    canvas.StrokeColor = Colors.White.WithAlpha(fade * (0.85f - s * 0.28f));
-                    canvas.StrokeSize = 2.2f - s * 0.6f;
-                    canvas.DrawLine(mtr.x + mtr.dx * speed * t0, mtr.y + mtr.dy * speed * t0,
-                                    mtr.x + mtr.dx * speed * t1, mtr.y + mtr.dy * speed * t1);
-                }
-                canvas.FillColor = Colors.White.WithAlpha(fade);
-                canvas.FillCircle(hx, hy, 1.8f);
-            }
-        }
     }
 
     // The little compass rose: a ring with tick marks and a needle that keeps

@@ -38,14 +38,13 @@ namespace dinospace.Views
 
         // A user drawing, shown WHOLE. AspectFill crops a tall canvas into a
         // wide slot — kids kept losing the head and feet of their creature —
-        // so drawings letterbox with AspectFit on the exact canvas colour they
-        // were painted on, and the bars blend invisibly into the picture.
+        // Drawings keep their shape with AspectFit and float transparently.
         public static View Drawing(string imagePath, string bgHex, double height = -1)
         {
-            Color bg;
-            try { bg = Color.FromArgb(string.IsNullOrWhiteSpace(bgHex) ? "#FFFFFF" : bgHex); }
-            catch { bg = Colors.White; }
-            var grid = new Grid { BackgroundColor = bg };
+            // Drawings export with a transparent background now, so they sit
+            // straight on the page like the built-in art — only the pixels
+            // the artist actually painted show up.
+            var grid = new Grid { BackgroundColor = Colors.Transparent };
             if (height > 0) grid.HeightRequest = height;
             grid.Add(new Image { Source = ImageSource.FromFile(imagePath), Aspect = Aspect.AspectFit });
             return grid;
@@ -268,7 +267,8 @@ namespace dinospace.Views
 
             var card = new Border
             {
-                Content = row, BackgroundColor = Theme.Surface, Stroke = Colors.Transparent,
+                Content = row, BackgroundColor = Theme.AccentSoft,
+                Stroke = Theme.TextPrimary.WithAlpha(0.4f), StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 20 }, Padding = 0,
                 Margin = new Thickness(0, 5), Shadow = Theme.CardShadow()
             };

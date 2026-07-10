@@ -11,6 +11,10 @@ var history = new List<ChatMessage>();
 string[] questions =
 {
     // the exact questions that failed on-device
+    "who was the first on the moon",
+    "will we ever go to mars",
+    "who was the first person on the moon",
+    "will humans ever live on mars",
     "what is a smilodon",
     "how strong is a t rex",
     "how strong is the t rex",
@@ -89,10 +93,9 @@ foreach (var q in round2)
     var turn = PromptBuilder.Build(q, history, carryover);
     if (turn.Entities.Count > 0) carryover = new List<string>(turn.Entities);
     if (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic) i2++;
-    else if (turn.OfflineFallback != null) i2++;
-    else { m2++; Console.WriteLine($"R2-UNCOVERED  {q}"); }
+    else { m2++; Console.WriteLine($"R2-NOT-INSTANT  {q}  ->  {Snip(turn.OfflineFallback ?? "(dead)")}"); }
 }
-Console.WriteLine($"=== round 2: {i2} covered, {m2} uncovered ===");
+Console.WriteLine($"=== round 2: {i2} instant, {m2} not instant ===");
 
 // round 3: conversational + creative + curveballs. These lean on the offline
 // brain (smalltalk, NovaCreative). NONE may dead-end.
@@ -339,9 +342,146 @@ foreach (var (q7, must) in rankings)
 }
 Console.WriteLine($"=== round 7 (rankings): {i7} instant, {m7} FAILURES ===");
 
+// round 8: the knowledge battery. Every curated fact in the knowledge base,
+// asked through every one of its own trigger phrasings plus the ways kids
+// wrap questions ("hey novasaur ...", "... please", "umm ..."). Every single
+// variant must come back with a real INSTANT answer — these are exactly the
+// questions the app promises it can answer with no model installed.
+string[] wraps = { "{0}", "hey novasaur {0}", "{0} please", "umm {0}", "can you tell me {0}", "i wanna know {0}" };
+int q8 = 0, m8 = 0;
+var fail8 = new List<string>();
+foreach (var n in dinospace.Data.KnowledgeBase.Nuggets)
+{
+    foreach (var kw in n.Keywords)
+    {
+        if (kw.Split(' ').Length < 2) continue;   // single words aren't questions
+        foreach (var w in wraps)
+        {
+            q8++;
+            string ques = string.Format(w, kw);
+            var t8 = PromptBuilder.Build(ques, new List<ChatMessage>(), new List<string>());
+            string? r8 = (t8.InstantReply != null && t8.InstantReply != NovaGuard.OffTopic) ? t8.InstantReply : null;
+            if (r8 == null || IsDodge(r8))
+            {
+                m8++;
+                if (fail8.Count < 40) fail8.Add($"{ques}  ->  {Snip(r8 ?? t8.OfflineFallback ?? "(dead)")}");
+            }
+        }
+    }
+}
+Console.WriteLine($"\n=== round 8 (knowledge battery): {q8} questions, {m8} not answered instantly ===");
+foreach (var f in fail8) Console.WriteLine("  " + f);
+
+// round 9: the decorated mega-battery. Every entry crossed with a much wider
+// set of phrasings, then wrapped the way kids actually type. Dead ends and
+// on-topic dodges fail; wrong-entity is advisory (graders are heuristic).
+string[] dinoT9 =
+{
+    "how big was {0}", "what did {0} eat", "when did {0} live", "how fast was {0}",
+    "tell me about {0}", "where did {0} live", "how heavy was {0}", "{0}",
+    "was {0} dangerous", "what does {0} mean", "how tall was {0}", "did {0} have teeth",
+    "how long was {0}", "was {0} a carnivore", "was {0} a herbivore", "how strong was {0}",
+    "could {0} swim", "did {0} have feathers", "what killed {0}", "fun fact about {0}",
+    "why is {0} famous", "how do you say {0}", "was {0} real", "what colour was {0}",
+};
+string[] spaceT9 =
+{
+    "how big is {0}", "how far away is {0}", "tell me about {0}", "what is {0}",
+    "{0}", "how hot is {0}", "how old is {0}", "how far is {0} from earth",
+    "can you see {0} tonight", "what is {0} made of", "fun fact about {0}",
+    "why is {0} special", "could you live on {0}", "who discovered {0}",
+    "how heavy is {0}", "does {0} have moons",
+};
+string[] wraps9 = { "{0}", "hey novasaur {0}", "{0} please" };
+int q9 = 0, dead9 = 0, dodge9 = 0;
+var fail9 = new List<string>();
+foreach (var d in DinoData.All)
+    foreach (var t in dinoT9)
+        foreach (var w in wraps9)
+        {
+            q9++;
+            string ques = string.Format(w, string.Format(t, d.Name.ToLowerInvariant()));
+            var t9 = PromptBuilder.Build(ques, new List<ChatMessage>(), new List<string>());
+            string? r9 = (t9.InstantReply != null && t9.InstantReply != NovaGuard.OffTopic) ? t9.InstantReply : t9.OfflineFallback;
+            if (r9 == null) { dead9++; if (fail9.Count < 40) fail9.Add("DEAD   " + ques); }
+            else if (IsDodge(r9)) { dodge9++; if (fail9.Count < 40) fail9.Add($"DODGE  {ques}  ->  {Snip(r9)}"); }
+        }
+foreach (var sp in SpaceData.All)
+    foreach (var t in spaceT9)
+        foreach (var w in wraps9)
+        {
+            q9++;
+            string ques = string.Format(w, string.Format(t, sp.Name.ToLowerInvariant()));
+            var t9 = PromptBuilder.Build(ques, new List<ChatMessage>(), new List<string>());
+            string? r9 = (t9.InstantReply != null && t9.InstantReply != NovaGuard.OffTopic) ? t9.InstantReply : t9.OfflineFallback;
+            if (r9 == null) { dead9++; if (fail9.Count < 40) fail9.Add("DEAD   " + ques); }
+            else if (IsDodge(r9)) { dodge9++; if (fail9.Count < 40) fail9.Add($"DODGE  {ques}  ->  {Snip(r9)}"); }
+        }
+Console.WriteLine($"\n=== round 9 (decorated battery): {q9} questions, {dead9} dead, {dodge9} dodges ===");
+foreach (var f in fail9) Console.WriteLine("  " + f);
+
+// round 10: every single pairwise battle question. Each one must resolve
+// instantly with a real verdict — this is the battle brain's whole job.
+int q10 = 0, m10 = 0;
+var fail10 = new List<string>();
+var allDinos = DinoData.All.Select(d => d.Name.ToLowerInvariant()).ToList();
+string[] battleT = { "who would win {0} or {1}", "could a {0} beat a {1}", "{0} vs {1}" };
+int bt = 0;
+for (int a = 0; a < allDinos.Count; a++)
+    for (int b = 0; b < allDinos.Count; b++)
+    {
+        if (a == b) continue;
+        q10++;
+        string ques = string.Format(battleT[bt++ % battleT.Length], allDinos[a], allDinos[b]);
+        var t10 = PromptBuilder.Build(ques, new List<ChatMessage>(), new List<string>());
+        string? r10 = (t10.InstantReply != null && t10.InstantReply != NovaGuard.OffTopic) ? t10.InstantReply : null;
+        if (r10 == null || IsDodge(r10))
+        { m10++; if (fail10.Count < 25) fail10.Add($"{ques}  ->  {Snip(r10 ?? t10.OfflineFallback ?? "(dead)")}"); }
+    }
+Console.WriteLine($"\n=== round 10 (all pairwise battles): {q10} questions, {m10} without an instant verdict ===");
+foreach (var f in fail10) Console.WriteLine("  " + f);
+
+// round 11: the typo gauntlet. Deterministic kid-style mutations of every
+// entry's name — a dropped letter, a doubled letter, two letters swapped —
+// asked through common templates. A mangled name the retriever still can't
+// place may gracefully dodge (advisory), but it must NEVER dead-end.
+static IEnumerable<string> Mutations(string name)
+{
+    if (name.Length < 5) yield break;
+    int mid = name.Length / 2;
+    yield return name.Remove(mid, 1);                                    // dropped letter
+    yield return name.Insert(mid, name[mid].ToString());                 // doubled letter
+    var chars = name.ToCharArray();
+    (chars[mid], chars[mid - 1]) = (chars[mid - 1], chars[mid]);
+    yield return new string(chars);                                      // swapped letters
+    yield return name.Replace("saurus", "sorus").Replace("don", "dont"); // phonetic
+}
+string[] typoT = { "what is {0}", "tell me about {0}", "how big was {0}" };
+int q11 = 0, dead11 = 0, dodge11 = 0;
+var fail11 = new List<string>();
+var allNames = DinoData.All.Select(d => d.Name).Concat(SpaceData.All.Select(x => x.Name)).ToList();
+foreach (var name in allNames)
+    foreach (var mut in Mutations(name.ToLowerInvariant()).Distinct())
+        foreach (var t in typoT)
+        {
+            q11++;
+            string ques = string.Format(t, mut);
+            var t11 = PromptBuilder.Build(ques, new List<ChatMessage>(), new List<string>());
+            string? r11 = (t11.InstantReply != null && t11.InstantReply != NovaGuard.OffTopic) ? t11.InstantReply : t11.OfflineFallback;
+            if (r11 == null) { dead11++; if (fail11.Count < 25) fail11.Add("DEAD  " + ques); }
+            else if (IsDodge(r11)) dodge11++;
+        }
+Console.WriteLine($"\n=== round 11 (typo gauntlet): {q11} questions, {dead11} dead, {dodge11} graceful dodges (advisory) ===");
+foreach (var f in fail11) Console.WriteLine("  " + f);
+
+int grand = questions.Length + round2.Length + round3.Length + dinospace.Data.SuggestedQuestions.All.Count
+          + total + d6 + rankings.Length + q8 + q9 + q10 + q11;
+Console.WriteLine($"\n=== GRAND TOTAL: {grand} questions ===");
+
 // CI-friendly: hard-fail when a question truly dead-ends (no instant reply
 // AND no offline fallback), a suggestion chip can't answer instantly, a
-// distance pair goes unanswered, or a ranking question fails. Dodge/wrong-
-// entity counts print above as advisories — the graders are heuristic and
-// flag correct answers that simply don't restate the creature's name.
-Environment.Exit(uncovered + m2 + m3 + m4 + dead + bad6 + m7 > 0 ? 1 : 0);
+// distance pair goes unanswered, a ranking question fails, a knowledge-base
+// phrasing isn't instant, or a battle has no verdict. Dodge/wrong-entity
+// counts in the entity batteries print above as advisories — the graders
+// are heuristic and flag correct answers that simply don't restate names.
+Environment.Exit(uncovered + m2 + m3 + m4 + dead + bad6 + m7 + m8 + dead9 + m10 + dead11 > 0 ? 1 : 0);

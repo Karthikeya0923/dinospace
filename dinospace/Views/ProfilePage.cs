@@ -23,13 +23,6 @@ namespace dinospace.Views
         {
             var stack = new VerticalStackLayout { Spacing = 12, Padding = new Thickness(20, 4, 20, 30) };
 
-            stack.Add(new Label
-            {
-                Text = "you",
-                FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary,
-                HorizontalOptions = LayoutOptions.Center, Margin = new Thickness(0, 4, 0, 2)
-            });
-
             // The profile picture, big — mascot_pfp.png once it's drawn,
             // a quiet empty circle until then.
             var face = new Border
@@ -61,7 +54,7 @@ namespace dinospace.Views
             stack.Add(Ui.SectionHeader("Your journey"));
             stack.Add(Card(DetailUi.StatRows(new[]
             {
-                ("Creatures discovered", $"{dinoSeen} of {dinoTotal}"),
+                ("Dinosaurs discovered", $"{dinoSeen} of {dinoTotal}"),
                 ("Space objects discovered", $"{spaceSeen} of {spaceTotal}"),
                 ("Most viewed entry", string.IsNullOrEmpty(mostViewed) ? "None yet" : mostViewed),
                 ("Favourites saved", saved.ToString()),
@@ -87,7 +80,7 @@ namespace dinospace.Views
             var col = new VerticalStackLayout { Spacing = 0 };
             (string label, string mode)[] topics =
             {
-                ("Prehistoric creatures", "Dinosaurs"),
+                ("Dinosaurs", "Dinosaurs"),
                 ("Space", "Space"),
                 ("Mixed", "Mixed"),
             };
@@ -142,11 +135,17 @@ namespace dinospace.Views
             });
             Ui.Describe(backWrap, "Go back");
 
-            var grid = new Grid { Padding = new Thickness(8, 10) };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(56) });
+            var grid = new Grid { Padding = new Thickness(8, 2, 8, 0) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(52) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(56) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(52) });
             grid.Add(backWrap, 0, 0);
+            grid.Add(new Label
+            {
+                Text = "you",
+                FontFamily = Ui.Display, FontSize = Ui.S(26), TextColor = Theme.TextPrimary,
+                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
+            }, 1, 0);
             return grid;
         }
     }

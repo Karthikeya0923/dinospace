@@ -31,14 +31,13 @@ namespace dinospace.Views
         private void Build()
         {
             _stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(18, 4, 18, 28) };
-            var body = Nav.DetailScaffoldFixed("", new ScrollView { Content = _stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never });
+            var body = Nav.DetailScaffoldFixed("your creations", new ScrollView { Content = _stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never });
             Content = Ui.PageRoot(body);
         }
 
         private void Refresh()
         {
             _stack.Children.Clear();
-            _stack.Add(new Label { Text = "your creations", FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary });
             _stack.Add(new Label
             {
                 Text = "Draw your own creatures and space objects, give them stats, and battle the ones you make.",

@@ -253,10 +253,8 @@ namespace dinospace
             var label = new Label
             {
                 Text = T(text),
-                FontFamily = Fonts,
-                FontSize = S(15),
-                FontAttributes = FontAttributes.Bold,
-                CharacterSpacing = 0.6,
+                FontFamily = Display,
+                FontSize = S(16),
                 TextColor = Theme.TextOnAccent,
                 HorizontalTextAlignment = TextAlignment.Center,
                 VerticalTextAlignment = TextAlignment.Center
@@ -266,8 +264,8 @@ namespace dinospace
                 Content = label,
                 BackgroundColor = Theme.Accent,
                 Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = AppLayout.ButtonRadius },
-                Padding = new Thickness(16, AppLayout.Playful ? 17 : 15),
+                StrokeShape = new RoundRectangle { CornerRadius = 100 },
+                Padding = new Thickness(20, 16),
                 Shadow = Theme.CardShadow()
             };
             return OnTap(btn, onTap);
@@ -278,21 +276,20 @@ namespace dinospace
             var label = new Label
             {
                 Text = T(text),
-                FontFamily = Fonts,
-                FontSize = S(15),
-                FontAttributes = FontAttributes.Bold,
-                TextColor = Theme.Accent,
+                FontFamily = Display,
+                FontSize = S(16),
+                TextColor = Theme.TextPrimary,
                 HorizontalTextAlignment = TextAlignment.Center,
                 VerticalTextAlignment = TextAlignment.Center
             };
             var btn = new Border
             {
                 Content = label,
-                BackgroundColor = Theme.Surface,
-                Stroke = Theme.Hairline,
-                StrokeThickness = 1.2,
-                StrokeShape = new RoundRectangle { CornerRadius = AppLayout.ButtonRadius },
-                Padding = new Thickness(16, 14)
+                BackgroundColor = Theme.AccentSoft,
+                Stroke = Theme.TextPrimary.WithAlpha(0.55f),
+                StrokeThickness = 1.6,
+                StrokeShape = new RoundRectangle { CornerRadius = 100 },
+                Padding = new Thickness(20, 14)
             };
             return OnTap(btn, onTap);
         }

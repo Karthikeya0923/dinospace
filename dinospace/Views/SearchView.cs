@@ -18,19 +18,12 @@ namespace dinospace.Views
         // First letter, shown on the night-sky stand-in until real art loads.
         public string Initial => Title.Length > 0 ? Title[..1].ToUpperInvariant() : "•";
 
-        // Canvas colour when this row is a user drawing, empty otherwise.
-        // Drawings letterbox (AspectFit on their canvas colour) so the whole
-        // picture shows; built-in art fills the square as usual.
+        // Set when this row is a user drawing. Drawings are transparent
+        // PNGs, so they AspectFit straight onto the row with nothing behind;
+        // built-in art fills the square as usual.
         public string DrawingBg { get; init; } = "";
         public Aspect ThumbAspect => DrawingBg.Length == 0 ? Aspect.AspectFill : Aspect.AspectFit;
-        public Color ThumbBg
-        {
-            get
-            {
-                if (DrawingBg.Length == 0) return Color.FromArgb("#111527");
-                try { return Color.FromArgb(DrawingBg); } catch { return Colors.White; }
-            }
-        }
+        public Color ThumbBg => DrawingBg.Length == 0 ? Color.FromArgb("#111527") : Colors.Transparent;
     }
 
     // The Search tab: big rounded field, All/Dinosaurs/Space filter, and a
@@ -78,7 +71,7 @@ namespace dinospace.Views
 
             _segments = new HorizontalStackLayout { Spacing = AppLayout.Playful ? 8 : 22 };
             _segments.Add(SegItem(Ui.T("All"), 0));
-            _segments.Add(SegItem(Ui.T("Prehistoric creatures"), 1));
+            _segments.Add(SegItem(Ui.T("Dinosaurs"), 1));
             _segments.Add(SegItem(Ui.T("Space"), 2));
             header.Add(_segments);
 

@@ -1,7 +1,5 @@
 using System;
-using System.Globalization;
 using System.Linq;
-using System.Text;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
@@ -10,8 +8,10 @@ using dinospace.Services;
 
 namespace dinospace.Views
 {
-    // Detail page for one of the user's creations. Looks just like a built-in
-    // entry — hero, stats, sections — but with Edit / Battle actions and NO
+    // One of the user's own creations, laid out EXACTLY like a real entry:
+    // centred section header, the name, tags, the drawing floating on the
+    // page (transparent — only what they painted shows), plain label/value
+    // stats, then the deeper sections. Plus Edit, Battle and Delete — and NO
     // Ask-NovaSaur button (the AI can't know a creature you invented).
     public class CreationDetailPage : ContentPage
     {
@@ -40,14 +40,40 @@ namespace dinospace.Views
                 return;
             }
 
-            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(18, 16, 18, 30) };
+            var stack = new VerticalStackLayout { Spacing = 18, Padding = new Thickness(20, 4, 20, 30) };
+
+            stack.Add(new Label
+            {
+                Text = c.Name,
+                FontFamily = Ui.Display, FontSize = Ui.S(30), LineHeight = 1.05,
+                TextColor = Theme.TextPrimary
+            });
+            if (!string.IsNullOrWhiteSpace(c.Pronunciation))
+                stack.Add(new Label
+                {
+                    Text = c.Pronunciation, FontFamily = Ui.Fonts, FontSize = Ui.S(13.5),
+                    TextColor = Theme.TextSecondary, Margin = new Thickness(0, -12, 0, 0)
+                });
+
+            if (c.Kind == CreationKind.Dinosaur)
+                stack.Add(DetailUi.TagChips(c.Diet, c.Era));
+            else
+                stack.Add(DetailUi.TagChips(c.TypeLabel));
+
+            stack.Add(ArtOnThePage(c));
 
             if (c.Kind == CreationKind.Dinosaur)
             {
                 var d = c.ToDinosaur();
-                string meta = string.Join("  ·  ", new[] { Quote(c.Meaning), c.Diet, c.Era }.Where(s => !string.IsNullOrWhiteSpace(s)));
-                stack.Add(DetailUi.TitleBlock(c.Name, c.Pronunciation, meta));
-                stack.Add(DinoStatBars(d));
+                stack.Add(DetailUi.StatRows(new[]
+                {
+                    ("Length", d.Length),
+                    ("Height", d.Height),
+                    ("Weight", d.Weight),
+                    ("Top speed", d.Speed),
+                    ("Bite force", d.BiteForce),
+                    ("Diet", d.Diet),
+                }));
                 stack.Add(DetailUi.Section("About", d.AboutText, Accent));
                 stack.Add(DetailUi.Section("Key features", d.KeyFeaturesText, Accent));
                 stack.Add(DetailUi.Section("Habitat & environment", d.LifeEnvironmentText, Accent));
@@ -57,14 +83,12 @@ namespace dinospace.Views
             else
             {
                 var s = c.ToSpaceObject();
-                string meta = string.Join("  ·  ", new[] { c.TypeLabel, c.Subtitle }.Where(x => !string.IsNullOrWhiteSpace(x)));
-                stack.Add(DetailUi.TitleBlock(c.Name, c.Pronunciation, meta));
-                var chips = new[]
-                {
-                    (s.Stat1Label, s.Stat1Value, Accent), (s.Stat2Label, s.Stat2Value, Accent),
-                    (s.Stat3Label, s.Stat3Value, Accent), (s.Stat4Label, s.Stat4Value, Accent),
-                }.Where(x => !string.IsNullOrWhiteSpace(x.Item2)).ToList();
-                if (chips.Count > 0) stack.Add(DetailUi.StatChipRow(chips));
+                var rows = new System.Collections.Generic.List<(string, string)> { ("Type", s.TypeLabel) };
+                rows.Add((s.Stat1Label, s.Stat1Value));
+                rows.Add((s.Stat2Label, s.Stat2Value));
+                rows.Add((s.Stat3Label, s.Stat3Value));
+                rows.Add((s.Stat4Label, s.Stat4Value));
+                stack.Add(DetailUi.StatRows(rows));
                 stack.Add(DetailUi.Section("About", s.AboutText, Accent));
                 stack.Add(DetailUi.Section("Key features", s.KeyFeaturesText, Accent));
                 stack.Add(DetailUi.Section("Orbit & movement", s.OrbitMovementText, Accent));
@@ -86,74 +110,78 @@ namespace dinospace.Views
             stack.Add(Ui.PrimaryButton("EDIT THIS CREATION", async (_, _) => await Nav.Push(() => new CreationEditorPage(c))));
             if (c.Kind == CreationKind.Dinosaur)
                 stack.Add(Ui.GhostButton("Battle this creature", async (_, _) => await Nav.Push(() => new BattlePage(c.ToDinosaur()))));
+            stack.Add(DeleteButton(c));
 
-            var scrollContent = new VerticalStackLayout { Spacing = 0 };
-            scrollContent.Add(Hero(c));
-            scrollContent.Add(stack);
+            var header = DetailUi.HeaderBar(c.Kind == CreationKind.Dinosaur ? "dinosaurs" : "space",
+                false, OnBack, () => { }, out _, showSave: false);
 
-            var scroll = new ScrollView { Content = scrollContent, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
-            var root = Ui.PageRoot(scroll);
-            root.Add(BackBar());
-            Content = root;
+            var main = new Grid { RowSpacing = 0 };
+            main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
+            main.Add(header, 0, 0);
+            main.Add(new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never }, 0, 1);
+
+            Content = Ui.PageRoot(main);
         }
 
-        private static string Quote(string s) => string.IsNullOrWhiteSpace(s) ? "" : "“" + s + "”";
-
-        private View Hero(UserCreation c)
+        // The drawing floats on the page exactly like built-in entry art —
+        // transparent PNG, so only what they painted is there.
+        private static View ArtOnThePage(UserCreation c)
         {
-            var grid = new Grid { HeightRequest = 300, BackgroundColor = Colors.White };
-            grid.Add(EntryCards.ArtFallback(c.Name, 56));
-            if (!string.IsNullOrEmpty(c.ImagePath) && System.IO.File.Exists(c.ImagePath))
-                grid.Add(EntryCards.Drawing(c.ImagePath, c.CanvasColor));
-            return grid;
-        }
+            if (string.IsNullOrEmpty(c.ImagePath) || !System.IO.File.Exists(c.ImagePath))
+                return new Border
+                {
+                    Content = EntryCards.PlayfulArt(c.Name, 54),
+                    HeightRequest = 210, Stroke = Colors.Transparent,
+                    StrokeShape = new RoundRectangle { CornerRadius = 24 }
+                };
 
-        private View BackBar()
-        {
-            var back = new Border
+            var img = new Image
             {
-                Content = Ui.Icon(Ui.IconBack, 22),
-                WidthRequest = 42, HeightRequest = 42,
-                BackgroundColor = Color.FromArgb("#8A000000"), Stroke = Colors.Transparent,
-                StrokeShape = new RoundRectangle { CornerRadius = 21 },
-                HorizontalOptions = LayoutOptions.Start, VerticalOptions = LayoutOptions.Start,
-                Margin = new Thickness(12, 10)
+                Source = ImageSource.FromFile(c.ImagePath), Aspect = Aspect.AspectFit,
+                HeightRequest = 230, HorizontalOptions = LayoutOptions.Center
             };
-            Ui.OnTap(back, async (_, _) => { try { if (Navigation.NavigationStack.Count > 1) await Navigation.PopAsync(); } catch { } });
-            Ui.Describe(back, "Go back");
-            return back;
+            Ui.Describe(img, c.Name);
+            var g = new Grid { HeightRequest = 244 };
+            g.Add(img);
+            return g;
         }
 
-        private View DinoStatBars(Dinosaur d)
+        private View DeleteButton(UserCreation c)
         {
-            double maxLen = DinoData.All.Max(x => Num(x.Length));
-            double maxH = DinoData.All.Max(x => Num(x.Height));
-            double maxW = DinoData.All.Max(x => Num(x.Weight));
-            double maxS = DinoData.All.Max(x => Num(x.Speed));
-            double maxBite = DinoData.All.Max(x => Num(x.BiteForce));
-
-            var col = new VerticalStackLayout { Spacing = 14 };
-            col.Add(Ui.SectionHeader("How it measures up"));
-            if (Num(d.Length) > 0) col.Add(Ui.StatBar("Length", d.Length, Clamp(Num(d.Length) / maxLen), Accent));
-            if (Num(d.Height) > 0) col.Add(Ui.StatBar("Height", d.Height, Clamp(Num(d.Height) / maxH), Accent));
-            if (Num(d.Weight) > 0) col.Add(Ui.StatBar("Weight", d.Weight, Clamp(Num(d.Weight) / maxW), Accent));
-            if (Num(d.Speed) > 0) col.Add(Ui.StatBar("Top speed", d.Speed, Clamp(Num(d.Speed) / maxS), Accent));
-            if (Num(d.BiteForce) > 0 && maxBite > 0) col.Add(Ui.StatBar("Bite force", d.BiteForce, Clamp(Num(d.BiteForce) / maxBite), Accent));
-            return col;
-        }
-
-        private static double Clamp(double v) => Math.Clamp(v, 0.04, 1.0);
-
-        private static double Num(string s)
-        {
-            if (string.IsNullOrWhiteSpace(s)) return 0;
-            var sb = new StringBuilder(); bool started = false;
-            foreach (char ch in s.Replace(",", ""))
+            var label = new Label
             {
-                if (char.IsDigit(ch) || (ch == '.' && started)) { sb.Append(ch); started = true; }
-                else if (started) break;
-            }
-            return sb.Length > 0 && double.TryParse(sb.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var v) ? v : 0;
+                Text = Ui.T("Delete this creation"),
+                FontFamily = Ui.Display, FontSize = Ui.S(15),
+                TextColor = Theme.Danger,
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Center
+            };
+            var btn = new Border
+            {
+                Content = label,
+                BackgroundColor = Colors.Transparent,
+                Stroke = Theme.Danger.WithAlpha(0.55f), StrokeThickness = 1.4,
+                StrokeShape = new RoundRectangle { CornerRadius = 100 },
+                HeightRequest = 50, Padding = new Thickness(20, 0)
+            };
+            Ui.OnTap(btn, async (_, _) =>
+            {
+                bool sure = await DisplayAlertAsync("Delete this creation?",
+                    $"{c.Name} will be gone for good — the drawing too. This can't be undone.",
+                    "Delete", "Keep it");
+                if (!sure) return;
+                CreationStore.Delete(c.Id);
+                AppSettings.LongPress();
+                try { if (Navigation.NavigationStack.Count > 1) await Navigation.PopAsync(); } catch { }
+            });
+            Ui.Describe(btn, "Delete this creation");
+            return btn;
+        }
+
+        private async void OnBack()
+        {
+            try { if (Navigation.NavigationStack.Count > 1) await Navigation.PopAsync(); } catch { }
         }
     }
 }

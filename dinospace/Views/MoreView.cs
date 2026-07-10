@@ -37,7 +37,7 @@ namespace dinospace.Views
             for (int r = 0; r < 4; r++) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(0.62, GridUnitType.Star) });
 
-            grid.Add(Tile(Ui.Icon(Ui.IconScanSky, 44), "scan sky", async () => await Nav.Push(() => new SkyViewPage())), 0, 0);
+            grid.Add(Tile(Ui.Icon(Ui.IconScanSky, 44), "scan sky", async () => await Nav.Push(() => new SkyPage())), 0, 0);
             grid.Add(Tile(Ui.Mascot("mascot_ask", 44, Ui.IconAsk), "ask novasaur", async () => await Nav.Push(() => new NovaPage())), 1, 0);
             grid.Add(Tile(Ui.Icon(Ui.IconBattles, 44), "dino battle", () => { RootPage.Current?.SwitchTab(2); return System.Threading.Tasks.Task.CompletedTask; }), 0, 1);
             grid.Add(Tile(Ui.Icon(Ui.IconDraw, 44), "draw entry", async () => await Nav.Push(() => new CreationsPage())), 1, 1);
@@ -49,7 +49,7 @@ namespace dinospace.Views
             // settings: one wide tile across both columns, reaching the
             // bottom of the page like the sheet's long panel.
             var settings = Tile(Ui.Icon(Ui.IconSettings, 36), "settings",
-                async () => await Nav.Push(() => new HostPage("", new SettingsView())), wide: true);
+                async () => await Nav.Push(() => new HostPage("settings", new SettingsView())), wide: true);
             grid.Add(settings, 0, 4);
             Grid.SetColumnSpan((BindableObject)settings, 2);
 

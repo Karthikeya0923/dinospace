@@ -86,7 +86,7 @@ namespace dinospace.Views
             // ---- the two cover pills ----
             var buttons = new VerticalStackLayout { Spacing = 14, VerticalOptions = LayoutOptions.End };
             buttons.Add(HomePill(Ui.Icon(Ui.IconScanSky, 26), "scan sky",
-                async () => await Nav.Push(() => new SkyViewPage())));
+                async () => await Nav.Push(() => new SkyPage())));
             buttons.Add(HomePill(Ui.Mascot("mascot_ask", 26, Ui.IconAsk), "ask novasaur",
                 async () => await Nav.Push(() => new NovaPage())));
             grid.Add(buttons, 0, 2);

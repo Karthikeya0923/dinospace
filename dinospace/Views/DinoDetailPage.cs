@@ -71,7 +71,7 @@ namespace dinospace.Views
             stack.Add(DetailUi.AskNovaButton(_d.Name));
             stack.Add(Ui.GhostButton("Battle this creature", async (_, _) => await Nav.Push(() => new BattlePage(_d))));
 
-            var header = DetailUi.HeaderBar("prehistoric creatures",
+            var header = DetailUi.HeaderBar("dinosaurs",
                 SavedStore.IsDinoSaved(_d.Name), OnBack, OnSave, out _saveIcon);
 
             var main = new Grid { RowSpacing = 0 };

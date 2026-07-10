@@ -64,7 +64,7 @@ namespace dinospace.Services
                 return "You're welcome! Want to ask another dinosaur or space question?";
 
             if (Phrase(q, "who are you") || Phrase(q, "what are you") || Phrase(q, "your name") || Phrase(q, "who made you"))
-                return "I'm NovaSaur, the dinosaur and space guide inside DinoSpace. I run right on your device and I can answer questions about prehistoric creatures and outer space.";
+                return "I'm NovaSaur, the dinosaur and space guide inside DinoSpace. I run right on your device and I can answer questions about dinosaurs and outer space.";
 
             if (Phrase(q, "what can you do") || Phrase(q, "how do you work") || Phrase(q, "help") && q.Length <= 6)
                 return "I answer questions about dinosaurs, prehistoric creatures, and space. Try me — how big was a Brachiosaurus? Why is Mars red?";

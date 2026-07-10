@@ -20,22 +20,12 @@ namespace dinospace.Views
         {
             var stack = new VerticalStackLayout { Spacing = 10, Padding = new Thickness(18, 8, 18, 28) };
 
-            stack.Add(new Label
-            {
-                Text = "settings",
-                FontFamily = Ui.Display,
-                FontSize = Ui.S(32),
-                TextColor = Theme.TextPrimary,
-                HorizontalOptions = LayoutOptions.Center,
-                Margin = new Thickness(0, 8, 0, 8)
-            });
-
             stack.Add(ProfileCard());
 
             stack.Add(Group(
                 IconRow(Ui.IconAppearance, "Appearance", async () => await Nav.Push(() => new ThemesPage())),
                 SoundRow(),
-                IconRow(Ui.IconNovaAi, "NovaSaur AI", async () => await Nav.Push(() => new HostPage("", NovaAiBody()))),
+                IconRow(Ui.IconNovaAi, "NovaSaur AI", async () => await Nav.Push(() => new HostPage("novasaur ai", NovaAiBody()))),
                 IconRow(Ui.IconPrivacy, "Privacy", OpenPrivacy),
                 IconRow(Ui.IconAbout, "About DinoSpace", ShowAbout),
                 IconRow(Ui.IconContact, "Contact us", OpenFeedback)));
@@ -178,7 +168,6 @@ namespace dinospace.Views
         private static View NovaAiBody()
         {
             var col = new VerticalStackLayout { Spacing = 12, Padding = new Thickness(18, 4, 18, 28) };
-            col.Add(new Label { Text = "novasaur ai", FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary, HorizontalOptions = LayoutOptions.Center });
             col.Add(new Label
             {
                 Text = "NovaSaur answers instantly from its encyclopedia. Add the optional on-device AI model and open-ended questions get full streamed answers — still completely offline.",
@@ -198,7 +187,7 @@ namespace dinospace.Views
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null) return;
             await page.DisplayAlertAsync("DinoSpace v1.0",
-                "A fully offline prehistoric & space encyclopedia with its own on-device AI and a live sky scanner.",
+                "A fully offline dinosaur & space encyclopedia with its own on-device AI and a live sky scanner.\n\nA few of the creatures inside — like Megalodon, Titanoboa and the woolly mammoth — aren't true dinosaurs, just amazing prehistoric creatures who earned their page.",
                 "OK");
         }
 

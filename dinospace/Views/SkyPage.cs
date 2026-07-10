@@ -7,9 +7,10 @@ using Microsoft.Maui.Graphics;
 
 namespace dinospace.Views
 {
-    // Sky Tonight — a live, personal sky report: the moon's phase drawn as it
-    // actually looks, the planets and constellations above you, and sun times.
-    // Everything is computed on-device; location is optional.
+    // Scan Sky's landing page — a live, personal sky report: a big "scan
+    // your sky" button into the AR view, then the moon's phase drawn as it
+    // actually looks tonight, the next meteor shower, the planets and
+    // constellations above you, and sun times. All computed on-device.
     public class SkyPage : ContentPage
     {
         private SkyReport _report;
@@ -38,17 +39,17 @@ namespace dinospace.Views
         {
             _stack = new VerticalStackLayout { Spacing = 14, Padding = new Thickness(18, 4, 18, 28) };
 
-            _stack.Add(new Label { Text = "Sky Tonight", FontFamily = Ui.Display, FontSize = Ui.S(30), TextColor = Theme.TextPrimary });
             string when = _report.IsNight ? "your sky right now" : "your sky after dark tonight";
             _stack.Add(new Label
             {
                 Text = $"{DateTime.Now:dddd, MMMM d} · {when}",
                 FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), TextColor = Theme.TextSecondary,
-                Margin = new Thickness(0, 0, 0, 4)
+                HorizontalOptions = LayoutOptions.Center, HorizontalTextAlignment = TextAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 2)
             });
 
+            _stack.Add(ScanButton());
             _stack.Add(MoonHero());
-            _stack.Add(Ui.PrimaryButton("Point at the sky", async (_, _) => await Nav.Push(() => new SkyViewPage())));
             _stack.Add(MoonDetailCard());
             _stack.Add(AskNovaCard());
             _stack.Add(TelescopeCard());
@@ -73,8 +74,39 @@ namespace dinospace.Views
 
             _stack.Add(LocationRow());
 
-            var body = Nav.DetailScaffoldFixed("", new ScrollView { Content = _stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never });
+            var body = Nav.DetailScaffoldFixed("scan sky", new ScrollView { Content = _stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never });
             Content = Ui.PageRoot(body);
+        }
+
+        // The star of the page: a storybook pill that opens the live AR view.
+        private static View ScanButton()
+        {
+            var row = new HorizontalStackLayout
+            {
+                Spacing = 10, HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
+            };
+            var ic = Ui.Icon(Ui.IconScanSky, 26);
+            ic.VerticalOptions = LayoutOptions.Center;
+            row.Add(ic);
+            row.Add(new Label
+            {
+                Text = "scan your sky",
+                FontFamily = Ui.Display, FontSize = 19,
+                TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center
+            });
+
+            var pill = new Border
+            {
+                Content = row,
+                BackgroundColor = Theme.AccentSoft,
+                Stroke = Theme.TextPrimary.WithAlpha(0.55f), StrokeThickness = 1.6,
+                StrokeShape = new RoundRectangle { CornerRadius = 100 },
+                HeightRequest = 58, Padding = new Thickness(20, 0),
+                Margin = new Thickness(0, 2, 0, 4)
+            };
+            Ui.OnTap(pill, async (_, _) => await Nav.Push(() => new SkyViewPage()));
+            Ui.Describe(pill, "Scan your sky with the camera");
+            return pill;
         }
 
         // ----- the moon, drawn as it looks tonight -----

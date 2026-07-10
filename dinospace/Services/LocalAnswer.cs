@@ -56,6 +56,22 @@ namespace dinospace.Services
                 if (d != null) return d;
             }
 
+            // 1.7) A strongly-matched curated topic beats a passing mention of
+            //      an entity: "who was the first on the moon" is about the
+            //      landing, not the rock, and "will we ever go to mars" is
+            //      about the mission, not the planet's orbit.
+            var (strongNugget, strongKw) = Retriever.BestNuggetMatch(q);
+            if (strongNugget != null && strongKw.Length > 0)
+            {
+                var kwWords = strongKw.Split(' ');
+                bool beyondEntity = kwWords.Any(w =>
+                    w.Length >= 4 && !IsStopWord(w) &&
+                    !dinos.Any(d => EntityHasWord(d.Name, d.Aliases, w)) &&
+                    !spaces.Any(sp => EntityHasWord(sp.Name, sp.Aliases, w)));
+                if (kwWords.Length >= 3 || (kwWords.Length == 2 && beyondEntity))
+                    return strongNugget.Fact;
+            }
+
             // 2) A specific measurable stat about one entity ("how fast was it?").
             if (dinos.Count == 1)
             {
@@ -85,6 +101,21 @@ namespace dinospace.Services
             if (nugget != null) return nugget.Fact;
 
             return null;
+        }
+
+        // Words too common to prove a keyword reaches beyond an entity name.
+        private static readonly HashSet<string> StopWords = new()
+        {
+            "the", "was", "is", "are", "how", "why", "what", "did", "can", "could",
+            "will", "would", "you", "your", "does", "have", "had", "with", "from",
+            "about", "were", "ever", "when", "where", "there", "this", "that"
+        };
+        private static bool IsStopWord(string w) => StopWords.Contains(w);
+
+        private static bool EntityHasWord(string name, IEnumerable<string> aliases, string w)
+        {
+            bool In(string s) => Retriever.Normalize(s).Split(' ').Contains(w);
+            return In(name) || aliases.Any(In);
         }
 
         // ---------- distance between two space objects ----------

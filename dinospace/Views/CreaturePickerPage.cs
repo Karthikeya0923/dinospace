@@ -136,9 +136,8 @@ namespace dinospace.Views
     {
         public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
         {
-            string hex = value as string ?? "";
-            if (hex.Length == 0) return Colors.Transparent;
-            try { return Color.FromArgb(hex); } catch { return Colors.White; }
+            // Drawings are transparent PNGs now — no canvas colour behind them.
+            return Colors.Transparent;
         }
         public object? ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
             => throw new NotSupportedException();

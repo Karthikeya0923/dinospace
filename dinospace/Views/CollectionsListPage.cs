@@ -28,13 +28,6 @@ namespace dinospace.Views
 
             stack.Add(new Label
             {
-                Text = "Collections",
-                FontFamily = Ui.Display,
-                FontSize = Ui.S(32),
-                TextColor = Theme.TextPrimary
-            });
-            stack.Add(new Label
-            {
                 Text = "Curated, ranked lists to browse — or build your own.",
                 FontFamily = Ui.Fonts,
                 FontSize = Ui.S(14),
@@ -83,7 +76,7 @@ namespace dinospace.Views
             Ui.Describe(makeCard, "Make your own list of prehistoric creatures and space objects");
             stack.Add(makeCard);
 
-            var body = Nav.DetailScaffoldFixed("", new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never });
+            var body = Nav.DetailScaffoldFixed("collections", new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never });
             Content = Ui.PageRoot(body);
         }
 

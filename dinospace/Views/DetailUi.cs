@@ -15,7 +15,7 @@ namespace dinospace.Views
         // The design sheet's page header: back arrow left, the lowercase
         // section name centred, and a save star on the right that turns gold.
         public static View HeaderBar(string section, bool saved, Action onBack, Action onSave,
-            out Ui.IconToggle saveIcon)
+            out Ui.IconToggle saveIcon, bool showSave = true)
         {
             var back = Ui.Icon(Ui.IconBack, 24);
             var backWrap = new Border
@@ -39,7 +39,8 @@ namespace dinospace.Views
             var saveWrap = new Border
             {
                 Content = saveIcon, WidthRequest = 44, HeightRequest = 44,
-                BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent
+                BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent,
+                IsVisible = showSave
             };
             Ui.OnTap(saveWrap, (_, _) => onSave());
             Ui.Describe(saveWrap, saved ? "Remove from saved" : "Save this entry");

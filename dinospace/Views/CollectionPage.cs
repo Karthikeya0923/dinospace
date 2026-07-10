@@ -22,14 +22,13 @@ namespace dinospace.Views
         {
             var stack = new VerticalStackLayout { Spacing = 8, Padding = new Thickness(16, 4, 16, 24) };
 
-            stack.Add(new Label { Text = c?.Title ?? "Collection", FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary });
             stack.Add(new Label { Text = c?.Subtitle ?? "", FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), TextColor = Theme.TextSecondary, Margin = new Thickness(0, 0, 0, 8) });
 
             int rank = 1;
             foreach (var e in entries)
                 stack.Add(Row(rank++, e, accent));
 
-            var content = Nav.DetailScaffoldFixed("", new ScrollView { Content = stack });
+            var content = Nav.DetailScaffoldFixed(c?.Title ?? "Collection", new ScrollView { Content = stack });
             Content = Ui.PageRoot(content);
         }
 

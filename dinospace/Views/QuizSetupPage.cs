@@ -24,7 +24,6 @@ namespace dinospace.Views
         {
             var stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(18, 4, 18, 28) };
 
-            stack.Add(new Label { Text = "quiz time", FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary });
             stack.Add(new Label
             {
                 Text = "Pick a topic and how many questions you're up for.",
@@ -80,7 +79,7 @@ namespace dinospace.Views
             stack.Add(Ui.PrimaryButton("START QUIZ", async (_, _) =>
                 await Nav.Push(() => new QuizPage(_mode, _count))));
 
-            var body = Nav.DetailScaffoldFixed("", new ScrollView { Content = stack });
+            var body = Nav.DetailScaffoldFixed("quiz time", new ScrollView { Content = stack });
             Content = Ui.PageRoot(body);
         }
 
@@ -91,8 +90,7 @@ namespace dinospace.Views
             {
                 bool active = _mode == m;
                 // "Dinosaurs" stays the internal mode key; the chip reads
-                // "prehistoric creatures" like the rest of the app.
-                string display = m == "Dinosaurs" ? "Prehistoric creatures" : m;
+                string display = m;
                 var chip = new Border
                 {
                     Content = new Label

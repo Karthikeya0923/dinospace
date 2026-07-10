@@ -47,8 +47,8 @@ namespace dinospace.Views
         private void Build()
         {
             var stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(16, 4, 16, 24) };
-            stack.Add(new Label { Text = Ui.T("Dino Battle"), FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary });
-            stack.Add(new Label { Text = "Choose two creatures and see who would come out on top.", FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), TextColor = Theme.TextSecondary });
+            stack.Add(new Label { Text = Ui.T("Dino Battle"), FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary, HorizontalOptions = LayoutOptions.Center, HorizontalTextAlignment = TextAlignment.Center });
+            stack.Add(new Label { Text = "Choose two creatures and see who would come out on top.", FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), TextColor = Theme.TextSecondary, HorizontalOptions = LayoutOptions.Center, HorizontalTextAlignment = TextAlignment.Center });
 
             _arena = new Grid { ColumnSpacing = 10, Margin = new Thickness(0, 6) };
             _arena.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });

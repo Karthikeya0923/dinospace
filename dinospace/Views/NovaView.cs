@@ -31,7 +31,7 @@ namespace dinospace.Views
         private const int MaxSaved = 60;
 
         private const string Welcome =
-            "Hi, I'm NovaSaur! Ask me anything about prehistoric creatures or space — how big a T. Rex was, why Mars is red, or even for a joke or a story. I work right here on your device, no internet needed!";
+            "Hi, I'm NovaSaur! Ask me anything about dinosaurs or space — how big a T. Rex was, why Mars is red, or even for a joke or a story. I work right here on your device, no internet needed!";
 
         // A detail page can queue a question and switch to this tab.
         private static string? _pending;
