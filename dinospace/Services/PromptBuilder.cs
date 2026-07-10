@@ -60,7 +60,8 @@ namespace dinospace.Services
             //      actually covers — "what would happen if the moon
             //      disappeared" has a real physics answer, and kids deserve it
             //      instantly rather than a make-believe story.
-            if (creative && new[] { "disappear", "vanish", "was gone", "were gone", "exploded", "blew up", "blow up", "without the" }
+            if (creative && new[] { "disappear", "vanish", "was gone", "were gone", "exploded", "blew up", "blow up", "without the",
+                                     "touched a star", "touch a star", "touch the sun", "touched the sun" }
                     .Any(c => q.Contains(c)))
             {
                 var nug = Retriever.BestNugget(q);

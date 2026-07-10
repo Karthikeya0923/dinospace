@@ -34,6 +34,12 @@ namespace dinospace.Services
             var ranked = RankedAnswer.TryAnswer(q);
             if (ranked != null) return ranked;
 
+            // 0.7) Anything Scan Sky can point at — named stars (Mirfak!),
+            //      the Messier/Caldwell showpieces, all 88 constellations —
+            //      answered from the same catalogues the sky view draws.
+            var skyObj = SkyObjectAnswer.TryAnswer(q);
+            if (skyObj != null) return skyObj;
+
             var dinos = new List<Dinosaur>();
             var spaces = new List<SpaceObject>();
             foreach (var name in g.Entities)

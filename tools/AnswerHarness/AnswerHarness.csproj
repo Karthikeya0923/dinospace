@@ -27,6 +27,9 @@
     <Compile Include="..\..\dinospace\Services\NovaCreative.cs" />
     <Compile Include="..\..\dinospace\Services\NovaGuard.cs" />
     <Compile Include="..\..\dinospace\Services\SkyCalc.cs" />
+    <Compile Include="..\..\dinospace\Services\SkyCatalog.cs" />
+    <Compile Include="..\..\dinospace\Services\SkyDeepSkyCatalog.cs" />
+    <Compile Include="..\..\dinospace\Services\SkyObjectAnswer.cs" />
     <Compile Include="..\..\dinospace\Services\MeteorShowers.cs" />
   </ItemGroup>
 

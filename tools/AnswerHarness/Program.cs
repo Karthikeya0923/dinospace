@@ -584,8 +584,76 @@ foreach (var q in adultQs)
 }
 Console.WriteLine($"=== round 13 (adults): {k13} good, {f13} FLOPS ===");
 
+// round 14: EVERY object Scan Sky can name — all named catalogue stars
+// (Mirfak!), all 219 Messier/Caldwell deep-sky objects (by name AND by
+// M/C code), and all 88 constellations — through the phrasings the sky
+// view's own buttons send. Every one must come back instant and on-topic.
+var skyNames = new List<string>();
+foreach (var st in dinospace.SkyCatalog.Stars)
+    if (st.Name.Length > 0) skyNames.Add(st.Name);
+foreach (var dso in dinospace.SkyDeepSkyCatalog.All)
+{
+    string full = dso.Name;
+    int par = full.IndexOf(" (");
+    if (par > 0) { skyNames.Add(full[..par]); skyNames.Add(full[(par + 2)..].TrimEnd(')')); }
+    else skyNames.Add(full);
+}
+foreach (var c in dinospace.SkyData.All) skyNames.Add(c.Name);
+
+string[] skyForms = { "Tell me about {0}.", "what is {0}", "how bright is {0}", "where is {0}", "how far is {0}" };
+int k14 = 0, f14 = 0;
+foreach (var name in skyNames)
+foreach (var form in skyForms)
+{
+    string q = string.Format(form, name);
+    var turn = PromptBuilder.Build(q, new List<ChatMessage>(), new List<string>());
+    string? reply = (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic) ? turn.InstantReply : turn.OfflineFallback;
+    bool flop = reply == null || IsDodge(reply);
+    if (flop) { f14++; if (f14 <= 25) Console.WriteLine($"SKY-FLOP  {q}  ->  {Snip(reply ?? "(dead)")}"); }
+    else k14++;
+}
+Console.WriteLine($"=== round 14 (sky catalogue): {k14} good, {f14} FLOPS ===");
+
+// round 15: the hundred-thousand gauntlet. Every name NovaSaur should know —
+// encyclopedia entries, named stars, deep-sky objects, constellations —
+// crossed with a dozen question shapes and the filler words real people
+// wrap around them. ~90,000 generated questions; not one may dead-end or
+// dodge.
+var gNames = new List<string>(skyNames);
+foreach (var d in dinospace.Data.DinoData.All) gNames.Add(d.Name);
+foreach (var sp in dinospace.Data.SpaceData.All) gNames.Add(sp.Name);
+
+string[] shapes =
+{
+    "what is {0}", "tell me about {0}", "how big is {0}", "where is {0}", "{0}",
+    "what is {0} like", "facts about {0}", "how far away is {0}", "is {0} real",
+    "when can i see {0}", "how bright is {0}", "why is {0} famous",
+    "tell me a fact about {0}", "describe {0}", "whats special about {0}", "give me info on {0}",
+};
+var gWraps = new (string pre, string post)[]
+{
+    ("", ""), ("hey novasaur ", ""), ("please ", ""), ("umm ", ""),
+    ("can you tell me ", ""), ("i want to know ", ""), ("quick question ", ""),
+    ("", " please"), ("", " right now"), ("so ", ""), ("ok ", ""), ("", " thanks"),
+};
+int k15 = 0, f15 = 0; long asked15 = 0;
+foreach (var name in gNames)
+foreach (var shape in shapes)
+foreach (var (pre, post) in gWraps)
+{
+    string q = pre + string.Format(shape, name) + post;
+    asked15++;
+    var turn = PromptBuilder.Build(q, new List<ChatMessage>(), new List<string>());
+    string? reply = (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic) ? turn.InstantReply : turn.OfflineFallback;
+    bool flop = reply == null || IsDodge(reply);
+    if (flop) { f15++; if (f15 <= 30) Console.WriteLine($"GAUNTLET-FLOP  {q}  ->  {Snip(reply ?? "(dead)")}"); }
+    else k15++;
+}
+Console.WriteLine($"=== round 15 (hundred-thousand gauntlet): {asked15} asked, {k15} good, {f15} FLOPS ===");
+
 int grand = questions.Length + round2.Length + round3.Length + dinospace.Data.SuggestedQuestions.All.Count
-          + total + d6 + rankings.Length + q8 + q9 + q10 + q11 + kidQs.Length + adultQs.Length;
+          + total + d6 + rankings.Length + q8 + q9 + q10 + q11 + kidQs.Length + adultQs.Length
+          + k14 + f14 + (int)asked15;
 Console.WriteLine($"\n=== GRAND TOTAL: {grand} questions ===");
 
 // CI-friendly: hard-fail when a question truly dead-ends (no instant reply
@@ -594,4 +662,4 @@ Console.WriteLine($"\n=== GRAND TOTAL: {grand} questions ===");
 // phrasing isn't instant, or a battle has no verdict. Dodge/wrong-entity
 // counts in the entity batteries print above as advisories — the graders
 // are heuristic and flag correct answers that simply don't restate names.
-Environment.Exit(uncovered + m2 + m3 + m4 + dead + bad6 + m7 + m8 + dead9 + m10 + dead11 + f12 + f13 > 0 ? 1 : 0);
+Environment.Exit(uncovered + m2 + m3 + m4 + dead + bad6 + m7 + m8 + dead9 + m10 + dead11 + f12 + f13 + f14 + f15 > 0 ? 1 : 0);

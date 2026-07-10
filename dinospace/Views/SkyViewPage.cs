@@ -481,7 +481,6 @@ namespace dinospace.Views
             // drawn near the horizon, it can be named there too.
             var (mra, mdec) = SkyCalc.MoonRaDec(jd);
             var (mAlt, mAz) = SkyCalc.AltAz(mra, mdec, _lat, _lon, utc);
-            if (mAlt > -10)
             {
                 var e = SpaceData.ByName("Moon");
                 Consider(SepTo(mAlt, mAz), Ring, 12,
@@ -494,7 +493,6 @@ namespace dinospace.Views
             {
                 var (ra, dec, _) = SkyCalc.PlanetRaDec(b, jd);
                 var (alt, az) = SkyCalc.AltAz(ra, dec, _lat, _lon, utc);
-                if (alt <= -10) continue;
                 var e = SpaceData.ByName(b.ToString());
                 Consider(SepTo(alt, az), Ring, 6,
                          b.ToString(), alt < 0 ? "Planet · below the horizon right now" : "Planet",
@@ -504,7 +502,6 @@ namespace dinospace.Views
             // the sun, during the day
             var (sra, sdec) = SkyCalc.SunRaDec(jd);
             var (sAlt, sAz) = SkyCalc.AltAz(sra, sdec, _lat, _lon, utc);
-            if (sAlt > -10)
             {
                 var e = SpaceData.ByName("Sun");
                 Consider(SepTo(sAlt, sAz), Ring, 8,
@@ -525,7 +522,6 @@ namespace dinospace.Views
                     if (s.Mag > SkyViewDrawable.BrightStarMag) break;   // sorted by brightness
                     if (s.Name.Length == 0) continue;
                     var (n, e, u) = frame.Horizon(sv[i * 3], sv[i * 3 + 1], sv[i * 3 + 2]);
-                    if (u < 0) continue;
                     double sep = SepToVec(n, e, u);
                     Consider(sep, Ring * 0.8, 0,
                              s.Name,
@@ -544,17 +540,14 @@ namespace dinospace.Views
                     var d = dsos[i];
                     if (d.Mag > SkyViewDrawable.DsoShowMag) continue;
                     var (alt, az) = SkyCalc.AltAz(d.RaHours * 15.0, d.DecDeg, _lat, _lon, utc);
-                    if (alt < 1) continue;
                     Consider(SepTo(alt, az), Ring * 0.8, 0,
                              d.Name, d.Kind, d.Blurb, SpaceData.ByName(d.Name.Split(" (")[0]));
                 }
             }
 
-            // fall back to a constellation — but ONLY one whose stick-figure
-            // is actually drawn on screen right now, measured to the centre
-            // of its drawn stars. Invisible regions (Grus, Microscopium…)
-            // can never claim the card again.
-            if (name == null && (skyDark || _drawable.ShowAll))
+            // fall back to a constellation whose stick-figure is on screen,
+            // measured to the centre of its drawn stars.
+            if (name == null)
             {
                 string? bestFig = null; double bestPx = 170;
                 foreach (var f in SkyMap.Figures)
@@ -563,7 +556,6 @@ namespace dinospace.Views
                     foreach (var st in f.Stars)
                     {
                         var (alt, az) = SkyCalc.AltAz(st.ra * 15.0, st.dec, _lat, _lon, utc);
-                        if (alt < 0) continue;
                         var (x, y, vis) = SkyMap.Project(alt, az, view);
                         if (!vis) continue;
                         sx += x; sy += y; n++;
@@ -580,6 +572,26 @@ namespace dinospace.Views
                     // Only link when the encyclopedia truly has THIS
                     // constellation (like Orion) — never a lookalike entry.
                     entry = SpaceData.ByName(bestFig);
+                }
+            }
+
+            // last tier: whichever of the 88 constellation regions the
+            // crosshair is inside — so the card ALWAYS says a name, no
+            // matter where you point (Lynx included).
+            if (name == null)
+            {
+                Constellation? nearest = null; double bestSep = double.MaxValue;
+                foreach (var c in SkyData.All)
+                {
+                    var (alt, az) = SkyCalc.AltAz(c.RaHours * 15.0, c.DecDeg, _lat, _lon, utc);
+                    double sep = SkyMap.Separation(alt, az, _alt, _az);
+                    if (sep < bestSep) { bestSep = sep; nearest = c; }
+                }
+                if (nearest != null)
+                {
+                    name = nearest.Name; kind = "Constellation";
+                    blurb = nearest.Blurb + ".";
+                    entry = SpaceData.ByName(nearest.Name);
                 }
             }
 
@@ -707,7 +719,6 @@ namespace dinospace.Views
             canvas.DrawPath(horizon);
 
             // ---- constellation figures with glow lines ----
-            if (skyDark || ShowAll)
                 foreach (var f in SkyMap.Figures)
                 {
                     var pts = new (float x, float y, bool ok)[f.Stars.Length];
@@ -715,7 +726,7 @@ namespace dinospace.Views
                     {
                         var (alt, az) = SkyCalc.AltAz(f.Stars[i].ra * 15.0, f.Stars[i].dec, Lat, Lon, utc);
                         var (x, y, vis) = SkyMap.Project(alt, az, v);
-                        pts[i] = (x, y, vis && alt > -8);
+                        pts[i] = (x, y, vis);
                     }
                     bool any = false;
                     foreach (var (a, b) in f.Lines)
@@ -747,7 +758,6 @@ namespace dinospace.Views
                     if (s.Mag > BrightStarMag) break;   // catalogue is sorted brightest-first
                     if (s.Name.Length == 0) continue;
                     var (n, e, u) = frame.Horizon(sv[i * 3], sv[i * 3 + 1], sv[i * 3 + 2]);
-                    if (u < -0.05) continue;
                     var (x, y, vis) = SkyMap.ProjectVector(n, e, u, v);
                     if (!vis) continue;
 
@@ -772,7 +782,6 @@ namespace dinospace.Views
                     var d = dsos[i];
                     if (d.Mag > DsoShowMag) continue;
                     var (alt, az) = SkyCalc.AltAz(d.RaHours * 15.0, d.DecDeg, Lat, Lon, utc);
-                    if (alt < 1) continue;
                     var (x, y, vis) = SkyMap.Project(alt, az, v);
                     if (!vis) continue;
                     var dia = new PathF();
@@ -786,12 +795,29 @@ namespace dinospace.Views
                 }
             }
 
+            // ---- every remaining constellation, named at its heart (view-all) ----
+            if (ShowAll)
+            {
+                foreach (var c in SkyData.All)
+                {
+                    bool hasFigure = false;
+                    foreach (var f in SkyMap.Figures)
+                        if (f.Name == c.Name) { hasFigure = true; break; }
+                    if (hasFigure) continue;
+                    var (alt, az) = SkyCalc.AltAz(c.RaHours * 15.0, c.DecDeg, Lat, Lon, utc);
+                    var (x, y, vis) = SkyMap.Project(alt, az, v);
+                    if (!vis) continue;
+                    canvas.FontColor = labelC.WithAlpha(0.55f);
+                    canvas.FontSize = 12;
+                    canvas.DrawString(c.Name, x, y, HorizontalAlignment.Center);
+                }
+            }
+
             // ---- planets with their signature looks ----
             foreach (var b in Enum.GetValues<SkyCalc.Body>())
             {
                 var (ra, dec, _) = SkyCalc.PlanetRaDec(b, jd);
                 var (alt, az) = SkyCalc.AltAz(ra, dec, Lat, Lon, utc);
-                if (alt < -10) continue;
                 var (x, y, vis) = SkyMap.Project(alt, az, v);
                 if (!vis) continue;
                 DrawPlanet(canvas, b, x, y, labelC);
@@ -800,14 +826,12 @@ namespace dinospace.Views
             // ---- the moon: phase-correct, with maria ----
             var (mra2, mdec2) = SkyCalc.MoonRaDec(jd);
             var (moonAlt, moonAz) = SkyCalc.AltAz(mra2, mdec2, Lat, Lon, utc);
-            if (moonAlt > -10)
             {
                 var (mx, my, mvis) = SkyMap.Project(moonAlt, moonAz, v);
                 if (mvis) DrawMoon(canvas, mx, my, 13, SkyCalc.MoonElongation(jd), labelC);
             }
 
             // ---- the sun ----
-            if (sunAlt > -10)
             {
                 var (sx, sy, svis) = SkyMap.Project(sunAlt, sunAz, v);
                 if (svis)
