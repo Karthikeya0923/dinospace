@@ -60,8 +60,16 @@ namespace dinospace.Services
             if (acks.Contains(q))
                 return "Glad you think so! What else would you like to know about dinosaurs or space?";
 
-            if (Phrase(q, "thank you") || Word(q, "thanks") || Word(q, "thx") || Word(q, "ty"))
-                return "You're welcome! Want to ask another dinosaur or space question?";
+            // Only when the message is ESSENTIALLY nothing but thanks —
+            // "canopus thanks" or "how far is Sirius thanks" carry a real
+            // question and must not be brushed off with "you're welcome".
+            {
+                var tw = new HashSet<string> { "thank", "thanks", "thankyou", "thx", "ty", "you", "so", "much", "a", "lot", "very" };
+                bool onlyThanks = (Phrase(q, "thank you") || Word(q, "thanks") || Word(q, "thx") || Word(q, "ty"))
+                                  && q.Split(' ', StringSplitOptions.RemoveEmptyEntries).All(tw.Contains);
+                if (onlyThanks)
+                    return "You're welcome! Want to ask another dinosaur or space question?";
+            }
 
             if (Phrase(q, "who are you") || Phrase(q, "what are you") || Phrase(q, "your name") || Phrase(q, "who made you"))
                 return "I'm NovaSaur, the dinosaur and space guide inside DinoSpace. I run right on your device and I can answer questions about dinosaurs and outer space.";

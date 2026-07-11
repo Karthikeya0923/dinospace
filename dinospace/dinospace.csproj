@@ -64,10 +64,10 @@
 	<ItemGroup>
 		<!-- App Icon — cream storybook page with the telescope-and-moon art
 		     from the sticker sheet; drop replacement PNGs in to rebrand -->
-		<MauiIcon Include="Resources\AppIcon\appicon.png" ForegroundFile="Resources\AppIcon\appiconfg.png" Color="#EEF1E2" />
+		<MauiIcon Include="Resources\AppIcon\appicon.png" ForegroundFile="Resources\AppIcon\appiconfg.png" Color="#E9EDDA" />
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.png" Color="#EEF1E2" BaseSize="192,192" />
+		<MauiSplashScreen Include="Resources\Splash\splash.png" Color="#E9EDDA" BaseSize="192,192" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />

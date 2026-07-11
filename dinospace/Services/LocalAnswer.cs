@@ -22,9 +22,17 @@ namespace dinospace.Services
         {
             if (string.IsNullOrWhiteSpace(question)) return null;
 
-            // 0) Live sky questions ("is the moon full tonight?") — the model
-            //    can't know tonight's sky, but the Sky Tonight engine can.
-            var sky = SkyAnswer(q);
+            // 0) Anything Scan Sky can point at — named stars (Mirfak!),
+            //    the Messier/Caldwell showpieces, all 88 constellations —
+            //    answered from the same catalogues the sky view draws. This
+            //    outranks the live tonight-report so "when can I see Sirius"
+            //    talks about SIRIUS, not about tonight in general.
+            var skyObj = SkyObjectAnswer.TryAnswer(q);
+            if (skyObj != null) return skyObj;
+
+            // 0.2) Live sky questions ("is the moon full tonight?") — the
+            //      model can't know tonight's sky, but the Sky Tonight engine can.
+            var sky = SkyAnswer(q, g);
             if (sky != null) return sky;
 
             // 0.5) Ranking, ordering, counting and list questions ("top 5
@@ -33,12 +41,6 @@ namespace dinospace.Services
             //      shrink them down to a single creature.
             var ranked = RankedAnswer.TryAnswer(q);
             if (ranked != null) return ranked;
-
-            // 0.7) Anything Scan Sky can point at — named stars (Mirfak!),
-            //      the Messier/Caldwell showpieces, all 88 constellations —
-            //      answered from the same catalogues the sky view draws.
-            var skyObj = SkyObjectAnswer.TryAnswer(q);
-            if (skyObj != null) return skyObj;
 
             var dinos = new List<Dinosaur>();
             var spaces = new List<SpaceObject>();
@@ -164,7 +166,7 @@ namespace dinospace.Services
         // Questions about tonight's actual sky, answered by the same astronomy
         // engine behind Sky Tonight. Cues are kept tight so "how big is the
         // moon" still goes to the encyclopedia, not the sky report.
-        private static string? SkyAnswer(string q)
+        private static string? SkyAnswer(string q, Grounding? g = null)
         {
             bool tonight = Has(q, "tonight", "now", "currently", "today", "evening");
 
@@ -189,7 +191,10 @@ namespace dinospace.Services
             bool wantsSky = (Has(q, "sky", "see", "visible", "spot", "look", "out") && tonight)
                           || (Has(q, "constellation", "constellations") && Has(q, "see", "visible", "tonight", "now", "above", "overhead", "out", "my"))
                           || (Has(q, "planet", "planets") && Has(q, "see", "visible", "tonight", "now", "spot", "out"));
-            if (wantsSky) return SkySummary();
+            // …but "when can I see a T. Rex right now" names a creature — the
+            // general tonight-report must never swallow a question about a
+            // specific thing.
+            if (wantsSky && (g == null || g.Entities.Count == 0)) return SkySummary();
 
             // Sunset and sunrise times ("why does the sun rise" stays conceptual).
             if (!q.StartsWith("why") &&
@@ -349,7 +354,7 @@ namespace dinospace.Services
             if (Has(q, "eat", "eats", "ate", "diet", "food", "meat", "plants", "plant", "carnivore", "herbivore", "omnivore", "hunt", "prey"))
                 return DietAnswer(d);
 
-            if (Has(q, "fast", "fastest", "speed", "quick", "quickest", "quickly", "slow", "slowest", "run", "runs", "running", "swim", "sprint"))
+            if (Has(q, "fast", "fastest", "speed", "quickest", "quickly", "slow", "slowest", "run", "runs", "running", "swim", "sprint"))
             {
                 if (string.IsNullOrEmpty(d.Speed)) return null;
                 return Trim($"{d.Name} could move at around {Pretty(d.Speed)}. {SpeedFlavor(d)}");
@@ -417,10 +422,12 @@ namespace dinospace.Services
             if ((q.Split(' ').FirstOrDefault() ?? "") == "why") return null; // "why" wants an explanation, not a number
 
             if (Has(q, "big", "bigger", "biggest", "large", "largest", "size", "wide", "diameter", "across", "radius"))
-                return Stat(s, new[] { "diameter", "width" }, v => $"{s.Name} is about {v} across.");
+                return Stat(s, new[] { "diameter", "width" },
+                    v => $"{s.Name} is about {v} across — {LowerLead(s.ShortDescription.TrimEnd('.'))}.");
 
             if (Has(q, "far", "distance", "away", "close"))
-                return Stat(s, new[] { "distance", "orbit", "location", "altitude" }, v => $"{s.Name} is {LowerLead(v)}.");
+                return Stat(s, new[] { "distance", "orbit", "location", "altitude" },
+                    v => $"{s.Name} is {LowerLead(v)} — {LowerLead(s.ShortDescription.TrimEnd('.'))}.");
 
             if (Has(q, "hot", "temperature", "temp", "cold", "warm"))
             {
@@ -503,7 +510,7 @@ namespace dinospace.Services
                 return Dimension(a, b, x => x.Height, "taller", "tall");
             if (Has(q, "heavy", "heavier", "heaviest", "weigh", "weight"))
                 return Dimension(a, b, x => x.Weight, "heavier", "");
-            if (Has(q, "fast", "faster", "fastest", "speed", "quick"))
+            if (Has(q, "fast", "faster", "fastest", "speed", "quickly", "quickest"))
                 return Dimension(a, b, x => x.Speed, "faster", "");
             if (Has(q, "strong", "stronger", "strongest") || q.Contains("bite"))
                 return BiteDimension(a, b);
@@ -635,7 +642,12 @@ namespace dinospace.Services
             "who","which","of","to","in","on","for","and","or","it","its","they","them","their","that",
             "this","these","those","tell","me","about","you","your","have","has","had","would","could",
             "can","will","like","really","actually","some","any","kind","type","one","there","here","get",
-            "got","just","so","then","than","with","as","at","by","from","if","but","much","many","big","old"
+            "got","just","so","then","than","with","as","at","by","from","if","but","much","many","big","old",
+            // conversational filler ("i want to know…", "one more thing…",
+            // "quick question…") must never count as content words — "know"
+            // used to match "known moons" and hijack the whole answer.
+            "want","know","thing","things","more","question","quick","real","curious","wondering",
+            "friend","asked","school","project","love","info","whats","deal","explain","describe","give"
         };
 
         // Finds the sentence from the entry that best matches the question's

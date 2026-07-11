@@ -2,6 +2,7 @@ using dinospace;
 using dinospace.Services;
 using dinospace.Models;
 
+
 // Interrogates NovaSaur's answer pipeline exactly the way the app does:
 // PromptBuilder.Build -> InstantReply (good) or Prompt (needs the model).
 // Every question a normal person types should come back INSTANT.
@@ -601,18 +602,25 @@ foreach (var dso in dinospace.SkyDeepSkyCatalog.All)
 foreach (var c in dinospace.SkyData.All) skyNames.Add(c.Name);
 
 string[] skyForms = { "Tell me about {0}.", "what is {0}", "how bright is {0}", "where is {0}", "how far is {0}" };
-int k14 = 0, f14 = 0;
+int k14 = 0, f14 = 0, shown14 = 0;
 foreach (var name in skyNames)
 foreach (var form in skyForms)
 {
     string q = string.Format(form, name);
     var turn = PromptBuilder.Build(q, new List<ChatMessage>(), new List<string>());
     string? reply = (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic) ? turn.InstantReply : turn.OfflineFallback;
-    bool flop = reply == null || IsDodge(reply);
+    // The quality bar: a real reply, no dodge, long enough to actually say
+    // something, and it must talk about the thing that was asked.
+    bool flop = reply == null || IsDodge(reply) || reply.Length < 40 || !Mentions(reply, name);
     if (flop) { f14++; if (f14 <= 25) Console.WriteLine($"SKY-FLOP  {q}  ->  {Snip(reply ?? "(dead)")}"); }
-    else k14++;
+    else
+    {
+        k14++;
+        if (form.StartsWith("Tell me") && shown14 < 6 && (shown14++ >= 0))
+            Console.WriteLine($"sample    {q}  ->  {reply}");
+    }
 }
-Console.WriteLine($"=== round 14 (sky catalogue): {k14} good, {f14} FLOPS ===");
+Console.WriteLine($"=== round 14 (sky catalogue, quality-graded): {k14} good, {f14} FLOPS ===");
 
 // round 15: the hundred-thousand gauntlet. Every name NovaSaur should know —
 // encyclopedia entries, named stars, deep-sky objects, constellations —
@@ -629,27 +637,48 @@ string[] shapes =
     "what is {0} like", "facts about {0}", "how far away is {0}", "is {0} real",
     "when can i see {0}", "how bright is {0}", "why is {0} famous",
     "tell me a fact about {0}", "describe {0}", "whats special about {0}", "give me info on {0}",
+    "what do you know about {0}", "explain {0}", "i love {0} tell me more", "whats the deal with {0}",
 };
 var gWraps = new (string pre, string post)[]
 {
     ("", ""), ("hey novasaur ", ""), ("please ", ""), ("umm ", ""),
     ("can you tell me ", ""), ("i want to know ", ""), ("quick question ", ""),
     ("", " please"), ("", " right now"), ("so ", ""), ("ok ", ""), ("", " thanks"),
+    ("hi ", ""), ("hey ", ""), ("yo ", ""), ("excuse me ", ""), ("wait ", ""),
+    ("also ", ""), ("and ", ""), ("but ", ""), ("hmm ", ""), ("real quick ", ""),
+    ("one more thing ", ""), ("i was wondering ", ""), ("my friend asked ", ""),
+    ("for school ", ""), ("for my project ", ""), ("", " for school"),
+    ("", " if you can"), ("", " im curious"),
+};
+
+// Case variants multiply the whole gauntlet by three — SHOUTED questions and
+// Title Case questions must answer exactly like lowercase ones.
+Func<string, string>[] gCases =
+{
+    t => t,
+    t => t.ToUpperInvariant(),
+    t => System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(t),
 };
 int k15 = 0, f15 = 0; long asked15 = 0;
 foreach (var name in gNames)
 foreach (var shape in shapes)
 foreach (var (pre, post) in gWraps)
+foreach (var recase in gCases)
 {
-    string q = pre + string.Format(shape, name) + post;
+    string q = recase(pre + string.Format(shape, name) + post);
     asked15++;
     var turn = PromptBuilder.Build(q, new List<ChatMessage>(), new List<string>());
     string? reply = (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic) ? turn.InstantReply : turn.OfflineFallback;
-    bool flop = reply == null || IsDodge(reply);
+    // Same quality bar as round 14: real, on-subject, substantial.
+    bool flop = reply == null || IsDodge(reply) || reply.Length < 40 || !Mentions(reply, name);
     if (flop) { f15++; if (f15 <= 30) Console.WriteLine($"GAUNTLET-FLOP  {q}  ->  {Snip(reply ?? "(dead)")}"); }
-    else k15++;
+    else
+    {
+        k15++;
+        if (asked15 % 100000 == 0) Console.WriteLine($"sample    {q}  ->  {Snip(reply!)}");
+    }
 }
-Console.WriteLine($"=== round 15 (hundred-thousand gauntlet): {asked15} asked, {k15} good, {f15} FLOPS ===");
+Console.WriteLine($"=== round 15 (the million gauntlet, quality-graded): {asked15} asked, {k15} good, {f15} FLOPS ===");
 
 int grand = questions.Length + round2.Length + round3.Length + dinospace.Data.SuggestedQuestions.All.Count
           + total + d6 + rankings.Length + q8 + q9 + q10 + q11 + kidQs.Length + adultQs.Length

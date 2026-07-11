@@ -58,6 +58,23 @@ namespace dinospace.Services
                           .GroupBy(h => h.Name).Select(x => x.First())
                           .Take(keep).ToList();
 
+            // An exact name plus a fuzzy lookalike (Triton + Troodon) is a
+            // mirage, not a comparison — the glue words ("to", "from") that
+            // open the two-entity door are also ordinary filler. Keep the
+            // fuzzy runner-up only when the question truly compares two
+            // things, or measures a distance between two SKY objects (a
+            // dinosaur can't be "far away from" anything, so a fuzzy dino on
+            // a distance question is always the mirage).
+            if (top.Count == 2 && top[0].Score >= ExactTier && top[1].Score < ExactTier)
+            {
+                bool battleish = HasAny(normalizedQuestion, "vs", "versus", "beat", "beats", "fight", "battle",
+                                        "compare", "against", "win", "stronger", "bigger", "faster", "between", "or");
+                bool bothSpace = top[0].Space != null && top[1].Space != null;
+                bool distancey = HasAny(normalizedQuestion, "far", "distance");
+                if (!battleish && !(distancey && bothSpace))
+                    top.RemoveAt(1);
+            }
+
             var sb = new StringBuilder();
             foreach (var h in top)
             {
@@ -121,58 +138,71 @@ namespace dinospace.Services
             return keys;
         }
 
+        // Exact matches (a name/alias literally present, or an exact token)
+        // live in a higher tier than any fuzzy typo match, so a fuzzy hit on
+        // one entity's long alias can NEVER tie a real exact hit on another
+        // (the "kronosaurus" vs "brontosaurus" bug). Within a tier, longer
+        // matches win.
+        private const int ExactTier = 1000;
+
         private static int Score(string q, string[] tokens, List<string> keys)
         {
             string padded = " " + q + " ";
             int best = 0;
+            void Exact(int len) { int v = ExactTier + len; if (v > best) best = v; }
+            void Fuzzy(int len) { if (len > best) best = len; }   // stays below ExactTier
+
             foreach (var key in keys)
             {
                 if (string.IsNullOrWhiteSpace(key)) continue;
-                if (padded.Contains(" " + key + " ")) { if (key.Length > best) best = key.Length; continue; }
+                if (padded.Contains(" " + key + " ")) { Exact(key.Length); continue; }
                 if (key.Contains(' ')) continue;
 
                 foreach (var t in tokens)
                 {
+                    // The assistant's own name is not an entity: "hey
+                    // novasaur" must never fuzzy-drift onto Mosasaurus.
+                    if (t is "novasaur" or "novasaurs" or "nova" or "dinospace") continue;
                     string tok = t.Length > 3 && t.EndsWith("s") ? t[..^1] : t;
-                    if (tok == key || t == key) { if (key.Length > best) best = key.Length; break; }
+                    if (tok == key || t == key) { Exact(key.Length); break; }
                     // kid abbreviation: 5+ letter start of an 8+ letter name
                     if (key.Length >= 8 && tok.Length >= 5 && tok.Length < key.Length && key.StartsWith(tok))
-                    { if (tok.Length > best) best = tok.Length; break; }
+                    { Fuzzy(tok.Length); break; }
                     // Typo tolerance. The RAW token is checked as well as the
                     // de-pluralised one: dinosaur names end in "s", so stripping
                     // it turned near-misses like "trisaratops" into far misses.
                     if (key.Length >= 5 && Math.Abs(t.Length - key.Length) <= 2)
                     {
                         int allowed = key.Length >= 7 ? 2 : 1;
-                        if ((EditDistanceAtMost(t, key, allowed) || EditDistanceAtMost(tok, key, allowed)
+                        if (EditDistanceAtMost(t, key, allowed) || EditDistanceAtMost(tok, key, allowed)
                              // doubled-letter typos ("neptoon", "satturn") sit
                              // just past the edit budget — squash runs first
                              || EditDistanceAtMost(Squash(t), Squash(key), allowed))
-                            && key.Length - 1 > best) best = key.Length - 1;
+                            Fuzzy(key.Length - 1);
                     }
                     // very short names ("sun") still deserve one slip — "the
                     // son" — but only when the first letter agrees, so common
                     // words can't drift onto planets.
                     if (key.Length is 3 or 4 && t.Length == key.Length && t[0] == key[0]
-                        && EditDistanceAtMost(t, key, 1) && key.Length - 1 > best) best = key.Length - 1;
+                        && EditDistanceAtMost(t, key, 1)) Fuzzy(key.Length - 1);
                 }
 
                 // Split-typo repair: kids write "tirano sarus" or "veloci
                 // raptor". Adjacent tokens are joined and matched against the
                 // long names. A fuzzy joined hit scores well BELOW an exact
-                // name (-4), because question words glued to a name ("did
+                // name, because question words glued to a name ("did
                 // spinosaurus") can lie within edit distance of some OTHER
                 // dinosaur — the real name must always outrank the mirage.
                 if (key.Length >= 8)
                     for (int i = 0; i + 1 < tokens.Length; i++)
                     {
                         string joined = tokens[i] + tokens[i + 1];
-                        if (joined == key) { if (key.Length > best) best = key.Length; break; }
+                        if (joined == key) { Exact(key.Length); break; }
                         if (joined.Length >= 10 && Math.Abs(joined.Length - key.Length) <= 3)
                         {
                             int allowed = key.Length >= 12 ? 4 : 2;
-                            if (EditDistanceAtMost(joined, key, allowed)
-                                && key.Length - 4 > best) best = key.Length - 4;
+                            if (EditDistanceAtMost(joined, key, allowed))
+                                Fuzzy(key.Length - 4);
                         }
                     }
             }

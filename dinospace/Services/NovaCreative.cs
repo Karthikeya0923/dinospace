@@ -26,7 +26,10 @@ namespace dinospace.Services
         public static string? QuickReply(string q)
         {
             if (IsJoke(q)) return Joke();
-            if (WantsFact(q)) return "Here's a cool one: " + FactData.Random() + " Want another, or shall we dig into a dinosaur or planet?";
+            // "a fact ABOUT Sirius" is a question about Sirius, not a request
+            // for a random fact — let the real answer layers take it.
+            if (WantsFact(q) && !(" " + q + " ").Contains(" about "))
+                return "Here's a cool one: " + FactData.Random() + " Want another, or shall we dig into a dinosaur or planet?";
             return null;
         }
 

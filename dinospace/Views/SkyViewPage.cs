@@ -522,6 +522,7 @@ namespace dinospace.Views
                     if (s.Mag > SkyViewDrawable.BrightStarMag) break;   // sorted by brightness
                     if (s.Name.Length == 0) continue;
                     var (n, e, u) = frame.Horizon(sv[i * 3], sv[i * 3 + 1], sv[i * 3 + 2]);
+                    if (u < 0) continue;   // only stars genuinely above the horizon
                     double sep = SepToVec(n, e, u);
                     Consider(sep, Ring * 0.8, 0,
                              s.Name,
@@ -540,6 +541,7 @@ namespace dinospace.Views
                     var d = dsos[i];
                     if (d.Mag > SkyViewDrawable.DsoShowMag) continue;
                     var (alt, az) = SkyCalc.AltAz(d.RaHours * 15.0, d.DecDeg, _lat, _lon, utc);
+                    if (alt < 1) continue;   // only what is genuinely up
                     Consider(SepTo(alt, az), Ring * 0.8, 0,
                              d.Name, d.Kind, d.Blurb, SpaceData.ByName(d.Name.Split(" (")[0]));
                 }
@@ -556,6 +558,7 @@ namespace dinospace.Views
                     foreach (var st in f.Stars)
                     {
                         var (alt, az) = SkyCalc.AltAz(st.ra * 15.0, st.dec, _lat, _lon, utc);
+                        if (alt < 0) continue;   // a figure counts only where it is really up
                         var (x, y, vis) = SkyMap.Project(alt, az, view);
                         if (!vis) continue;
                         sx += x; sy += y; n++;
@@ -575,17 +578,20 @@ namespace dinospace.Views
                 }
             }
 
-            // last tier: whichever of the 88 constellation regions the
-            // crosshair is inside — so the card ALWAYS says a name, no
-            // matter where you point (Lynx included).
-            if (name == null)
+            // view-all labels the other constellations at their hearts —
+            // those drawn labels are nameable when the crosshair is on them.
+            // Pointing at genuinely empty sky names NOTHING: no ghosts.
+            if (name == null && _drawable.ShowAll)
             {
-                Constellation? nearest = null; double bestSep = double.MaxValue;
+                Constellation? nearest = null; double bestPx2 = 130;
                 foreach (var c in SkyData.All)
                 {
                     var (alt, az) = SkyCalc.AltAz(c.RaHours * 15.0, c.DecDeg, _lat, _lon, utc);
-                    double sep = SkyMap.Separation(alt, az, _alt, _az);
-                    if (sep < bestSep) { bestSep = sep; nearest = c; }
+                    if (alt < 0) continue;   // label isn't drawn -> not nameable
+                    var (x, y, vis) = SkyMap.Project(alt, az, view);
+                    if (!vis) continue;
+                    double dpx = Math.Sqrt((x - cxPx) * (x - cxPx) + (y - cyPx) * (y - cyPx));
+                    if (dpx < bestPx2) { bestPx2 = dpx; nearest = c; }
                 }
                 if (nearest != null)
                 {
@@ -726,7 +732,7 @@ namespace dinospace.Views
                     {
                         var (alt, az) = SkyCalc.AltAz(f.Stars[i].ra * 15.0, f.Stars[i].dec, Lat, Lon, utc);
                         var (x, y, vis) = SkyMap.Project(alt, az, v);
-                        pts[i] = (x, y, vis);
+                        pts[i] = (x, y, vis && alt > -2);
                     }
                     bool any = false;
                     foreach (var (a, b) in f.Lines)
@@ -758,6 +764,7 @@ namespace dinospace.Views
                     if (s.Mag > BrightStarMag) break;   // catalogue is sorted brightest-first
                     if (s.Name.Length == 0) continue;
                     var (n, e, u) = frame.Horizon(sv[i * 3], sv[i * 3 + 1], sv[i * 3 + 2]);
+                    if (u < -0.03) continue;   // only real, above-horizon stars
                     var (x, y, vis) = SkyMap.ProjectVector(n, e, u, v);
                     if (!vis) continue;
 
@@ -782,6 +789,7 @@ namespace dinospace.Views
                     var d = dsos[i];
                     if (d.Mag > DsoShowMag) continue;
                     var (alt, az) = SkyCalc.AltAz(d.RaHours * 15.0, d.DecDeg, Lat, Lon, utc);
+                    if (alt < 1) continue;   // only what is genuinely up
                     var (x, y, vis) = SkyMap.Project(alt, az, v);
                     if (!vis) continue;
                     var dia = new PathF();
@@ -805,6 +813,7 @@ namespace dinospace.Views
                         if (f.Name == c.Name) { hasFigure = true; break; }
                     if (hasFigure) continue;
                     var (alt, az) = SkyCalc.AltAz(c.RaHours * 15.0, c.DecDeg, Lat, Lon, utc);
+                    if (alt < 0) continue;   // label only constellations that are up
                     var (x, y, vis) = SkyMap.Project(alt, az, v);
                     if (!vis) continue;
                     canvas.FontColor = labelC.WithAlpha(0.55f);
