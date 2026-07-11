@@ -214,7 +214,7 @@ namespace dinospace.Views
         private static View AskNovaCard()
         {
             var info = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };
-            info.Add(new Label { Text = "Ask NovaSaur about tonight", FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
+            info.Add(new Label { Text = "Ask Nova about tonight", FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
             info.Add(new Label
             {
                 Text = "Your AI guide reads tonight's sky and tells you where to look",
@@ -244,7 +244,7 @@ namespace dinospace.Views
                 NovaView.Ask("What's in the sky tonight?");
                 await Nav.Push(() => new NovaPage());
             });
-            Ui.Describe(card, "Ask NovaSaur what's in the sky tonight");
+            Ui.Describe(card, "Ask Nova what's in the sky tonight");
             return card;
         }
 

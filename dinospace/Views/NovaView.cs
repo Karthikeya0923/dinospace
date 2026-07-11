@@ -31,7 +31,7 @@ namespace dinospace.Views
         private const int MaxSaved = 60;
 
         private const string Welcome =
-            "Hi, I'm NovaSaur! Ask me anything about dinosaurs or space — how big a T. Rex was, why Mars is red, or even for a joke or a story. I work right here on your device, no internet needed!";
+            "Hi, I'm Nova! Ask me anything about dinosaurs or space — how big a T. Rex was, why Mars is red, or even for a joke or a story. I work right here on your device, no internet needed!";
 
         // A detail page can queue a question and switch to this tab.
         private static string? _pending;
@@ -162,7 +162,7 @@ namespace dinospace.Views
                 Content = Ui.Mascot("mascot_ask", 28, Ui.IconAsk)
             };
             var title = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
-            title.Add(new Label { Text = "ask novasaur", FontFamily = Ui.Display, FontSize = 21, TextColor = Theme.TextPrimary });
+            title.Add(new Label { Text = "ask nova", FontFamily = Ui.Display, FontSize = 21, TextColor = Theme.TextPrimary });
             title.Add(new Label { Text = Ui.T("Your dino & space buddy"), FontFamily = Ui.Fonts, FontSize = 11.5, TextColor = Theme.TextSecondary });
 
             var clear = new Label { Text = Ui.T("Clear"), FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.Center };
@@ -424,7 +424,7 @@ namespace dinospace.Views
         private void StartThinking()
         {
             _thinkingTicks = 0;
-            var label = new Label { Text = "NovaSaur is thinking…", FontFamily = Ui.Fonts, FontSize = Ui.S(13), FontAttributes = FontAttributes.Italic, TextColor = Theme.TextSecondary, HorizontalOptions = LayoutOptions.Start };
+            var label = new Label { Text = "Nova is thinking…", FontFamily = Ui.Fonts, FontSize = Ui.S(13), FontAttributes = FontAttributes.Italic, TextColor = Theme.TextSecondary, HorizontalOptions = LayoutOptions.Start };
             _thinkingLabel = label;
             _thinking = label;
             _chatStack.Add(label);
@@ -435,7 +435,7 @@ namespace dinospace.Views
                 if (_thinkingLabel == null) return;
                 _thinkingLabel.Text = _thinkingTicks switch
                 {
-                    1 => "NovaSaur is thinking… reading up on your question.",
+                    1 => "Nova is thinking… reading up on your question.",
                     2 => "Still thinking — big questions take a moment…",
                     _ => "Almost there — writing the answer…",
                 };

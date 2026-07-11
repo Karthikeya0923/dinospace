@@ -110,7 +110,7 @@ namespace dinospace.Services
 
             // The production system prompt. Order matters for a small model:
             // role, format, honesty rule, injection guard.
-            sb.Append("You are NovaSaur, a friendly dinosaur and space expert inside the DinoSpace app. ");
+            sb.Append("You are Nova, a friendly dinosaur and space expert inside the DinoSpace app. ");
             sb.Append(creative
                 ? "Write a fun, vivid answer of 3 to 5 short sentences a 10-year-old would love; keep any real facts accurate. No emojis, no lists, no markdown. "
                 : "Answer in 2 to 3 short, clear, accurate sentences a 10-year-old understands. No emojis, no lists, no markdown. ");
@@ -155,7 +155,7 @@ namespace dinospace.Services
             }
 
             text = text.Trim();
-            foreach (var prefix in new[] { "model", "A:", "Answer:", "NovaSaur:" })
+            foreach (var prefix in new[] { "model", "A:", "Answer:", "Nova:", "NovaSaur:" })
                 if (text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                     text = text[prefix.Length..].Trim();
 

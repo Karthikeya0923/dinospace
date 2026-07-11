@@ -114,7 +114,7 @@ namespace dinospace.Views
             // stars, nebulae and galaxies included, not just encyclopedia entries.
             var askLabel = new Label
             {
-                Text = "Ask NovaSaur", FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), FontAttributes = FontAttributes.Bold,
+                Text = "Ask Nova", FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), FontAttributes = FontAttributes.Bold,
                 TextColor = Color.FromArgb("#F2E8C8"), HorizontalTextAlignment = TextAlignment.Center
             };
             _askBtn = new Border
@@ -132,7 +132,7 @@ namespace dinospace.Views
                 NovaView.Ask($"Tell me about {what}.");
                 await Nav.Push(() => new NovaPage());
             });
-            Ui.Describe(_askBtn, "Ask NovaSaur about this object");
+            Ui.Describe(_askBtn, "Ask Nova about this object");
 
             // The card tucks into the top-right corner, out of the sky's way —
             // the crosshair and the stars stay unblocked in the middle.

@@ -38,7 +38,7 @@ namespace dinospace.Views
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(0.62, GridUnitType.Star) });
 
             grid.Add(Tile(Ui.Icon(Ui.IconScanSky, 44), "scan sky", async () => await Nav.Push(() => new SkyPage())), 0, 0);
-            grid.Add(Tile(Ui.Mascot("mascot_ask", 44, Ui.IconAsk), "ask novasaur", async () => await Nav.Push(() => new NovaPage())), 1, 0);
+            grid.Add(Tile(Ui.Mascot("mascot_ask", 44, Ui.IconAsk), "ask nova", async () => await Nav.Push(() => new NovaPage())), 1, 0);
             grid.Add(Tile(Ui.Icon(Ui.IconBattles, 44), "dino battle", () => { RootPage.Current?.SwitchTab(2); return System.Threading.Tasks.Task.CompletedTask; }), 0, 1);
             grid.Add(Tile(Ui.Icon(Ui.IconDraw, 44), "draw entry", async () => await Nav.Push(() => new CreationsPage())), 1, 1);
             grid.Add(Tile(Ui.Icon(Ui.IconEncyclopedia, 44), "encyclopedia", () => { RootPage.Current?.SwitchTab(1); return System.Threading.Tasks.Task.CompletedTask; }), 0, 2);

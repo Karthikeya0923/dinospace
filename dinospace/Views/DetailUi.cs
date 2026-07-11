@@ -276,7 +276,7 @@ namespace dinospace.Views
         public static Border Card(View content) => Ui.Card(content);
 
         public static View AskNovaButton(string name)
-            => Ui.PrimaryButton($"ASK NOVASAUR ABOUT {name.ToUpperInvariant()}", async (_, _) =>
+            => Ui.PrimaryButton($"ASK NOVA ABOUT {name.ToUpperInvariant()}", async (_, _) =>
             {
                 NovaView.Ask($"Tell me an interesting fact about {name}.");
                 await Nav.Push(() => new NovaPage());

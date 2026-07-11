@@ -111,7 +111,7 @@ namespace dinospace.Views
 
             if (state == DownloadState.Downloading && ModelManager.IsLocalInstall)
             {
-                _title.Text = "Setting up NovaSaur…";
+                _title.Text = "Setting up Nova…";
                 _caption.Text = "Joining the model files Google Play delivered — about a minute.";
                 _bar.IsVisible = true;
                 _bar.Progress = ModelManager.Progress;
@@ -143,7 +143,7 @@ namespace dinospace.Views
                 return;
             }
 
-            _title.Text = "Give NovaSaur its full brain";
+            _title.Text = "Give Nova its full brain";
             _caption.Text = "Nova already answers instantly from its encyclopedia. Add the on-device AI model (2.4 GB, Wi-Fi recommended) and open-ended questions get full streamed answers — still completely offline.";
             _bar.IsVisible = false;
             _actionLabel.Text = "Download — 2.4 GB";

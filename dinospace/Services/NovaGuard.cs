@@ -42,7 +42,7 @@ namespace dinospace.Services
 
             string[] greetings = { "hi", "hello", "hey", "yo", "hiya", "sup", "hi there", "hello there", "hey there", "good morning", "good afternoon", "good evening", "howdy" };
             if (greetings.Contains(q))
-                return "Hey! I'm NovaSaur. Ask me anything about dinosaurs or space — I love both.";
+                return "Hey! I'm Nova. Ask me anything about dinosaurs or space — I love both.";
 
             if (q is "bye" or "goodbye" or "see you" or "good night" or "goodnight" or "cya")
                 return "See you later! Come back any time you're curious about dinosaurs or space.";
@@ -72,7 +72,7 @@ namespace dinospace.Services
             }
 
             if (Phrase(q, "who are you") || Phrase(q, "what are you") || Phrase(q, "your name") || Phrase(q, "who made you"))
-                return "I'm NovaSaur, the dinosaur and space guide inside DinoSpace. I run right on your device and I can answer questions about dinosaurs and outer space.";
+                return "I'm Nova, the dinosaur and space guide inside DinoSpace. I run right on your device and I can answer questions about dinosaurs and outer space.";
 
             if (Phrase(q, "what can you do") || Phrase(q, "how do you work") || Phrase(q, "help") && q.Length <= 6)
                 return "I answer questions about dinosaurs, prehistoric creatures, and space. Try me — how big was a Brachiosaurus? Why is Mars red?";

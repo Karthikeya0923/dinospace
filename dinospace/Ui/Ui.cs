@@ -43,7 +43,7 @@ namespace dinospace
         public const string IconSettings = "icon_settings";            // settings more tile
         public const string IconAppearance = "icon_appearance";        // settings row
         public const string IconSound = "icon_sound";                  // settings row
-        public const string IconNovaAi = "icon_novasaur";              // settings row
+        public const string IconNovaAi = "icon_nova";                  // settings row
         public const string IconPrivacy = "icon_privacy";              // settings row
         public const string IconAbout = "icon_about";                  // settings row
         public const string IconContact = "icon_contact";              // settings row

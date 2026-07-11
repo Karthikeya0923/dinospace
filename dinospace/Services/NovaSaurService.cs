@@ -250,7 +250,7 @@ namespace dinospace.Services
             return NovaGuard.CheckAnswer(cleaned) ?? cleaned;
 #else
             await Task.CompletedTask;
-            return "NovaSaur runs on Android right now.";
+            return "Nova runs on Android right now.";
 #endif
         }
 
@@ -351,7 +351,7 @@ namespace dinospace.Services
             return NovaGuard.CheckAnswer(cleaned) ?? cleaned;
 #else
             await Task.CompletedTask;
-            return "NovaSaur runs on Android right now.";
+            return "Nova runs on Android right now.";
 #endif
         }
 

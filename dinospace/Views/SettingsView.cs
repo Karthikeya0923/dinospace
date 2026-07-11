@@ -25,7 +25,7 @@ namespace dinospace.Views
             stack.Add(Group(
                 IconRow(Ui.IconAppearance, "Appearance", async () => await Nav.Push(() => new ThemesPage())),
                 SoundRow(),
-                IconRow(Ui.IconNovaAi, "NovaSaur AI", async () => await Nav.Push(() => new HostPage("novasaur ai", NovaAiBody()))),
+                IconRow(Ui.IconNovaAi, "Nova AI", async () => await Nav.Push(() => new HostPage("nova ai", NovaAiBody()))),
                 IconRow(Ui.IconPrivacy, "Privacy", OpenPrivacy),
                 IconRow(Ui.IconAbout, "About DinoSpace", ShowAbout),
                 IconRow(Ui.IconContact, "Contact us", OpenFeedback)));
@@ -170,7 +170,7 @@ namespace dinospace.Views
             var col = new VerticalStackLayout { Spacing = 12, Padding = new Thickness(18, 4, 18, 28) };
             col.Add(new Label
             {
-                Text = "NovaSaur answers instantly from its encyclopedia. Add the optional on-device AI model and open-ended questions get full streamed answers — still completely offline.",
+                Text = "Nova answers instantly from its encyclopedia. Add the optional on-device AI model and open-ended questions get full streamed answers — still completely offline.",
                 FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), LineHeight = 1.4, TextColor = Theme.TextSecondary
             });
             col.Add(new NovaModelCard(hideWhenInstalled: false));
@@ -201,7 +201,7 @@ namespace dinospace.Views
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null) return;
             bool sure = await page.DisplayAlertAsync("Reset everything?",
-                "This clears your streak, quiz scores, viewed history, bookmarks, and your NovaSaur chat. The encyclopedia and the AI itself stay. This can't be undone.",
+                "This clears your streak, quiz scores, viewed history, bookmarks, and your Nova chat. The encyclopedia and the AI itself stay. This can't be undone.",
                 "Reset", "Cancel");
             if (!sure) return;
             StatsStore.ClearProgress();
