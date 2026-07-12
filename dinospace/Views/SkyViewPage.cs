@@ -246,7 +246,6 @@ namespace dinospace.Views
         }
 
         private bool _locationTried;
-        private bool _locationReal;
         private async System.Threading.Tasks.Task RefreshLocationAsync()
         {
             // Keeps retrying on every appearance until a real fix lands — a
@@ -258,7 +257,6 @@ namespace dinospace.Views
             {
                 var loc = await SkyService.RequestDeviceLocationAsync();
                 if (loc == null) { _locationTried = false; return; }
-                _locationReal = true;
                 if (Math.Abs(loc.Lat - _lat) < 0.05 && Math.Abs(loc.Lon - _lon) < 0.05) return;
                 _lat = loc.Lat; _lon = loc.Lon;
                 _drawable.Lat = _lat; _drawable.Lon = _lon;
@@ -348,7 +346,7 @@ namespace dinospace.Views
             {
                 if (platformView is AndroidX.Camera.View.PreviewView pv)
                 {
-                    pv.SetScaleType(AndroidX.Camera.View.PreviewView.ScaleType.FillCenter);
+                    pv.SetScaleType(AndroidX.Camera.View.PreviewView.ScaleType.FillCenter!);
                     return;
                 }
                 if (platformView is Android.Views.ViewGroup vg)

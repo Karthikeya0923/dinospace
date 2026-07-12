@@ -95,7 +95,7 @@ namespace dinospace.Views
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
             root.Add(header, 0, 0);
             root.Add(_list, 0, 1);
-            Content = root;
+            Content = Ui.CapWidth(root);
 
             SyncSegments();
             Refresh();

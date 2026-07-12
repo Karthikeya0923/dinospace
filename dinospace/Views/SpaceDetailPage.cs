@@ -74,7 +74,7 @@ namespace dinospace.Views
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
             main.Add(header, 0, 0);
-            main.Add(new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never }, 0, 1);
+            main.Add(new ScrollView { Content = Ui.CapWidth(stack), VerticalScrollBarVisibility = ScrollBarVisibility.Never }, 0, 1);
 
             Content = Ui.PageRoot(main);
         }

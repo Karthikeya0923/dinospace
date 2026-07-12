@@ -88,12 +88,14 @@ namespace dinospace.Services
         }
 
         // Requests for imagination rather than facts.
+        private static readonly string[] CreativeCues =
+        { " story ", " stories ", " imagine ", " pretend ", " poem ", " joke ", " song ", " rap ",
+          " make up ", " write ", " invent ", " adventure ", " what if ", " what would happen if " };
+
         private static bool IsCreative(string q)
         {
             string p = " " + q + " ";
-            string[] cues = { " story ", " stories ", " imagine ", " pretend ", " poem ", " joke ", " song ", " rap ",
-                              " make up ", " write ", " invent ", " adventure ", " what if ", " what would happen if " };
-            return cues.Any(c => p.Contains(c));
+            return CreativeCues.Any(c => p.Contains(c));
         }
 
         // Kept deliberately tiny: on a phone CPU, prompt length is the main

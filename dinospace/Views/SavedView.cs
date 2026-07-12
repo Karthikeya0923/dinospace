@@ -40,7 +40,7 @@ namespace dinospace.Views
             root.Add(stack);
             root.Add(_list);
 
-            Content = new ScrollView { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
+            Content = new ScrollView { Content = Ui.CapWidth(root), VerticalScrollBarVisibility = ScrollBarVisibility.Never };
             Refresh();
         }
 

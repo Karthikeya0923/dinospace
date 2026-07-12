@@ -6,11 +6,16 @@ namespace dinospace.Data
 
     public static class DinoData
     {
-        private static List<Dinosaur>? _cache;
-        public static List<Dinosaur> All => _cache ??= BuildWithBiteForce();
+        // Lazy<T> so the first touch is thread-safe; the name lookup is a
+        // dictionary because ByName is on the answer pipeline's hot path.
+        private static readonly System.Lazy<List<Dinosaur>> _cache = new(BuildWithBiteForce);
+        public static List<Dinosaur> All => _cache.Value;
+
+        private static readonly System.Lazy<Dictionary<string, Dinosaur>> _byName =
+            new(() => All.ToDictionary(d => d.Name));
 
         public static Dinosaur? ByName(string name)
-            => All.FirstOrDefault(d => d.Name == name);
+            => _byName.Value.TryGetValue(name, out var d) ? d : null;
 
 
         private static readonly Dictionary<string, string> BiteForcePsi = new()

@@ -67,11 +67,21 @@ namespace dinospace.Services
             // a distance question is always the mirage).
             if (top.Count == 2 && top[0].Score >= ExactTier && top[1].Score < ExactTier)
             {
-                bool battleish = HasAny(normalizedQuestion, "vs", "versus", "beat", "beats", "fight", "battle",
-                                        "compare", "against", "win", "stronger", "bigger", "faster", "between", "or");
+                // Strong battle words ("vs", "beat", "fight") make a real
+                // matchup on their own. A bare "or"/"between" is far weaker —
+                // it's a genuine comparison only between two things of the SAME
+                // kind ("trex or spinosaurus"). Left unchecked, the "or" in a
+                // fixed phrase ("is the ice giant real or made up") kept a
+                // cross-type fuzzy mirage (Uranus + a phantom Giganotosaurus).
+                bool strongBattle = HasAny(normalizedQuestion, "vs", "versus", "beat", "beats", "fight", "fights",
+                                           "battle", "compare", "against", "win", "wins", "stronger", "bigger", "faster");
+                bool weakOr = HasAny(normalizedQuestion, "or", "between");
+                bool sameType = (top[0].Dino != null && top[1].Dino != null)
+                             || (top[0].Space != null && top[1].Space != null);
                 bool bothSpace = top[0].Space != null && top[1].Space != null;
                 bool distancey = HasAny(normalizedQuestion, "far", "distance");
-                if (!battleish && !(distancey && bothSpace))
+                bool keepFuzzy = strongBattle || (weakOr && sameType) || (distancey && bothSpace);
+                if (!keepFuzzy)
                     top.RemoveAt(1);
             }
 
@@ -104,20 +114,26 @@ namespace dinospace.Services
         private static readonly HashSet<string> StopKeys = new()
         { "black", "hole", "star", "planet", "giant", "great", "super", "space", "little", "big", "the" };
 
+        // Every entity's normalized match keys, computed once — rebuilding
+        // them per question was the single hottest allocation in the pipeline.
+        private static readonly Lazy<List<(string Name, Dinosaur? Dino, SpaceObject? Space, List<string> Keys)>> EntityKeys =
+            new(() =>
+            {
+                var list = new List<(string, Dinosaur?, SpaceObject?, List<string>)>();
+                foreach (var d in DinoData.All) list.Add((d.Name, d, null, Keys(d.Name, d.Aliases)));
+                foreach (var s in SpaceData.All) list.Add((s.Name, null, s, Keys(s.Name, s.Aliases)));
+                return list;
+            });
+
         private static List<Hit> FindEntities(string q)
         {
             var hits = new List<Hit>();
             var tokens = q.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-            foreach (var d in DinoData.All)
+            foreach (var (name, dino, space, keys) in EntityKeys.Value)
             {
-                int score = Score(q, tokens, Keys(d.Name, d.Aliases));
-                if (score > 0) hits.Add(new Hit(d.Name, d, null, score));
-            }
-            foreach (var s in SpaceData.All)
-            {
-                int score = Score(q, tokens, Keys(s.Name, s.Aliases));
-                if (score > 0) hits.Add(new Hit(s.Name, null, s, score));
+                int score = Score(q, tokens, keys);
+                if (score > 0) hits.Add(new Hit(name, dino, space, score));
             }
             return hits;
         }
@@ -258,6 +274,17 @@ namespace dinospace.Services
         public static KnowledgeNugget? BestNugget(string normalizedQuestion)
             => BestNuggetMatch(normalizedQuestion).nugget;
 
+        // Every nugget's keywords, normalized once with their word counts —
+        // normalizing ~600 keyword strings per question was pure waste.
+        private static readonly Lazy<List<(KnowledgeNugget Nugget, (string Key, int Words, int Score)[] Keys)>> NuggetKeys =
+            new(() => KnowledgeBase.Nuggets
+                .Select(n => (n, n.Keywords
+                    .Select(Normalize)
+                    .Where(k => k.Length > 0)
+                    .Select(k => (k, k.Split(' ').Length, k.Split(' ').Length + k.Length / 6))
+                    .ToArray()))
+                .ToList());
+
         // The best nugget plus the longest keyword phrase that matched it.
         // Callers use the phrase length to let a real topic ("first on the
         // moon") outrank a passing mention of an entity ("moon").
@@ -267,22 +294,20 @@ namespace dinospace.Services
             KnowledgeNugget? best = null;
             int bestScore = 0;
             string bestKw = "";
-            foreach (var n in KnowledgeBase.Nuggets)
+            foreach (var (nugget, keys) in NuggetKeys.Value)
             {
                 int score = 0;
-                string longest = "";
-                foreach (var kw in n.Keywords)
+                string longest = ""; int longestWords = 0;
+                foreach (var (k, words, kwScore) in keys)
                 {
-                    string k = Normalize(kw);
-                    if (k.Length == 0) continue;
                     if (padded.Contains(" " + k + " ") || padded.Contains(" " + k))
                     {
-                        score += k.Split(' ').Length + k.Length / 6;
-                        if (longest.Length == 0 || k.Split(' ').Length > longest.Split(' ').Length)
-                            longest = k;
+                        score += kwScore;
+                        if (longest.Length == 0 || words > longestWords)
+                        { longest = k; longestWords = words; }
                     }
                 }
-                if (score > bestScore) { bestScore = score; best = n; bestKw = longest; }
+                if (score > bestScore) { bestScore = score; best = nugget; bestKw = longest; }
             }
             return (best, bestKw);
         }

@@ -59,6 +59,39 @@ namespace dinospace
         // text exactly as authored.
         public static string T(string text) => AppLayout.Playful ? text.ToLowerInvariant() : text;
 
+        // The screen's width in device-independent units, or 0 if unknown.
+        public static double ScreenDpWidth
+        {
+            get
+            {
+                try
+                {
+                    var d = DeviceDisplay.MainDisplayInfo;
+                    return d.Density > 0 ? d.Width / d.Density : d.Width;
+                }
+                catch { return 0; }
+            }
+        }
+
+        // True on tablets and other large screens (≥600dp wide). Phones stay
+        // false, so any tablet-only layout tweak is a guaranteed no-op there.
+        public static bool IsWideScreen => ScreenDpWidth >= 600;
+
+        // Centres content and caps it to a comfortable reading width on big
+        // screens, so a tablet doesn't stretch phone-first layouts edge to
+        // edge. Implemented as symmetric side padding rather than a width
+        // request, because that centres reliably inside any host — a
+        // ScrollView, a Grid or a ContentView alike. On phones it returns the
+        // view untouched — zero risk to the shipped phone layout.
+        public static View CapWidth(View content, double max = 640)
+        {
+            double w = ScreenDpWidth;
+            if (w < 600) return content;
+            double pad = (w - System.Math.Min(max, w - 24)) / 2;
+            if (pad < 1) return content;
+            return new Grid { Padding = new Thickness(pad, 0), Children = { content } };
+        }
+
         // ---------- type ----------
 
         public static Label Title(string text, double size = 30) => new()

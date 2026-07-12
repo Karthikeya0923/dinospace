@@ -17,7 +17,10 @@ namespace dinospace.Services
     // playful answers stay accurate and safe.
     public static class NovaCreative
     {
-        private static readonly Random _rng = new();
+        // Random.Shared is safe to call from any thread; a plain shared
+        // Random corrupts its state under concurrent use and starts
+        // returning zeros forever.
+        private static Random _rng => Random.Shared;
 
         // Instant, always-fun replies that shouldn't depend on the encyclopedia
         // or the model: jokes and "tell me a fact". Returns null if the question
@@ -305,8 +308,11 @@ namespace dinospace.Services
 
         // ---------- helpers ----------
 
+        // "haha" is deliberately NOT a cue: trailing laughter ("what is saturn
+        // haha") is punctuation, not a joke request — a bare "haha" is already
+        // an acknowledgement handled by NovaGuard.SmallTalk.
         private static bool IsJoke(string q) =>
-            Has(q, "joke", "jokes", "funny", "make me laugh", "tell me something funny", "haha");
+            Has(q, "joke", "jokes", "funny", "make me laugh", "tell me something funny");
 
         private static bool WantsFact(string q) =>
             Has(q, "fun fact", "fun facts", "a fact", "another fact", "random fact", "cool fact",

@@ -6,8 +6,8 @@ namespace dinospace.Data
     // "Did you know?" facts shown on Home and Play. Kept punchy and true.
     public static class FactData
     {
-        public static string Random() => Facts[_rng.Next(Facts.Count)];
-        private static readonly Random _rng = new();
+        // Random.Shared: safe from any thread, unlike a shared Random instance.
+        public static string Random() => Facts[System.Random.Shared.Next(Facts.Count)];
 
         public static readonly List<string> Facts = new()
         {

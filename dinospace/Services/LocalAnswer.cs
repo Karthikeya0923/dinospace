@@ -20,6 +20,42 @@ namespace dinospace.Services
         // Returns a finished, kid-friendly answer, or null to let the model try.
         public static string? TryAnswer(string question, string q, Grounding g, IReadOnlyList<string> carryover)
         {
+            var reply = Answer(question, q, g, carryover);
+            if (reply == null || reply.Length >= 70) return reply;
+
+            // A bare one-liner ("Neptune has 16 moons.") is true but thin.
+            // Follow it with one more real sentence about the same subject —
+            // the first fact the reply doesn't already tell — so every answer
+            // feels complete.
+            foreach (var name in g.Entities)
+            {
+                var extras = new List<string>();
+                var d = DinoData.ByName(name);
+                if (d != null)
+                {
+                    extras.Add(FirstFunFact(d.FunFactsText));
+                    extras.Add(FirstSentence(d.AboutText));
+                }
+                else if (SpaceData.ByName(name) is SpaceObject sp)
+                {
+                    extras.Add(FirstFunFact(sp.FunFactsText));
+                    extras.Add(FirstSentence(sp.AboutText));
+                    extras.Add(sp.ShortDescription?.Trim() ?? "");
+                }
+                foreach (var extra in extras)
+                {
+                    if (extra.Length == 0) continue;
+                    if (reply.Contains(extra, StringComparison.OrdinalIgnoreCase)) continue;
+                    reply = Trim(reply + " " + extra);
+                    break;
+                }
+                break;
+            }
+            return reply;
+        }
+
+        private static string? Answer(string question, string q, Grounding g, IReadOnlyList<string> carryover)
+        {
             if (string.IsNullOrWhiteSpace(question)) return null;
 
             // 0) Anything Scan Sky can point at — named stars (Mirfak!),
@@ -52,6 +88,12 @@ namespace dinospace.Services
                 if (s != null) spaces.Add(s);
             }
 
+            // "how do we know about Allosaurus", "facts about Titan" — when a
+            // named entity is the object of "about", the question is asking
+            // about THAT entity, so no generic topic nugget may answer over it.
+            bool entityIsObject = dinos.Any(d => AboutEntity(q, d.Name, d.Aliases))
+                                || spaces.Any(sp => AboutEntity(q, sp.Name, sp.Aliases));
+
             // 1) Two creatures head to head ("could a Spinosaurus beat a T. Rex?").
             if (dinos.Count >= 2 && IsComparison(q))
                 return Compare(dinos[0], dinos[1], q);
@@ -76,7 +118,7 @@ namespace dinospace.Services
                     w.Length >= 4 && !IsStopWord(w) &&
                     !dinos.Any(d => EntityHasWord(d.Name, d.Aliases, w)) &&
                     !spaces.Any(sp => EntityHasWord(sp.Name, sp.Aliases, w)));
-                if (kwWords.Length >= 3 || (kwWords.Length == 2 && beyondEntity))
+                if (!entityIsObject && (kwWords.Length >= 3 || (kwWords.Length == 2 && beyondEntity)))
                     return strongNugget.Fact;
             }
 
@@ -94,9 +136,13 @@ namespace dinospace.Services
 
             // 3) A curated general-knowledge fact (extinction, black holes, how
             //    stars form, …). Prefer it for conceptual "why/how/what is"
-            //    questions, or when no specific entity was matched.
-            var nugget = Retriever.BestNugget(q);
-            if (nugget != null && ((dinos.Count == 0 && spaces.Count == 0) || IsConceptual(q)))
+            //    questions, or when no specific entity was matched. (Step 1.7
+            //    already found the best nugget — no need to scan again.) But a
+            //    question whose object is a named entity ("how do we know about
+            //    Allosaurus") must answer about that entity, even though it
+            //    opens with a conceptual "how".
+            var nugget = strongNugget;
+            if (nugget != null && !entityIsObject && ((dinos.Count == 0 && spaces.Count == 0) || IsConceptual(q)))
                 return nugget.Fact;
 
             // 4) Anything else about a recognised entity: answer from its entry,
@@ -124,6 +170,24 @@ namespace dinospace.Services
         {
             bool In(string s) => Retriever.Normalize(s).Split(' ').Contains(w);
             return In(name) || aliases.Any(In);
+        }
+
+        // True when this entity's name/alias is the object of "about" — "tell
+        // me about Titan", "facts about the moon", "how do we know about t rex".
+        // Both the whole phrase ("t rex") and each distinctive word are checked,
+        // so a multi-word alias whose lead word is short still counts.
+        private static bool AboutEntity(string q, string name, IEnumerable<string> aliases)
+        {
+            bool After(string s) =>
+                q.Contains(" about " + s + " ") || q.EndsWith(" about " + s)
+                || q.Contains(" about the " + s + " ") || q.EndsWith(" about the " + s);
+            bool Hit(string raw)
+            {
+                string n = Retriever.Normalize(raw);
+                if (n.Length >= 3 && After(n)) return true;
+                return n.Split(' ', StringSplitOptions.RemoveEmptyEntries).Any(w => w.Length >= 3 && After(w));
+            }
+            return Hit(name) || aliases.Any(Hit);
         }
 
         // ---------- distance between two space objects ----------

@@ -36,12 +36,23 @@ namespace dinospace.Services
 
         // ---------- smalltalk (instant, no model) ----------
 
+        private static readonly HashSet<string> Greetings = new()
+        { "hi", "hello", "hey", "yo", "hiya", "sup", "hi there", "hello there", "hey there", "good morning", "good afternoon", "good evening", "howdy" };
+
+        private static readonly HashSet<string> Acks = new()
+        {
+            "ok", "okay", "okie", "k", "kk", "cool", "nice", "great", "awesome",
+            "wow", "woah", "whoa", "lol", "lmao", "haha", "hah", "oh", "ohh",
+            "got it", "i see", "makes sense", "interesting", "neat", "sweet",
+            "amazing", "fair", "true", "right", "yeah", "yea", "yep", "yup",
+            "no way", "damn", "crazy", "fr", "bet", "alright", "aight"
+        };
+
         public static string? SmallTalk(string q)
         {
             if (string.IsNullOrEmpty(q)) return null;
 
-            string[] greetings = { "hi", "hello", "hey", "yo", "hiya", "sup", "hi there", "hello there", "hey there", "good morning", "good afternoon", "good evening", "howdy" };
-            if (greetings.Contains(q))
+            if (Greetings.Contains(q))
                 return "Hey! I'm Nova. Ask me anything about dinosaurs or space — I love both.";
 
             if (q is "bye" or "goodbye" or "see you" or "good night" or "goodnight" or "cya")
@@ -49,15 +60,7 @@ namespace dinospace.Services
 
             // Short acknowledgements ("ok", "cool", "nice") get an instant, on
             // -brand reply so trivial one-word messages never bother the model.
-            string[] acks =
-            {
-                "ok", "okay", "okie", "k", "kk", "cool", "nice", "great", "awesome",
-                "wow", "woah", "whoa", "lol", "lmao", "haha", "hah", "oh", "ohh",
-                "got it", "i see", "makes sense", "interesting", "neat", "sweet",
-                "amazing", "fair", "true", "right", "yeah", "yea", "yep", "yup",
-                "no way", "damn", "crazy", "fr", "bet", "alright", "aight"
-            };
-            if (acks.Contains(q))
+            if (Acks.Contains(q))
                 return "Glad you think so! What else would you like to know about dinosaurs or space?";
 
             // Only when the message is ESSENTIALLY nothing but thanks —

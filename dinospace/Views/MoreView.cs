@@ -32,10 +32,15 @@ namespace dinospace.Views
             var grid = new Grid { ColumnSpacing = 14, RowSpacing = 14, Padding = new Thickness(18, 8, 18, 16) };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            // Four star-sized tile rows plus a shorter settings row: together
-            // they stretch to fill whatever height the page has.
-            for (int r = 0; r < 4; r++) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(0.62, GridUnitType.Star) });
+            // On a phone the tile rows are star-sized so they stretch to fill
+            // the page with no dead space. On a big screen that stretch turns
+            // the tiles into tall pills, so there they get a fixed card height
+            // and sit at the top instead.
+            bool wide = Ui.IsWideScreen;
+            for (int r = 0; r < 4; r++)
+                grid.RowDefinitions.Add(new RowDefinition { Height = wide ? new GridLength(190) : GridLength.Star });
+            grid.RowDefinitions.Add(new RowDefinition { Height = wide ? new GridLength(110) : new GridLength(0.62, GridUnitType.Star) });
+            if (wide) grid.VerticalOptions = LayoutOptions.Start;
 
             grid.Add(Tile(Ui.Icon(Ui.IconScanSky, 44), "scan sky", async () => await Nav.Push(() => new SkyPage())), 0, 0);
             grid.Add(Tile(Ui.Mascot("mascot_ask", 44, Ui.IconAsk), "ask nova", async () => await Nav.Push(() => new NovaPage())), 1, 0);
@@ -58,7 +63,7 @@ namespace dinospace.Views
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
             root.Add(title, 0, 0);
             root.Add(grid, 0, 1);
-            Content = root;
+            Content = Ui.CapWidth(root);
         }
 
         private View Tile(View icon, string label, Func<System.Threading.Tasks.Task> onTap, bool wide = false)

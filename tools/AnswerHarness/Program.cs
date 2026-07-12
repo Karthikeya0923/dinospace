@@ -1,3 +1,4 @@
+using System.Threading;
 using dinospace;
 using dinospace.Services;
 using dinospace.Models;
@@ -8,6 +9,53 @@ using dinospace.Models;
 // Every question a normal person types should come back INSTANT.
 var carryover = new List<string>();
 var history = new List<ChatMessage>();
+
+// round 0: the regression pinboard. Every bug this harness has ever caught,
+// pinned by name with the exact question that exposed it — if one of these
+// fails, that fix has regressed and the name says which bug is back.
+(string pinName, string pinQ, Func<string, bool> pinOk)[] pins =
+{
+    ("filler-quick-question", "quick question how big is jupiter",
+        r => r.Contains("Jupiter", StringComparison.OrdinalIgnoreCase) && r.Contains("across", StringComparison.OrdinalIgnoreCase)),
+    ("filler-trailing-thanks", "how far is sirius thanks",
+        r => r.Contains("Sirius", StringComparison.OrdinalIgnoreCase) && !r.StartsWith("You're welcome")),
+    ("filler-i-want-to-know", "i want to know about polaris",
+        r => r.Contains("Polaris", StringComparison.OrdinalIgnoreCase) && !r.StartsWith("Here's a cool one")),
+    ("fact-request-names-a-thing", "tell me a fact about vega",
+        r => r.Contains("Vega", StringComparison.OrdinalIgnoreCase) && !r.StartsWith("Here's a cool one")),
+    ("tonight-report-swallow", "when can i see sirius tonight",
+        r => r.Contains("Sirius", StringComparison.OrdinalIgnoreCase)),
+    ("fuzzy-mirage-triton", "how far is triton",
+        r => r.Contains("Triton", StringComparison.OrdinalIgnoreCase) && !r.Contains("Troodon", StringComparison.OrdinalIgnoreCase)),
+    ("exact-beats-fuzzy", "what is troodon",
+        r => r.Contains("Troodon", StringComparison.OrdinalIgnoreCase) && !r.Contains("Triton", StringComparison.OrdinalIgnoreCase)),
+    ("trailing-laughter-not-a-joke", "what is saturn haha",
+        r => r.Contains("Saturn", StringComparison.OrdinalIgnoreCase)),
+    ("bare-laughter-is-chat", "haha", r => r.Length > 0),
+    ("live-distance-pair", "how far is neptune from venus",
+        r => r.Contains("Neptune", StringComparison.OrdinalIgnoreCase) && r.Contains("Venus", StringComparison.OrdinalIgnoreCase) && r.Contains("apart")),
+    ("sky-tonight-summary", "whats in the sky tonight",
+        r => r.Contains("moon", StringComparison.OrdinalIgnoreCase)),
+    // "real or made up" — the bare "or" must not keep a cross-type fuzzy
+    // mirage ("giant" drifting to Giganotosaurus) over the exact planet.
+    ("or-phrase-not-a-battle", "is the ice giant real or made up",
+        r => r.Contains("Uranus", StringComparison.OrdinalIgnoreCase) && !r.Contains("Giganotosaurus", StringComparison.OrdinalIgnoreCase)),
+    // "how do we know about X" names X as the object — the answer must be
+    // about X, not the generic fossils nugget.
+    ("about-entity-beats-nugget", "how do we know about allosaurus",
+        r => r.Contains("Allosaurus", StringComparison.OrdinalIgnoreCase)),
+    ("about-space-entity-beats-nugget", "how do we know about callisto",
+        r => r.Contains("Callisto", StringComparison.OrdinalIgnoreCase)),
+};
+int pinFails = 0;
+foreach (var (pinName, pinQ, pinOk) in pins)
+{
+    var t = PromptBuilder.Build(pinQ, new List<ChatMessage>(), new List<string>());
+    string? r = (t.InstantReply != null && t.InstantReply != NovaGuard.OffTopic) ? t.InstantReply : t.OfflineFallback;
+    if (r == null || !pinOk(r))
+    { pinFails++; Console.WriteLine($"PIN-FAIL [{pinName}]  {pinQ}  ->  {Snip(r ?? "(dead)")}"); }
+}
+Console.WriteLine($"=== round 0 (regression pinboard): {pins.Length - pinFails}/{pins.Length} pinned bugs still fixed ===\n");
 
 string[] questions =
 {
@@ -610,8 +658,8 @@ foreach (var form in skyForms)
     var turn = PromptBuilder.Build(q, new List<ChatMessage>(), new List<string>());
     string? reply = (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic) ? turn.InstantReply : turn.OfflineFallback;
     // The quality bar: a real reply, no dodge, long enough to actually say
-    // something, and it must talk about the thing that was asked.
-    bool flop = reply == null || IsDodge(reply) || reply.Length < 40 || !Mentions(reply, name);
+    // something (60+ chars), and it must talk about the thing that was asked.
+    bool flop = reply == null || IsDodge(reply) || reply.Length < 60 || !Mentions(reply, name);
     if (flop) { f14++; if (f14 <= 25) Console.WriteLine($"SKY-FLOP  {q}  ->  {Snip(reply ?? "(dead)")}"); }
     else
     {
@@ -622,14 +670,32 @@ foreach (var form in skyForms)
 }
 Console.WriteLine($"=== round 14 (sky catalogue, quality-graded): {k14} good, {f14} FLOPS ===");
 
-// round 15: the hundred-thousand gauntlet. Every name NovaSaur should know —
-// encyclopedia entries, named stars, deep-sky objects, constellations —
-// crossed with a dozen question shapes and the filler words real people
-// wrap around them. ~90,000 generated questions; not one may dead-end or
-// dodge.
+// round 15: the generative gauntlet. Every name NovaSaur should know —
+// encyclopedia entries AND their aliases, named stars, deep-sky objects by
+// name and by catalogue code, constellations — crossed with the question
+// shapes, lead-ins, tails, case styles and end punctuation real people type.
+// The full space is names × shapes × wraps × cases × punctuation (over a
+// billion questions, run with --billion); the default run samples that same
+// space evenly so plain `dotnet run` stays CI-quick. Same quality bar either
+// way: not one question may dead-end, dodge, come back thin, or talk about
+// the wrong thing.
+bool fullGauntlet = args.Contains("--billion");
+
 var gNames = new List<string>(skyNames);
-foreach (var d in dinospace.Data.DinoData.All) gNames.Add(d.Name);
-foreach (var sp in dinospace.Data.SpaceData.All) gNames.Add(sp.Name);
+foreach (var d in dinospace.Data.DinoData.All)
+{
+    gNames.Add(d.Name);
+    foreach (var a in d.Aliases) if (a.Trim().Length >= 3) gNames.Add(TitleName(a));
+}
+foreach (var sp in dinospace.Data.SpaceData.All)
+{
+    gNames.Add(sp.Name);
+    foreach (var a in sp.Aliases) if (a.Trim().Length >= 3) gNames.Add(TitleName(a));
+}
+gNames = gNames.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+static string TitleName(string name) =>
+    System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(name.Trim().ToLowerInvariant());
 
 string[] shapes =
 {
@@ -638,57 +704,191 @@ string[] shapes =
     "when can i see {0}", "how bright is {0}", "why is {0} famous",
     "tell me a fact about {0}", "describe {0}", "whats special about {0}", "give me info on {0}",
     "what do you know about {0}", "explain {0}", "i love {0} tell me more", "whats the deal with {0}",
-};
-var gWraps = new (string pre, string post)[]
-{
-    ("", ""), ("hey novasaur ", ""), ("please ", ""), ("umm ", ""),
-    ("can you tell me ", ""), ("i want to know ", ""), ("quick question ", ""),
-    ("", " please"), ("", " right now"), ("so ", ""), ("ok ", ""), ("", " thanks"),
-    ("hi ", ""), ("hey ", ""), ("yo ", ""), ("excuse me ", ""), ("wait ", ""),
-    ("also ", ""), ("and ", ""), ("but ", ""), ("hmm ", ""), ("real quick ", ""),
-    ("one more thing ", ""), ("i was wondering ", ""), ("my friend asked ", ""),
-    ("for school ", ""), ("for my project ", ""), ("", " for school"),
-    ("", " if you can"), ("", " im curious"),
+    "whats {0}", "how old is {0}", "how far is {0}", "what can you tell me about {0}",
+    "teach me about {0}", "talk to me about {0}", "share a fact about {0}", "what should i know about {0}",
+    "help me learn about {0}", "im curious about {0}", "how would you describe {0}", "whats {0} all about",
+    "tell me something about {0}", "tell me more about {0}", "what else can you say about {0}", "is {0} interesting",
+    "whats the history of {0}", "how did {0} get its name", "when was {0} discovered", "who discovered {0}",
+    "what do scientists know about {0}", "does {0} really exist", "is {0} real or made up", "how do we know about {0}",
+    "give me the basics on {0}", "sum up {0} for me", "whats cool about {0}", "what makes {0} special",
+    "any facts about {0}", "whats so great about {0}", "what kind of thing is {0}", "why do people talk about {0}",
 };
 
-// Case variants multiply the whole gauntlet by three — SHOUTED questions and
-// Title Case questions must answer exactly like lowercase ones.
+string[] gPres =
+{
+    "", "hey novasaur ", "please ", "umm ", "can you tell me ", "i want to know ",
+    "quick question ", "so ", "ok ", "hi ", "hey ", "yo ", "excuse me ", "wait ",
+    "also ", "and ", "but ", "hmm ", "real quick ", "one more thing ",
+    "i was wondering ", "my friend asked ", "for school ", "for my project ",
+    "hey nova ", "hi nova ", "ok so ", "so um ", "uh ", "er ", "well ", "right ",
+    "listen ", "look ", "say ", "quick q ", "little question ", "random question ",
+    "honest question ", "serious question ", "before i forget ", "by the way ",
+    "anyway ", "actually ", "honestly ", "basically ", "just curious ",
+    "just wondering ", "i wonder ", "i gotta know ", "i need to know ",
+    "help me out ", "settle this ", "my sister asked ", "my brother asked ",
+    "my mom asked ", "my dad asked ", "my teacher asked ", "someone asked me ",
+    "tell me ",
+};
+
+string[] gPosts =
+{
+    "", " please", " right now", " thanks", " for school", " if you can",
+    " im curious", " thank you", " real quick", " im just curious", " just asking",
+    " just wondering", " for my homework", " for homework", " for my report",
+    " for class", " for a friend", " no rush", " if thats ok", " if you know",
+    " when you get a chance", " i gotta know", " im dying to know", " seriously",
+    " honestly", " right this second", " asap", " pls", " plz", " thx", " ty",
+    " ok", " lol", " haha",
+};
+
+// Case variants: SHOUTED, Title Case and lowercase questions must answer
+// exactly like the original. Punctuation variants ride on top — a question
+// mark, double exclamation or full stop can never change the answer.
 Func<string, string>[] gCases =
 {
     t => t,
     t => t.ToUpperInvariant(),
     t => System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(t),
+    t => t.ToLowerInvariant(),
 };
-int k15 = 0, f15 = 0; long asked15 = 0;
-foreach (var name in gNames)
-foreach (var shape in shapes)
-foreach (var (pre, post) in gWraps)
-foreach (var recase in gCases)
-{
-    string q = recase(pre + string.Format(shape, name) + post);
-    asked15++;
-    var turn = PromptBuilder.Build(q, new List<ChatMessage>(), new List<string>());
-    string? reply = (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic) ? turn.InstantReply : turn.OfflineFallback;
-    // Same quality bar as round 14: real, on-subject, substantial.
-    bool flop = reply == null || IsDodge(reply) || reply.Length < 40 || !Mentions(reply, name);
-    if (flop) { f15++; if (f15 <= 30) Console.WriteLine($"GAUNTLET-FLOP  {q}  ->  {Snip(reply ?? "(dead)")}"); }
-    else
-    {
-        k15++;
-        if (asked15 % 100000 == 0) Console.WriteLine($"sample    {q}  ->  {Snip(reply!)}");
-    }
-}
-Console.WriteLine($"=== round 15 (the million gauntlet, quality-graded): {asked15} asked, {k15} good, {f15} FLOPS ===");
+string[] gPuncts = { "", "?", "!!", "." };
 
-int grand = questions.Length + round2.Length + round3.Length + dinospace.Data.SuggestedQuestions.All.Count
+// What counts as "mentioning" each name, computed once: the name itself and
+// its distinctive words, plus — when the name is an encyclopedia entry or one
+// of its aliases — the entry's canonical name and every alias ("t rex" asked,
+// "Tyrannosaurus Rex" answered is a hit, exactly like round 5's grader).
+string[] MentionCandidates(string name)
+{
+    var list = new List<string>();
+    void AddForms(string n)
+    {
+        string ln = n.ToLowerInvariant().Trim();
+        if (ln.Length > 0 && !list.Contains(ln)) list.Add(ln);
+        foreach (var w in ln.Split(' ', '-', '.'))
+            if (w.Length >= 3 && !list.Contains(w)) list.Add(w);
+    }
+    AddForms(name);
+    var d = DinoData.All.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)
+                                          || x.Aliases.Any(a => a.Equals(name, StringComparison.OrdinalIgnoreCase)));
+    if (d != null) { AddForms(d.Name); foreach (var a in d.Aliases) AddForms(a); }
+    var s = SpaceData.All.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)
+                                           || x.Aliases.Any(a => a.Equals(name, StringComparison.OrdinalIgnoreCase)));
+    if (s != null) { AddForms(s.Name); foreach (var a in s.Aliases) AddForms(a); }
+    return list.ToArray();
+}
+
+static bool MentionsAny(string reply, string[] candidates)
+{
+    string low = reply.ToLowerInvariant();
+    foreach (var c in candidates)
+        if (low.Contains(c, StringComparison.Ordinal)) return true;
+    return false;
+}
+
+var mentionCandidates = new Dictionary<string, string[]>(StringComparer.Ordinal);
+foreach (var n in gNames) mentionCandidates[n] = MentionCandidates(n);
+
+long perName = (long)shapes.Length * gPres.Length * gPosts.Length * gCases.Length * gPuncts.Length;
+long total15 = perName * gNames.Count;
+long stride = fullGauntlet ? 1 : Math.Max(1, total15 / 1_000_000);
+Console.WriteLine($"\n=== round 15 (the gauntlet): {gNames.Count} names × {shapes.Length} shapes × " +
+                  $"{gPres.Length}×{gPosts.Length} wraps × {gCases.Length} cases × {gPuncts.Length} punctuation " +
+                  $"= {total15:N0} questions" +
+                  (fullGauntlet ? "" : $" — sampling every {stride:N0}th (run with --billion for all of them)") + " ===");
+
+long asked15 = 0, f15 = 0;
+var flopSamples = new System.Collections.Concurrent.ConcurrentQueue<string>();
+var gswatch = System.Diagnostics.Stopwatch.StartNew();
+object consoleGate = new();
+var emptyHistory = new List<ChatMessage>();
+var emptyCarry = new List<string>();
+
+void FlushCounts(ref long la, ref long lf)
+{
+    if (la == 0 && lf == 0) return;
+    long after = Interlocked.Add(ref asked15, la);
+    long before = after - la;
+    if (lf > 0) Interlocked.Add(ref f15, lf);
+    // A liveness line every 10 million questions: count, flops, throughput.
+    if (after / 10_000_000 != before / 10_000_000)
+    {
+        double qps = after / Math.Max(0.001, gswatch.Elapsed.TotalSeconds);
+        lock (consoleGate)
+            Console.WriteLine($"[gauntlet] {after:N0} asked | {Interlocked.Read(ref f15):N0} flops | {qps:N0} q/s | elapsed {gswatch.Elapsed:d\\.hh\\:mm\\:ss}");
+    }
+    la = 0; lf = 0;
+}
+
+System.Threading.Tasks.Parallel.ForEach(
+    Enumerable.Range(0, gNames.Count),
+    new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
+    ni =>
+    {
+        string name = gNames[ni];
+        var candidates = mentionCandidates[name];
+        // Identical questions produce identical replies, so each reply string
+        // is graded once per name — the pipeline still runs for every single
+        // question; only the pure grading arithmetic is remembered.
+        var graded = new Dictionary<string, bool>();
+        long la = 0, lf = 0;
+        long combo = ni * perName;
+        var shaped = new string[shapes.Length];
+        for (int si = 0; si < shapes.Length; si++) shaped[si] = string.Format(shapes[si], name);
+
+        foreach (var s in shaped)
+        foreach (var pre in gPres)
+        foreach (var post in gPosts)
+        {
+            string baseQ = pre + s + post;
+            foreach (var recase in gCases)
+            {
+                string cased = recase(baseQ);
+                foreach (var punct in gPuncts)
+                {
+                    long idx = combo++;
+                    if (stride != 1 && idx % stride != 0) continue;
+                    string q = punct.Length == 0 ? cased : cased + punct;
+                    la++;
+                    var turn = PromptBuilder.Build(q, emptyHistory, emptyCarry);
+                    string? reply = (turn.InstantReply != null && turn.InstantReply != NovaGuard.OffTopic) ? turn.InstantReply : turn.OfflineFallback;
+                    // The quality bar, same as round 14: a real reply, no
+                    // dodge, 60+ chars of substance, on the asked subject.
+                    bool flop;
+                    if (reply == null) flop = true;
+                    else if (!graded.TryGetValue(reply, out flop))
+                    {
+                        flop = IsDodge(reply) || reply.Length < 60 || !MentionsAny(reply, candidates);
+                        if (graded.Count < 4096) graded[reply] = flop;
+                    }
+                    if (flop)
+                    {
+                        lf++;
+                        if (flopSamples.Count < 40) flopSamples.Enqueue($"{q}  ->  {Snip(reply ?? "(dead)")}");
+                    }
+                    if ((la & 0x3FFFF) == 0) FlushCounts(ref la, ref lf);
+                }
+            }
+        }
+        FlushCounts(ref la, ref lf);
+    });
+
+long k15 = asked15 - f15;
+Console.WriteLine($"=== round 15 (the gauntlet, quality-graded): {asked15:N0} asked, {k15:N0} good, {f15:N0} FLOPS, " +
+                  $"{asked15 / Math.Max(0.001, gswatch.Elapsed.TotalSeconds):N0} q/s ===");
+foreach (var fs in flopSamples) Console.WriteLine("  GAUNTLET-FLOP  " + fs);
+
+long grand = questions.Length + round2.Length + round3.Length + dinospace.Data.SuggestedQuestions.All.Count
           + total + d6 + rankings.Length + q8 + q9 + q10 + q11 + kidQs.Length + adultQs.Length
-          + k14 + f14 + (int)asked15;
-Console.WriteLine($"\n=== GRAND TOTAL: {grand} questions ===");
+          + k14 + f14 + asked15 + pins.Length;
+Console.WriteLine($"\n=== GRAND TOTAL: {grand:N0} questions ===");
 
 // CI-friendly: hard-fail when a question truly dead-ends (no instant reply
 // AND no offline fallback), a suggestion chip can't answer instantly, a
 // distance pair goes unanswered, a ranking question fails, a knowledge-base
-// phrasing isn't instant, or a battle has no verdict. Dodge/wrong-entity
-// counts in the entity batteries print above as advisories — the graders
-// are heuristic and flag correct answers that simply don't restate names.
-Environment.Exit(uncovered + m2 + m3 + m4 + dead + bad6 + m7 + m8 + dead9 + m10 + dead11 + f12 + f13 + f14 + f15 > 0 ? 1 : 0);
+// phrasing isn't instant, a battle has no verdict, a pinned regression is
+// back, or the gauntlet finds a single flop. Dodge/wrong-entity counts in
+// the entity batteries print above as advisories — the graders are heuristic
+// and flag correct answers that simply don't restate names.
+bool anyFail = pinFails + uncovered + m2 + m3 + m4 + dead + bad6 + m7 + m8 + dead9 + m10 + dead11 + f12 + f13 + f14 > 0
+               || f15 > 0;
+Environment.Exit(anyFail ? 1 : 0);

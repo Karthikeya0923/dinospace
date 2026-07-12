@@ -7,11 +7,16 @@ namespace dinospace.Data
     // exploration. Categories drive the Explore filters.
     public static class SpaceData
     {
-        private static List<SpaceObject>? _cache;
-        public static List<SpaceObject> All => _cache ??= Build();
+        // Lazy<T> so the first touch is thread-safe; the name lookup is a
+        // dictionary because ByName is on the answer pipeline's hot path.
+        private static readonly System.Lazy<List<SpaceObject>> _cache = new(Build);
+        public static List<SpaceObject> All => _cache.Value;
+
+        private static readonly System.Lazy<Dictionary<string, SpaceObject>> _byName =
+            new(() => All.ToDictionary(s => s.Name));
 
         public static SpaceObject? ByName(string name)
-            => All.FirstOrDefault(s => s.Name == name);
+            => _byName.Value.TryGetValue(name, out var s) ? s : null;
 
         private static List<SpaceObject> Build() => new()
         {
@@ -325,7 +330,7 @@ namespace dinospace.Data
                 ShortDescription = "A giant star ready to explode as a supernova",
                 Stat1Label = "Distance", Stat1Value = "550 light-years",
                 Stat2Label = "Diameter", Stat2Value = "700× the Sun",
-                Stat3Label = "Type", Stat3Value = "Red supergiant",
+                Stat3Label = "Class", Stat3Value = "Red supergiant",
                 Stat4Label = "Future", Stat4Value = "Will go supernova",
                 ImageFile = "betelgeuse.png",
                 Aliases = new[] { "betelguese", "red supergiant" },
@@ -345,7 +350,7 @@ namespace dinospace.Data
                 ShortDescription = "The spiral galaxy we live in",
                 Stat1Label = "Diameter", Stat1Value = "100,000 light-years",
                 Stat2Label = "Stars", Stat2Value = "100–400 billion",
-                Stat3Label = "Type", Stat3Value = "Barred spiral",
+                Stat3Label = "Class", Stat3Value = "Barred spiral",
                 Stat4Label = "Age", Stat4Value = "13.6 billion years",
                 ImageFile = "milkyway.png",
                 Aliases = new[] { "the milky way", "our galaxy", "galaxy" },
@@ -425,7 +430,7 @@ namespace dinospace.Data
                 ShortDescription = "A glowing cloud where new stars are born",
                 Stat1Label = "Distance", Stat1Value = "1,344 light-years",
                 Stat2Label = "Width", Stat2Value = "24 light-years",
-                Stat3Label = "Type", Stat3Value = "Stellar nursery",
+                Stat3Label = "Class", Stat3Value = "Stellar nursery",
                 Stat4Label = "New stars", Stat4Value = "Thousands",
                 ImageFile = "orionnebula.png",
                 Aliases = new[] { "the orion nebula", "nebula" },
@@ -804,7 +809,7 @@ namespace dinospace.Data
                 Category = "Stars",
                 ShortDescription = "The closest star to our Sun",
                 Stat1Label = "Distance", Stat1Value = "4.25 light-years",
-                Stat2Label = "Type", Stat2Value = "Red dwarf",
+                Stat2Label = "Class", Stat2Value = "Red dwarf",
                 Stat3Label = "Size", Stat3Value = "12% of Sun's mass",
                 Stat4Label = "Planets", Stat4Value = "At least 2",
                 ImageFile = "proximacentauri.png",
@@ -845,7 +850,7 @@ namespace dinospace.Data
                 ShortDescription = "The star the whole northern sky spins around",
                 Stat1Label = "Distance", Stat1Value = "~430 light-years",
                 Stat2Label = "Brightness", Stat2Value = "~2000x the Sun",
-                Stat3Label = "Type", Stat3Value = "Supergiant (Cepheid)",
+                Stat3Label = "Class", Stat3Value = "Supergiant (Cepheid)",
                 Stat4Label = "Constellation", Stat4Value = "Ursa Minor",
                 ImageFile = "polaris.png",
                 Aliases = new[] { "north star", "the north star", "pole star" },

@@ -88,13 +88,13 @@ namespace dinospace.Views
                     LineBreakMode = LineBreakMode.TailTruncation
                 }, 1, 0);
 
-            scroll = new ScrollView { Content = wrapInScroll ? content : null };
+            scroll = new ScrollView { Content = wrapInScroll ? Ui.CapWidth(content) : null };
 
             var root = new Grid { RowSpacing = 0 };
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
             root.Add(bar, 0, 0);
-            root.Add(wrapInScroll ? scroll : content, 0, 1);
+            root.Add(wrapInScroll ? scroll : Ui.CapWidth(content), 0, 1);
             return root;
         }
     }

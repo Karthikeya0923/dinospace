@@ -84,7 +84,7 @@ namespace dinospace.Views
             _resultArea = new VerticalStackLayout { Spacing = 12 };
             stack.Add(_resultArea);
 
-            Content = new ScrollView { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Never };
+            Content = new ScrollView { Content = Ui.CapWidth(stack), VerticalScrollBarVisibility = ScrollBarVisibility.Never };
             RefreshArena();
         }
 

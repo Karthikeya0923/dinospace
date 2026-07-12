@@ -14,23 +14,32 @@ namespace dinospace.Services
     {
         private enum Kind { Star, DeepSky, Constellation }
 
-        // normalized name -> (kind, index into its catalogue)
-        private static Dictionary<string, (Kind kind, int idx)>? _index;
+        // normalized name -> (kind, index into its catalogue). Lazy<T> so the
+        // first build is thread-safe. MaxKeyTokens caps the span search below.
+        private static readonly Lazy<Dictionary<string, (Kind kind, int idx)>> _index = new(BuildIndex);
+        private static int _maxKeyTokens = 1;
 
         public static string? TryAnswer(string q)
         {
-            var index = _index ??= BuildIndex();
+            var index = _index.Value;
 
             // Longest name wins ("crab nebula" beats "crab"); token-bounded so
-            // "leo" can't fire from inside another word.
-            string padded = " " + q + " ";
+            // "leo" can't fire from inside another word. The question arrives
+            // normalized, so every name in it is a contiguous run of tokens —
+            // looking up each token span beats scanning the whole index.
+            var tokens = q.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             string? bestKey = null;
-            foreach (var key in index.Keys)
-                if (padded.Contains(" " + key + " ") && (bestKey == null || key.Length > bestKey.Length))
-                    bestKey = key;
+            (Kind kind, int idx) best = default;
+            for (int len = Math.Min(_maxKeyTokens, tokens.Length); len >= 1; len--)
+                for (int i = 0; i + len <= tokens.Length; i++)
+                {
+                    string span = len == 1 ? tokens[i] : string.Join(' ', tokens, i, len);
+                    if (index.TryGetValue(span, out var v) && (bestKey == null || span.Length > bestKey.Length))
+                    { bestKey = span; best = v; }
+                }
             if (bestKey == null) return null;
 
-            var (kind, idx) = index[bestKey];
+            var (kind, idx) = best;
             return kind switch
             {
                 Kind.Star => StarAnswer(SkyCatalog.Stars[idx], q),
@@ -54,6 +63,9 @@ namespace dinospace.Services
                 // the Milky Way…) — this index only covers what it doesn't.
                 if (SpaceData.ByName(name) != null) return;
                 if (!map.ContainsKey(key)) map[key] = (kind, idx);
+                int tokens = 1;
+                foreach (char c in key) if (c == ' ') tokens++;
+                if (tokens > _maxKeyTokens) _maxKeyTokens = tokens;
             }
 
             var stars = SkyCatalog.Stars;

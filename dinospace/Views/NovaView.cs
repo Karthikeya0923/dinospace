@@ -129,7 +129,7 @@ namespace dinospace.Views
             main.Add(_suggestionScroll, 0, 3);
             main.Add(_inputArea, 0, 4);
 
-            Content = main;
+            Content = Ui.CapWidth(main);
         }
 
         private View BuildHeader()
