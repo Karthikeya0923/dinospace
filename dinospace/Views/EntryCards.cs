@@ -38,16 +38,24 @@ namespace dinospace.Views
 
         // A user drawing, shown WHOLE. AspectFill crops a tall canvas into a
         // wide slot — kids kept losing the head and feet of their creature —
-        // Drawings keep their shape with AspectFit and float transparently.
+        // so drawings keep their shape with AspectFit, letterboxed on the
+        // paper colour they were drawn on (white unless the background was
+        // painted). Older drawings saved with transparency sit on that same
+        // paper, so nothing ever bleeds through from behind.
         public static View Drawing(string imagePath, string bgHex, double height = -1)
         {
-            // Drawings export with a transparent background now, so they sit
-            // straight on the page like the built-in art — only the pixels
-            // the artist actually painted show up.
-            var grid = new Grid { BackgroundColor = Colors.Transparent };
+            var grid = new Grid { BackgroundColor = CanvasColor(bgHex) };
             if (height > 0) grid.HeightRequest = height;
             grid.Add(new Image { Source = ImageSource.FromFile(imagePath), Aspect = Aspect.AspectFit });
             return grid;
+        }
+
+        // The paper colour a creation was drawn on; plain white when the hex
+        // is missing or unreadable.
+        public static Color CanvasColor(string bgHex)
+        {
+            try { return string.IsNullOrWhiteSpace(bgHex) ? Colors.White : Color.FromArgb(bgHex); }
+            catch { return Colors.White; }
         }
 
         // A bright gradient stand-in for the Playful layout — a cheerful splash

@@ -81,16 +81,40 @@ namespace dinospace.Views
         private readonly Dictionary<string, InputView> _fields = new();
         private readonly Dictionary<string, string> _picks = new();
 
+        // True when an existing drawing was loaded onto the canvas — editing
+        // continues the picture instead of starting from a blank page.
+        private bool _hadArtAtOpen;
+
         public CreationEditorPage(UserCreation? existing = null)
         {
             _isNew = existing == null;
             _c = existing ?? new UserCreation { Id = Guid.NewGuid().ToString("N"), Kind = CreationKind.Dinosaur };
             _kind = _c.Kind;
+            LoadExistingArt();
             _drawStep = BuildDrawStep();
             _detailsStep = BuildDetailsStep();
             Content = _drawStep;
             // NOTE: no SwipeBack here — a left-to-right brush stroke must never
             // be mistaken for a back-swipe. The top-bar arrow handles going back.
+        }
+
+        // Editing a creation opens with its saved drawing already on the
+        // canvas, so "edit" means continue, not start over. The PNG becomes
+        // the base layer; new strokes (and the eraser) work on top of it.
+        private void LoadExistingArt()
+        {
+            if (_isNew || string.IsNullOrEmpty(_c.ImagePath) || !System.IO.File.Exists(_c.ImagePath)) return;
+            try
+            {
+                var bytes = System.IO.File.ReadAllBytes(_c.ImagePath);
+                _paint.BaseBytes = bytes;
+#if ANDROID
+                using var ms = new System.IO.MemoryStream(bytes);
+                _paint.BaseImage = Microsoft.Maui.Graphics.Platform.PlatformImage.FromStream(ms);
+#endif
+                _hadArtAtOpen = true;
+            }
+            catch { }
         }
 
         // The drawing is made in the SAME wide shape entries display it in —
@@ -101,16 +125,20 @@ namespace dinospace.Views
         // ================= STEP 1: DRAW =================
         private View BuildDrawStep()
         {
-            // Paper-coloured canvas — the saved PNG is transparent, so the
-            // drawing blends into every page like the built-in cartoon art.
-            _paint.Background = Theme.BgRaised;
+            // Plain white paper, like every real drawing app — and the saved
+            // PNG bakes it in, so a creation always shows on the white it was
+            // drawn on (or the colour the background was painted) instead of
+            // whatever happens to sit behind it on a page. When editing, the
+            // paper takes the drawing's saved background colour, so the
+            // eraser rubs back to the right colour instead of white.
+            _paint.Background = _hadArtAtOpen ? EntryCards.CanvasColor(_c.CanvasColor) : Colors.White;
             _canvas = new GraphicsView { Drawable = _paint, BackgroundColor = Colors.Transparent };
             WireCanvas();
 
             var frame = new Border
             {
                 Content = _canvas,
-                BackgroundColor = Theme.BgRaised,
+                BackgroundColor = _paint.Background,
                 Stroke = StudioLine, StrokeThickness = 1.5,
                 StrokeShape = new RoundRectangle { CornerRadius = 20 },
                 Padding = 0,
@@ -390,15 +418,25 @@ namespace dinospace.Views
         }
 
         // A clear can be taken back with one Undo — accidentally wiping a
-        // masterpiece shouldn't mean starting over.
+        // masterpiece shouldn't mean starting over. Clearing also wipes the
+        // loaded base drawing (that's what "clear" means), and Undo brings
+        // it back along with the strokes.
         private List<Stroke>? _lastCleared;
+        private (byte[]? bytes, Microsoft.Maui.Graphics.IImage? image)? _lastClearedBase;
 
         private void Undo()
         {
-            if (_paint.Strokes.Count == 0 && _lastCleared != null)
+            if (_paint.Strokes.Count == 0 && (_lastCleared != null || _lastClearedBase != null))
             {
-                foreach (var s in _lastCleared) _paint.Strokes.Add(s);
+                if (_lastCleared != null)
+                    foreach (var s in _lastCleared) _paint.Strokes.Add(s);
+                if (_lastClearedBase is (var bytes, var image))
+                {
+                    _paint.BaseBytes = bytes;
+                    _paint.BaseImage = image;
+                }
                 _lastCleared = null;
+                _lastClearedBase = null;
                 _canvas.Invalidate();
                 AppSettings.Tap();
                 return;
@@ -421,8 +459,14 @@ namespace dinospace.Views
 
         private void ClearCanvas()
         {
-            if (_paint.Strokes.Count == 0) return;
-            _lastCleared = new List<Stroke>(_paint.Strokes);
+            if (_paint.Strokes.Count == 0 && _paint.BaseImage == null && _paint.BaseBytes == null) return;
+            _lastCleared = _paint.Strokes.Count > 0 ? new List<Stroke>(_paint.Strokes) : null;
+            if (_paint.BaseBytes != null || _paint.BaseImage != null)
+            {
+                _lastClearedBase = (_paint.BaseBytes, _paint.BaseImage);
+                _paint.BaseBytes = null;
+                _paint.BaseImage = null;
+            }
             _paint.Strokes.Clear();
             _redo.Clear();
             _canvas.Invalidate();
@@ -471,9 +515,9 @@ namespace dinospace.Views
             _previewDrawable.Source = _paint;
             _previewDrawable.SrcW = _canvasW;
             _previewDrawable.SrcH = _canvasH;
-            bool hasDrawing = _paint.Strokes.Count > 0;
+            bool hasDrawing = _paint.Strokes.Count > 0 || _paint.BaseImage != null;
             _previewWrap.IsVisible = hasDrawing && _canvasW > 0;
-            _previewWrap.BackgroundColor = _paint.Background;
+            _previewWrap.BackgroundColor = _paint.EffectiveBackground;
             _preview.Invalidate();
         }
         private void ShowDraw() { Content = _drawStep; AppSettings.Tap(); }
@@ -800,28 +844,41 @@ namespace dinospace.Views
 
             if (_c.CreatedTicks == 0) _c.CreatedTicks = DateTime.UtcNow.Ticks;
 
-            // Export the drawing to a PNG. If they didn't draw anything on an
-            // edit, keep the picture they already had. (Fills are strokes too,
-            // so an untouched canvas really is Strokes.Count == 0.)
+            // Export the drawing to a PNG. If they didn't touch the canvas on
+            // an edit, keep the picture they already had. (Fills are strokes
+            // too, so an untouched canvas really is Strokes.Count == 0.)
             if (_paint.Strokes.Count > 0)
             {
                 double w = _canvasW > 0 ? _canvasW : _canvas.Width;
                 double h = _canvasH > 0 ? _canvasH : _canvas.Height;
                 if (w > 0 && h > 0)
                 {
-                    string path = CreationStore.NewImagePath(_c.Id);
+                    // A fresh file name every save: image views cache by path,
+                    // so overwriting the same file kept showing the OLD
+                    // drawing everywhere until an app restart.
+                    string oldPath = _c.ImagePath;
+                    string path = CreationStore.NewImagePath($"{_c.Id}_{DateTime.UtcNow.Ticks}");
                     double density = 2.75;
                     try { density = DeviceDisplay.MainDisplayInfo.Density; } catch { }
                     bool ok = CreationCanvas.ExportPng(_paint, w, h, density, path);
                     if (ok)
                     {
                         _c.ImagePath = path;
+                        if (!string.IsNullOrEmpty(oldPath) && oldPath != path)
+                            try { if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath); } catch { }
                         // Cards letterbox the drawing on this colour so the
                         // whole picture always shows, never a cropped middle.
-                        var bg = _paint.Background;
+                        var bg = _paint.EffectiveBackground;
                         _c.CanvasColor = $"#{(int)(bg.Red * 255):X2}{(int)(bg.Green * 255):X2}{(int)(bg.Blue * 255):X2}";
                     }
                 }
+            }
+            else if (_hadArtAtOpen && _paint.BaseImage == null && _paint.BaseBytes == null)
+            {
+                // They cleared their old drawing and saved an empty canvas —
+                // respect it: the creation goes back to having no picture.
+                try { if (System.IO.File.Exists(_c.ImagePath)) System.IO.File.Delete(_c.ImagePath); } catch { }
+                _c.ImagePath = "";
             }
 
             CreationStore.Save(_c);

@@ -189,19 +189,46 @@ namespace dinospace.Views
     }
 
     // Renders the whole drawing onto the on-screen canvas. Background is the
-    // page's paper colour — it's what the eraser paints and what the canvas
-    // shows behind the drawing — but the EXPORTED PNG is transparent, so
-    // creations blend into every page like the built-in cartoon entries.
+    // white paper the child draws on; the EXPORTED PNG bakes that paper in,
+    // so a saved creation shows exactly what the canvas showed — white by
+    // default, or whatever colour the background was painted.
     public class PaintDrawable : IDrawable
     {
         public List<Stroke> Strokes { get; } = new();
         public Color Background { get; set; } = Colors.White;
+
+        // When editing an existing creation, its saved PNG loads here and the
+        // new strokes draw on top — so editing continues the drawing instead
+        // of starting over. BaseBytes feeds the Android rasteriser (export and
+        // flood fill); BaseImage is the same picture for the live canvas.
+        public byte[]? BaseBytes;
+        public Microsoft.Maui.Graphics.IImage? BaseImage;
+
+        // The colour currently underneath everything: the last whole-canvas
+        // fill if there is one, else the paper. It's what the eraser paints
+        // and what letterboxes behind the saved art.
+        public Color EffectiveBackground
+        {
+            get
+            {
+                var bg = Background;
+                foreach (var s in Strokes)
+                    if (s.Kind == BrushKind.Fill && s.RegionPng == null) bg = s.Color;
+                return bg;
+            }
+        }
 
         public void Draw(ICanvas canvas, RectF rect)
         {
             canvas.Antialias = true;
             canvas.FillColor = Background;
             canvas.FillRectangle(rect);
+            if (BaseImage != null)
+                canvas.DrawImage(BaseImage, rect.Left, rect.Top, rect.Width, rect.Height);
+
+            // The eraser paints whatever is underneath at that point in the
+            // stroke history — the paper, or the last background fill.
+            var bg = Background;
             foreach (var s in Strokes)
             {
                 if (s.Kind == BrushKind.Fill)
@@ -212,9 +239,10 @@ namespace dinospace.Views
                     {
                         canvas.FillColor = s.Color;
                         canvas.FillRectangle(rect);
+                        bg = s.Color;
                     }
                 }
-                else BrushEngine.Draw(canvas, s, Background);
+                else BrushEngine.Draw(canvas, s, bg);
             }
         }
     }
@@ -286,8 +314,10 @@ namespace dinospace.Views
     // geometry mirrors BrushEngine exactly so the saved image matches the canvas.
     public static class CreationCanvas
     {
-        // The saved PNG has a TRANSPARENT background — the drawing floats on
-        // whatever page shows it, exactly like the built-in cartoon entries.
+        // The saved PNG is EXACTLY what the canvas showed: the white paper
+        // (or the painted background) baked in, the loaded base drawing when
+        // editing, and every stroke on top — never a surprise background from
+        // whatever page happens to display it.
         public static bool ExportPng(PaintDrawable paint, double viewWidth, double viewHeight, double density, string path)
         {
 #if ANDROID
@@ -298,7 +328,16 @@ namespace dinospace.Views
                 using var bitmap = Android.Graphics.Bitmap.CreateBitmap(w, h, Android.Graphics.Bitmap.Config.Argb8888!);
                 using var acanvas = new Android.Graphics.Canvas(bitmap);
 
+                acanvas.DrawColor(ToA(paint.Background));
+                if (paint.BaseBytes != null)
+                {
+                    using var baseBmp = Android.Graphics.BitmapFactory.DecodeByteArray(paint.BaseBytes, 0, paint.BaseBytes.Length);
+                    if (baseBmp != null)
+                        acanvas.DrawBitmap(baseBmp, null, new Android.Graphics.Rect(0, 0, w, h), null);
+                }
+
                 float d = (float)density;
+                var bg = paint.Background;
                 foreach (var s in paint.Strokes)
                 {
                     if (s.Kind == BrushKind.Fill)
@@ -309,10 +348,12 @@ namespace dinospace.Views
                             if (region != null)
                                 acanvas.DrawBitmap(region, null, new Android.Graphics.Rect(0, 0, w, h), null);
                         }
-                        else acanvas.DrawColor(ToA(s.Color));
+                        else { acanvas.DrawColor(ToA(s.Color)); bg = s.Color; }
                         continue;
                     }
-                    DrawStrokeA(acanvas, s, paint.Background, d, eraseClear: true);
+                    // The eraser paints the colour underneath it — same as on
+                    // screen — so the export never punches see-through holes.
+                    DrawStrokeA(acanvas, s, bg, d);
                 }
 
                 using var fs = System.IO.File.Create(path);
@@ -340,11 +381,19 @@ namespace dinospace.Views
                 int tx = Math.Clamp((int)tap.X, 0, w - 1);
                 int ty = Math.Clamp((int)tap.Y, 0, h - 1);
 
-                // rasterise the drawing as it looks on screen (paper included)
+                // rasterise the drawing as it looks on screen (paper, the
+                // loaded base drawing when editing, then every stroke)
                 using var snap = Android.Graphics.Bitmap.CreateBitmap(w, h, Android.Graphics.Bitmap.Config.Argb8888!);
                 using (var c = new Android.Graphics.Canvas(snap))
                 {
                     c.DrawColor(ToA(paint.Background));
+                    if (paint.BaseBytes != null)
+                    {
+                        using var baseBmp = Android.Graphics.BitmapFactory.DecodeByteArray(paint.BaseBytes, 0, paint.BaseBytes.Length);
+                        if (baseBmp != null)
+                            c.DrawBitmap(baseBmp, null, new Android.Graphics.Rect(0, 0, w, h), null);
+                    }
+                    var snapBg = paint.Background;
                     foreach (var s in paint.Strokes)
                     {
                         if (s.Kind == BrushKind.Fill)
@@ -355,9 +404,9 @@ namespace dinospace.Views
                                 if (region != null)
                                     c.DrawBitmap(region, null, new Android.Graphics.Rect(0, 0, w, h), null);
                             }
-                            else c.DrawColor(ToA(s.Color));
+                            else { c.DrawColor(ToA(s.Color)); snapBg = s.Color; }
                         }
-                        else DrawStrokeA(c, s, paint.Background, 1f);
+                        else DrawStrokeA(c, s, snapBg, 1f);
                     }
                 }
 
@@ -376,6 +425,7 @@ namespace dinospace.Views
 
                 int fill = (0xFF << 24) | ((int)(color.Red * 255) << 16) | ((int)(color.Green * 255) << 8) | (int)(color.Blue * 255);
                 var mask = new int[w * h];
+                var filled = new bool[w * h];
                 var seen = new bool[w * h];
                 var stack = new System.Collections.Generic.Stack<int>();
                 stack.Push(ty * w + tx);
@@ -386,6 +436,7 @@ namespace dinospace.Views
                     int i = stack.Pop();
                     if (!Match(px[i])) continue;
                     mask[i] = fill;
+                    filled[i] = true;
                     count++;
                     int x = i % w, y = i / w;
                     if (x > 0 && !seen[i - 1]) { seen[i - 1] = true; stack.Push(i - 1); }
@@ -394,6 +445,31 @@ namespace dinospace.Views
                     if (y < h - 1 && !seen[i + w]) { seen[i + w] = true; stack.Push(i + w); }
                 }
                 if (count == 0) return null;
+
+                // The flood reached (nearly) the whole canvas: nothing enclosed
+                // the tap, so this is a background paint — return a clean
+                // whole-canvas fill (the eraser then paints THIS colour).
+                if ((long)count * 100 >= (long)w * h * 95)
+                    return new Stroke { Kind = BrushKind.Fill, Color = color };
+
+                // Grow the region two pixels outward so the fill tucks under
+                // the antialiased edge of the outline — without this a pale
+                // halo was left around every fill, worst against rainbow
+                // strokes whose colours shift along the line.
+                for (int pass = 0; pass < 2; pass++)
+                {
+                    var grow = new System.Collections.Generic.List<int>();
+                    for (int i = 0; i < filled.Length; i++)
+                    {
+                        if (!filled[i]) continue;
+                        int x = i % w, y = i / w;
+                        if (x > 0 && !filled[i - 1]) grow.Add(i - 1);
+                        if (x < w - 1 && !filled[i + 1]) grow.Add(i + 1);
+                        if (y > 0 && !filled[i - w]) grow.Add(i - w);
+                        if (y < h - 1 && !filled[i + w]) grow.Add(i + w);
+                    }
+                    foreach (int i in grow) { filled[i] = true; mask[i] = fill; }
+                }
 
                 using var regionBmp = Android.Graphics.Bitmap.CreateBitmap(w, h, Android.Graphics.Bitmap.Config.Argb8888!);
                 regionBmp.SetPixels(mask, 0, w, 0, 0, w, h);
@@ -420,18 +496,16 @@ namespace dinospace.Views
         }
 
 #if ANDROID
-        private static void DrawStrokeA(Android.Graphics.Canvas canvas, Stroke s, Color background, float d, bool eraseClear = false)
+        private static void DrawStrokeA(Android.Graphics.Canvas canvas, Stroke s, Color background, float d)
         {
             var pts = s.Smoothed();
             if (pts.Count == 0) return;
+            // The eraser paints the colour underneath it (paper or the last
+            // background fill) — identical to how the live canvas renders it.
             Color col = s.Kind == BrushKind.Eraser ? background : s.Color;
             float w = PaintMath.EffectiveWidth(s) * d;
 
             using var pnt = new Android.Graphics.Paint { AntiAlias = true };
-            // On the transparent export the eraser truly erases; on the
-            // in-editor snapshot it paints the paper back in, like on screen.
-            if (s.Kind == BrushKind.Eraser && eraseClear)
-                pnt.SetXfermode(new Android.Graphics.PorterDuffXfermode(Android.Graphics.PorterDuff.Mode.Clear!));
             pnt.SetStyle(Android.Graphics.Paint.Style.Stroke);
             pnt.StrokeCap = s.Kind == BrushKind.Highlighter ? Android.Graphics.Paint.Cap.Square : Android.Graphics.Paint.Cap.Round;
             pnt.StrokeJoin = Android.Graphics.Paint.Join.Round;

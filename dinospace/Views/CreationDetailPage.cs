@@ -124,8 +124,9 @@ namespace dinospace.Views
             Content = Ui.PageRoot(main);
         }
 
-        // The drawing floats on the page exactly like built-in entry art —
-        // transparent PNG, so only what they painted is there.
+        // The drawing shown on the paper it was drawn on — white unless the
+        // background was painted — inside the same rounded band real entry
+        // art gets, so nothing from the page shows through behind it.
         private static View ArtOnThePage(UserCreation c)
         {
             if (string.IsNullOrEmpty(c.ImagePath) || !System.IO.File.Exists(c.ImagePath))
@@ -139,12 +140,17 @@ namespace dinospace.Views
             var img = new Image
             {
                 Source = ImageSource.FromFile(c.ImagePath), Aspect = Aspect.AspectFit,
-                HeightRequest = 230, HorizontalOptions = LayoutOptions.Center
+                HorizontalOptions = LayoutOptions.Center
             };
             Ui.Describe(img, c.Name);
-            var g = new Grid { HeightRequest = 244 };
-            g.Add(img);
-            return g;
+            return new Border
+            {
+                Content = img,
+                HeightRequest = 244,
+                BackgroundColor = EntryCards.CanvasColor(c.CanvasColor),
+                Stroke = Theme.CardStroke, StrokeThickness = 1.4,
+                StrokeShape = new RoundRectangle { CornerRadius = 24 }
+            };
         }
 
         // Back arrow left, section name centred, the hand-drawn delete slot

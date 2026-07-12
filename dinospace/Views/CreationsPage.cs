@@ -110,10 +110,14 @@ namespace dinospace.Views
 
         private View Card(UserCreation c)
         {
-            var imgGrid = new Grid { HeightRequest = 130, BackgroundColor = Colors.White };
-            imgGrid.Add(EntryCards.ArtFallback(c.Name, 30, stars: false));
+            // The drawing sits on its own paper colour; the night-sky letter
+            // tile only appears when a creation has no picture at all — it
+            // must never peek through behind someone's actual drawing.
+            var imgGrid = new Grid { HeightRequest = 130, BackgroundColor = EntryCards.CanvasColor(c.CanvasColor) };
             if (!string.IsNullOrEmpty(c.ImagePath) && System.IO.File.Exists(c.ImagePath))
                 imgGrid.Add(EntryCards.Drawing(c.ImagePath, c.CanvasColor));
+            else
+                imgGrid.Add(EntryCards.ArtFallback(c.Name, 30, stars: false));
 
             var imgWrap = new Border
             {
