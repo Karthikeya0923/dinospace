@@ -236,6 +236,9 @@ namespace dinospace.Views
                     HueStart = _rng.Next(360)
                 };
                 _current.Points.Add(p);
+                // A shape needs a second corner from the very first frame so it
+                // has a box to grow; the drag then just moves that corner.
+                if (ShapeTool.Is(_brush)) _current.Points.Add(p);
                 _paint.Strokes.Add(_current);
                 _canvas.Invalidate();
             };
@@ -243,7 +246,10 @@ namespace dinospace.Views
             {
                 if (_current == null || e.Touches.Length == 0) return;
                 // One pointer only — a second finger must not zig-zag the line.
-                _current.Points.Add(e.Touches[0]);
+                if (ShapeTool.Is(_current.Kind))
+                    _current.Points[^1] = e.Touches[0];   // drag the opposite corner
+                else
+                    _current.Points.Add(e.Touches[0]);
                 _current.Dirty = true;
                 _canvas.Invalidate();
             };
@@ -251,7 +257,11 @@ namespace dinospace.Views
             {
                 if (_current == null) return;
                 var p = e.Touches.FirstOrDefault();
-                if (p != default) _current.Points.Add(p);
+                if (p != default)
+                {
+                    if (ShapeTool.Is(_current.Kind)) _current.Points[^1] = p;
+                    else _current.Points.Add(p);
+                }
                 _current.Dirty = true;
                 _current = null;
                 _canvas.Invalidate();
@@ -268,8 +278,13 @@ namespace dinospace.Views
             var brushRow = new HorizontalStackLayout { Spacing = 8, Padding = new Thickness(2, 2) };
             (BrushKind kind, string name)[] brushes =
             {
-                (BrushKind.Pencil, "Pencil"), (BrushKind.Marker, "Marker"), (BrushKind.Highlighter, "Marker+"),
-                (BrushKind.Glow, "Glow"), (BrushKind.Rainbow, "Rainbow"), (BrushKind.Eraser, "Eraser"), (BrushKind.Fill, "Fill"),
+                (BrushKind.Pencil, "Pencil"), (BrushKind.Marker, "Marker"),
+                (BrushKind.Glow, "Glow"), (BrushKind.Rainbow, "Rainbow"),
+                // Drag-to-place shapes — the fastest way to a real creature or
+                // planet: stack ovals and triangles, ring a circle.
+                (BrushKind.Oval, "Oval"), (BrushKind.Triangle, "Triangle"),
+                (BrushKind.Rect, "Square"), (BrushKind.Star, "Star"),
+                (BrushKind.Eraser, "Eraser"), (BrushKind.Fill, "Fill"),
             };
             foreach (var (kind, name) in brushes)
                 brushRow.Add(BrushChip(kind, name));

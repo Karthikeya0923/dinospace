@@ -11,11 +11,63 @@ namespace dinospace.Views
     {
         Pencil,       // thin, crisp
         Marker,       // bold, solid (the default)
-        Highlighter,  // wide and see-through, colours build up
+        Highlighter,  // wide and see-through (retired from the tray; kept for old saves)
         Glow,         // neon core with a soft halo
         Rainbow,      // colour shifts along the stroke
         Eraser,       // paints the background back in
-        Fill          // flood the whole canvas
+        Fill,         // flood the whole canvas
+
+        // Drag-to-place filled shapes. Clean geometry is what freehand can't
+        // give a young child: stacked ovals and triangles make a real dinosaur,
+        // a circle and an ellipse make a ringed planet. Each shape stores just
+        // its two drag corners (anchor + current) in Points.
+        Oval,
+        Triangle,
+        Rect,
+        Star,
+    }
+
+    public static class ShapeTool
+    {
+        public static bool Is(BrushKind k) =>
+            k is BrushKind.Oval or BrushKind.Triangle or BrushKind.Rect or BrushKind.Star;
+
+        // The bounding box of a two-corner shape stroke.
+        public static RectF Box(Stroke s)
+        {
+            var a = s.Points.Count > 0 ? s.Points[0] : new PointF();
+            var b = s.Points.Count > 1 ? s.Points[^1] : a;
+            float x = MathF.Min(a.X, b.X), y = MathF.Min(a.Y, b.Y);
+            return new RectF(x, y, MathF.Abs(b.X - a.X), MathF.Abs(b.Y - a.Y));
+        }
+
+        // The polygon points for triangle/star inside a box (empty for oval/rect).
+        public static PointF[] Polygon(BrushKind kind, RectF r)
+        {
+            switch (kind)
+            {
+                case BrushKind.Triangle:
+                    return new[]
+                    {
+                        new PointF(r.Left + r.Width / 2f, r.Top),
+                        new PointF(r.Right, r.Bottom),
+                        new PointF(r.Left, r.Bottom),
+                    };
+                case BrushKind.Star:
+                    var pts = new PointF[10];
+                    float cx = r.Center.X, cy = r.Center.Y;
+                    float rx = r.Width / 2f, ry = r.Height / 2f;
+                    for (int i = 0; i < 10; i++)
+                    {
+                        float ang = -MathF.PI / 2f + i * MathF.PI / 5f;
+                        float f = (i % 2 == 0) ? 1f : 0.42f;   // outer / inner
+                        pts[i] = new PointF(cx + MathF.Cos(ang) * rx * f, cy + MathF.Sin(ang) * ry * f);
+                    }
+                    return pts;
+                default:
+                    return System.Array.Empty<PointF>();
+            }
+        }
     }
 
     // One freehand stroke. Points are the raw finger samples; Smoothed() turns
@@ -129,6 +181,8 @@ namespace dinospace.Views
     {
         public static void Draw(ICanvas canvas, Stroke s, Color background)
         {
+            if (ShapeTool.Is(s.Kind)) { DrawShape(canvas, s); return; }
+
             var pts = s.Smoothed();
             if (pts.Count == 0) return;
 
@@ -176,6 +230,22 @@ namespace dinospace.Views
             path.MoveTo(pts[0].X, pts[0].Y);
             for (int i = 1; i < pts.Count; i++) path.LineTo(pts[i].X, pts[i].Y);
             canvas.DrawPath(path);
+        }
+
+        private static void DrawShape(ICanvas canvas, Stroke s)
+        {
+            var r = ShapeTool.Box(s);
+            if (r.Width < 1 && r.Height < 1) return;
+            canvas.FillColor = s.Kind == BrushKind.Rainbow ? Rgb(s.HueStart) : s.Color;
+            if (s.Kind == BrushKind.Oval) { canvas.FillEllipse(r); return; }
+            if (s.Kind == BrushKind.Rect) { canvas.FillRectangle(r); return; }
+            var poly = ShapeTool.Polygon(s.Kind, r);
+            if (poly.Length == 0) return;
+            var path = new PathF();
+            path.MoveTo(poly[0].X, poly[0].Y);
+            for (int i = 1; i < poly.Length; i++) path.LineTo(poly[i].X, poly[i].Y);
+            path.Close();
+            canvas.FillPath(path);
         }
 
         private static Color Alpha(Stroke s, Color col) =>
@@ -279,6 +349,19 @@ namespace dinospace.Views
         public void Draw(ICanvas canvas, RectF rect)
         {
             canvas.Antialias = true;
+
+            // Shape brushes preview as the filled shape itself, centred.
+            if (ShapeTool.Is(Kind))
+            {
+                float m = 4;
+                var box = new RectF(rect.Left + m, rect.Top + m, rect.Width - 2 * m, rect.Height - 2 * m);
+                var s0 = new Stroke { Kind = Kind, Color = Color };
+                s0.Points.Add(new PointF(box.Left, box.Top));
+                s0.Points.Add(new PointF(box.Right, box.Bottom));
+                BrushEngine.Draw(canvas, s0, Colors.Transparent);
+                return;
+            }
+
             float midY = rect.Center.Y;
             float amp = rect.Height * 0.28f;
             var s = new Stroke { Kind = Kind, Color = Color, Width = 6, HueStart = 0 };
@@ -496,8 +579,36 @@ namespace dinospace.Views
         }
 
 #if ANDROID
+        private static void DrawShapeA(Android.Graphics.Canvas canvas, Stroke s, float d)
+        {
+            var r = ShapeTool.Box(s);
+            if (r.Width < 1 && r.Height < 1) return;
+            using var pnt = new Android.Graphics.Paint { AntiAlias = true };
+            pnt.SetStyle(Android.Graphics.Paint.Style.Fill);
+            pnt.Color = s.Kind == BrushKind.Rainbow ? RgbA(s.HueStart) : ToA(s.Color);
+            if (s.Kind == BrushKind.Oval)
+            {
+                canvas.DrawOval(new Android.Graphics.RectF(r.Left * d, r.Top * d, r.Right * d, r.Bottom * d), pnt);
+                return;
+            }
+            if (s.Kind == BrushKind.Rect)
+            {
+                canvas.DrawRect(r.Left * d, r.Top * d, r.Right * d, r.Bottom * d, pnt);
+                return;
+            }
+            var poly = ShapeTool.Polygon(s.Kind, r);
+            if (poly.Length == 0) return;
+            using var path = new Android.Graphics.Path();
+            path.MoveTo(poly[0].X * d, poly[0].Y * d);
+            for (int i = 1; i < poly.Length; i++) path.LineTo(poly[i].X * d, poly[i].Y * d);
+            path.Close();
+            canvas.DrawPath(path, pnt);
+        }
+
         private static void DrawStrokeA(Android.Graphics.Canvas canvas, Stroke s, Color background, float d)
         {
+            if (ShapeTool.Is(s.Kind)) { DrawShapeA(canvas, s, d); return; }
+
             var pts = s.Smoothed();
             if (pts.Count == 0) return;
             // The eraser paints the colour underneath it (paper or the last
