@@ -62,13 +62,19 @@ namespace dinospace.Views
         private View RowTemplate()
         {
             // Drawn creatures letterbox on their canvas colour so the whole
-            // drawing shows; built-in art fills and crops as usual.
+            // drawing shows; built-in entries get their face-crop thumb (the
+            // face view ignores file paths, so it never touches a drawing).
             var img = new Image { WidthRequest = 48, HeightRequest = 48 };
             img.SetBinding(Image.SourceProperty, new Binding(nameof(Dinosaur.ImageFile)));
             img.SetBinding(Image.AspectProperty, new Binding(nameof(Dinosaur.CreationBg), converter: new DrawingAspectConverter()));
+            var face = new FaceThumbView { WidthRequest = 48, HeightRequest = 48, FaceBg = Theme.SurfaceAlt };
+            face.SetBinding(FaceThumbView.ImageNameProperty, new Binding(nameof(Dinosaur.ImageFile)));
+            var thumbGrid = new Grid();
+            thumbGrid.Add(img);
+            thumbGrid.Add(face);
             var thumb = new Border
             {
-                Content = img, WidthRequest = 48, HeightRequest = 48,
+                Content = thumbGrid, WidthRequest = 48, HeightRequest = 48,
                 Stroke = Colors.Transparent,
                 StrokeShape = new RoundRectangle { CornerRadius = 12 }
             };

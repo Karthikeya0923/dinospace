@@ -149,9 +149,9 @@ namespace dinospace.Views
             else
             {
                 // A drawn creature shows whole on its canvas colour; built-in
-                // art can safely fill and crop.
+                // art is a transparent full-body cutout, so it shows whole too.
                 View img = string.IsNullOrEmpty(d!.CreationBg)
-                    ? new Image { Source = d.ImageFile, Aspect = Aspect.AspectFill, HeightRequest = 130 }
+                    ? new Image { Source = d.ImageFile, Aspect = Aspect.AspectFit, HeightRequest = 130 }
                     : EntryCards.Drawing(d.ImageFile, d.CreationBg, 130);
                 var imgWrap = new Border { Content = img, HeightRequest = 130, BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 12 } };
                 inner = new VerticalStackLayout

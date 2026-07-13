@@ -289,8 +289,15 @@ namespace dinospace.Views
             foreach (var (image, name, data) in items)
             {
                 var imgGrid = new Grid();
-                imgGrid.Add(EntryCards.ArtFallback(name, 22, stars: false));
-                imgGrid.Add(new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = 84, WidthRequest = 124 });
+                // Real art shows the whole creature on a clean ground; the
+                // letter tile appears only while an entry has no art yet.
+                if (Ui.HasImage(FaceArt.BaseName(image)))
+                {
+                    imgGrid.BackgroundColor = Theme.SurfaceAlt;
+                    imgGrid.Add(new Image { Source = image, Aspect = Aspect.AspectFit, HeightRequest = 84, WidthRequest = 124, Margin = new Thickness(4) });
+                }
+                else
+                    imgGrid.Add(EntryCards.ArtFallback(name, 22, stars: false));
                 var wrap = new Border
                 {
                     Content = imgGrid, WidthRequest = 124, HeightRequest = 84,

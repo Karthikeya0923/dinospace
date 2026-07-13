@@ -167,8 +167,8 @@ namespace dinospace.Views
         {
             if (AppLayout.Playful) return PlayfulRowTemplate();
 
-            var img = new Image { Aspect = Aspect.AspectFill, WidthRequest = 54, HeightRequest = 54 };
-            img.SetBinding(Image.SourceProperty, new Binding(nameof(EntryRow.Image)));
+            var img = new FaceThumbView { WidthRequest = 54, HeightRequest = 54, FaceBg = Theme.ImgPlaceholder };
+            img.SetBinding(FaceThumbView.ImageNameProperty, new Binding(nameof(EntryRow.Image)));
             var thumb = new Border
             {
                 Content = img, WidthRequest = 54, HeightRequest = 54, BackgroundColor = Theme.ImgPlaceholder,
@@ -198,11 +198,13 @@ namespace dinospace.Views
         }
 
         // Playful search row: rounded pill card with a bright, per-item round
-        // thumbnail. Kept in the CollectionView so it stays virtualized.
+        // thumbnail — the entry's FACE on its own splash of colour. The
+        // initial letter shows only until real art exists for the entry.
         private View PlayfulRowTemplate()
         {
-            var img = new Image { Aspect = Aspect.AspectFill, WidthRequest = 58, HeightRequest = 58 };
-            img.SetBinding(Image.SourceProperty, new Binding(nameof(EntryRow.Image)));
+            var img = new FaceThumbView { WidthRequest = 58, HeightRequest = 58 };
+            img.SetBinding(FaceThumbView.ImageNameProperty, new Binding(nameof(EntryRow.Image)));
+            img.SetBinding(FaceThumbView.FaceBgProperty, new Binding(nameof(EntryRow.Title), converter: _hue));
             var initial = new Label { FontFamily = Ui.Display, FontSize = 22, TextColor = Colors.White.WithAlpha(0.92f), HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
             initial.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Initial)));
             var thumbGrid = new Grid();

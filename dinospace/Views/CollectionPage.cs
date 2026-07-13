@@ -49,7 +49,7 @@ namespace dinospace.Views
                 VerticalOptions = LayoutOptions.Center, Content = rankLabel
             };
 
-            var img = new Image { Source = e.Image, Aspect = Aspect.AspectFill, WidthRequest = 52, HeightRequest = 52 };
+            var img = new FaceThumbView { ImageName = e.Image, FaceBg = Theme.SurfaceAlt, WidthRequest = 52, HeightRequest = 52 };
             var thumb = new Border
             {
                 Content = img, WidthRequest = 52, HeightRequest = 52,

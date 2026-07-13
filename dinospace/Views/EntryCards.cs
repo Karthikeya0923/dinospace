@@ -81,11 +81,17 @@ namespace dinospace.Views
         {
             if (AppLayout.Playful) return PlayfulGridCard(image, title, meta, onTap);
             double imgH = 118;
-            var img = new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = imgH };
             var imgWrap = new Grid { HeightRequest = imgH };
-            // stars:false — a plain label fallback keeps grids of cards cheap.
-            imgWrap.Add(ArtFallback(title, 30, stars: false));
-            imgWrap.Add(img);
+            // The letter tile is a missing-art placeholder only — real art
+            // (a transparent full-body cutout) shows whole on a clean ground.
+            if (Ui.HasImage(FaceArt.BaseName(image)))
+            {
+                imgWrap.BackgroundColor = Theme.SurfaceAlt;
+                imgWrap.Add(new Image { Source = image, Aspect = Aspect.AspectFit, HeightRequest = imgH, Margin = new Thickness(6) });
+            }
+            else
+                // stars:false — a plain label fallback keeps grids of cards cheap.
+                imgWrap.Add(ArtFallback(title, 30, stars: false));
 
             var name = new Label
             {
@@ -142,10 +148,14 @@ namespace dinospace.Views
         {
             var hue = PlayfulKit.GradientFor(title);
             double imgH = 124;
-            var img = new Image { Source = image, Aspect = Aspect.AspectFill, HeightRequest = imgH };
             var imgGrid = new Grid { HeightRequest = imgH };
-            imgGrid.Add(PlayfulArt(title, 34));
-            imgGrid.Add(img);
+            if (Ui.HasImage(FaceArt.BaseName(image)))
+            {
+                imgGrid.BackgroundColor = PlayfulKit.HueFor(title);
+                imgGrid.Add(new Image { Source = image, Aspect = Aspect.AspectFit, HeightRequest = imgH, Margin = new Thickness(6) });
+            }
+            else
+                imgGrid.Add(PlayfulArt(title, 34));
             var imgWrap = new Border
             {
                 Content = imgGrid, HeightRequest = imgH,
@@ -208,7 +218,7 @@ namespace dinospace.Views
             if (AppLayout.Playful) return PlayfulListRow(image, title, meta, onTap, goldStar);
             var thumbGrid = new Grid();
             thumbGrid.Add(ArtFallback(title, 20, stars: false));
-            thumbGrid.Add(new Image { Source = image, Aspect = Aspect.AspectFill, WidthRequest = 54, HeightRequest = 54 });
+            thumbGrid.Add(new FaceThumbView { ImageName = image, FaceBg = Theme.ImgPlaceholder, WidthRequest = 54, HeightRequest = 54 });
             var thumb = new Border
             {
                 Content = thumbGrid,
@@ -246,7 +256,7 @@ namespace dinospace.Views
         {
             var thumbGrid = new Grid();
             thumbGrid.Add(PlayfulArt(title, 22));
-            thumbGrid.Add(new Image { Source = image, Aspect = Aspect.AspectFill, WidthRequest = 58, HeightRequest = 58 });
+            thumbGrid.Add(new FaceThumbView { ImageName = image, FaceBg = PlayfulKit.HueFor(title), WidthRequest = 58, HeightRequest = 58 });
             var thumb = new Border
             {
                 Content = thumbGrid, WidthRequest = 58, HeightRequest = 58,

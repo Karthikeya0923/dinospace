@@ -65,9 +65,8 @@ namespace dinospace.Views
                 HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
             };
             initial.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Initial)));
-            var img = new Image { WidthRequest = 46, HeightRequest = 46 };
-            img.SetBinding(Image.SourceProperty, new Binding(nameof(EntryRow.Image)));
-            img.SetBinding(Image.AspectProperty, new Binding(nameof(EntryRow.ThumbAspect)));
+            var img = new FaceThumbView { WidthRequest = 46, HeightRequest = 46, FaceBg = Theme.SurfaceAlt };
+            img.SetBinding(FaceThumbView.ImageNameProperty, new Binding(nameof(EntryRow.Image)));
             var thumbGrid = new Grid();
             thumbGrid.SetBinding(Grid.BackgroundColorProperty, new Binding(nameof(EntryRow.ThumbBg)));
             thumbGrid.Add(initial);
