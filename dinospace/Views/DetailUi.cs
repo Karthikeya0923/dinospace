@@ -222,11 +222,11 @@ namespace dinospace.Views
 
             var lines = funFacts.Split('\n');
 
-            // When the hand-drawn mascot lands (mascot_fact.png), it tells the
+            // Nova the robot (mascot_nova.png) tells the
             // first fun fact itself from a little speech bubble; the rest stay
             // in the dotted list below.
             int start = 0;
-            if (Ui.HasImage("mascot_fact"))
+            if (Ui.HasImage("mascot_nova"))
             {
                 string first = lines[0].TrimStart('•', ' ').Trim();
                 if (first.Length > 0)
@@ -244,7 +244,7 @@ namespace dinospace.Views
                     var row = new Grid { ColumnSpacing = 10 };
                     row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                     row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-                    row.Add(Ui.Mascot("mascot_fact", 84), 0, 0);
+                    row.Add(Ui.Mascot("mascot_nova", 84), 0, 0);
                     row.Add(bubble, 1, 0);
                     col.Add(row);
                 }

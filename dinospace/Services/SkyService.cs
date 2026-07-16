@@ -72,9 +72,14 @@ namespace dinospace
                     status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
                 if (status != PermissionStatus.Granted) return null;
 
+                // Last-known is instant when the phone has any recent fix; the
+                // live request is the fallback. Medium accuracy with a 15s
+                // window succeeds indoors far more often than a short Low
+                // request, which used to time out to a "No location" alert on
+                // the very first try after granting permission.
                 var loc = await Geolocation.Default.GetLastKnownLocationAsync();
                 loc ??= await Geolocation.Default.GetLocationAsync(
-                    new GeolocationRequest(GeolocationAccuracy.Low, TimeSpan.FromSeconds(10)));
+                    new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(15)));
                 return loc == null ? null : Save(loc);
             }
             catch { return null; }

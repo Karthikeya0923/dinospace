@@ -36,7 +36,7 @@ namespace dinospace
         public const string IconStarOutline = "icon_star_outline";     // unsaved star
         public const string IconPlus = "icon_plus";                    // battle choose, own-list add, colour mixer
         public const string IconScanSky = "icon_scan_sky";             // home pill + more tile
-        public const string IconAsk = "icon_ask";                      // ask-novasaur pill/tile/avatar until mascot_ask lands
+        public const string IconAsk = "icon_ask";                      // ask-nova pill/tile/avatar fallback if the robot avatar is missing
         public const string IconDraw = "icon_draw";                    // draw entry more tile
         public const string IconQuiz = "icon_quiz";                    // quiz more tile
         public const string IconCollections = "icon_collections";      // collections more tile
@@ -81,15 +81,26 @@ namespace dinospace
         // screens, so a tablet doesn't stretch phone-first layouts edge to
         // edge. Implemented as symmetric side padding rather than a width
         // request, because that centres reliably inside any host — a
-        // ScrollView, a Grid or a ContentView alike. On phones it returns the
-        // view untouched — zero risk to the shipped phone layout.
+        // ScrollView, a Grid or a ContentView alike.
+        //
+        // The padding is recomputed from the wrapper's OWN width every time
+        // it changes, never captured once at build time: a page rebuilt while
+        // the device is still rotating (returning from the landscape sky
+        // scanner used to do exactly this) would otherwise bake landscape
+        // padding into a portrait page and squeeze everything into a column.
         public static View CapWidth(View content, double max = 640)
         {
-            double w = ScreenDpWidth;
-            if (w < 600) return content;
-            double pad = (w - System.Math.Min(max, w - 24)) / 2;
-            if (pad < 1) return content;
-            return new Grid { Padding = new Thickness(pad, 0), Children = { content } };
+            var wrap = new Grid { Children = { content } };
+            void Apply(double w)
+            {
+                if (w <= 0) return;
+                double pad = w < 600 ? 0 : System.Math.Max(0, (w - System.Math.Min(max, w - 24)) / 2);
+                if (System.Math.Abs(wrap.Padding.Left - pad) > 0.5)
+                    wrap.Padding = new Thickness(pad, 0);
+            }
+            wrap.SizeChanged += (_, _) => Apply(wrap.Width);
+            Apply(ScreenDpWidth);
+            return wrap;
         }
 
         // ---------- type ----------

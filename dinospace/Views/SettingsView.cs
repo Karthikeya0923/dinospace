@@ -47,19 +47,22 @@ namespace dinospace.Views
         // profile page with everything the app knows about your journey.
         private View ProfileCard()
         {
+            // The pfp art is itself a round badge (cropped tight to its own
+            // edge), so it renders at the frame's full size and BECOMES the
+            // circle — sized any smaller it floats as a circle-in-a-circle.
             var face = new Border
             {
                 WidthRequest = 54, HeightRequest = 54,
                 BackgroundColor = Theme.AccentSoft,
                 Stroke = Theme.Hairline.WithAlpha(0.5f), StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 27 },
-                Content = Ui.Mascot("mascot_pfp", 36),
+                Content = Ui.Mascot("mascot_pfp", 54),
                 VerticalOptions = LayoutOptions.Center
             };
 
             var who = new VerticalStackLayout { Spacing = 1, VerticalOptions = LayoutOptions.Center };
             who.Add(new Label { Text = "You", FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Theme.TextPrimary });
-            who.Add(new Label { Text = "Junior Dino Explorer", FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), TextColor = Theme.TextSecondary });
+            who.Add(new Label { Text = "Explorer", FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), TextColor = Theme.TextSecondary });
 
             var chev = Ui.Icon(Ui.IconChevron, 20);
             chev.VerticalOptions = LayoutOptions.Center;

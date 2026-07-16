@@ -137,9 +137,12 @@ namespace dinospace.Views
                 HorizontalOptions = LayoutOptions.Center
             };
 
-            var inner = new VerticalStackLayout { Spacing = 4, Padding = new Thickness(16, 26, 16, 22) };
+            // Balanced spacing: the gap above the moon equals the gap between
+            // the moon and its name (24 = top padding = 4 + 16 + 4), so the
+            // drawing sits properly centred in the card's upper half.
+            var inner = new VerticalStackLayout { Spacing = 4, Padding = new Thickness(16, 24, 16, 22) };
             inner.Add(moon);
-            inner.Add(new BoxView { HeightRequest = 14, Color = Colors.Transparent });
+            inner.Add(new BoxView { HeightRequest = 16, Color = Colors.Transparent });
             inner.Add(name);
             inner.Add(sub);
 
@@ -221,15 +224,15 @@ namespace dinospace.Views
                 FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), LineHeight = 1.3, TextColor = Theme.TextSecondary
             });
 
-            // NovaSaur's own face once mascot_ask.png lands (the icon_ask
-            // slot covers until then) — never a random star.
+            // Nova's robot avatar (mascot_nova.png; the icon_ask slot covers
+            // if it's ever missing) — never a random star.
             var dot = new Border
             {
                 WidthRequest = 38, HeightRequest = 38,
                 BackgroundColor = Ui.MultiplyAlpha(Theme.AccentNova, 0.18f),
                 Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 19 },
                 VerticalOptions = LayoutOptions.Center,
-                Content = Ui.Mascot("mascot_ask", 22, Ui.IconAsk)
+                Content = Ui.Mascot("mascot_nova", 22, Ui.IconAsk)
             };
 
             var grid = new Grid { ColumnSpacing = 12 };

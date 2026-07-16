@@ -250,9 +250,9 @@ namespace dinospace.Views
             };
 
             _body.Add(new Label { Text = "quiz complete!", FontFamily = Ui.Display, FontSize = 26, TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(0, 20, 0, 8) });
-            // the celebrating mascot's spot (mascot_quiz.png), above the score
-            if (Ui.HasImage("mascot_quiz"))
-                _body.Add(Ui.Mascot("mascot_quiz", 120));
+            // Nova's spot (mascot_nova.png, the robot avatar), above the score
+            if (Ui.HasImage("mascot_nova"))
+                _body.Add(Ui.Mascot("mascot_nova", 120));
             _body.Add(ring);
             _body.Add(new Label { Text = verdict, FontFamily = Ui.Fonts, FontSize = 15, LineHeight = 1.4, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(20, 8) });
 

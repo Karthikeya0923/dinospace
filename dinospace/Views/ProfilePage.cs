@@ -23,22 +23,24 @@ namespace dinospace.Views
         {
             var stack = new VerticalStackLayout { Spacing = 12, Padding = new Thickness(20, 4, 20, 30) };
 
-            // The profile picture, big — mascot_pfp.png once it's drawn,
-            // a quiet empty circle until then.
+            // The profile picture, big. The pfp art is itself a round badge
+            // (cropped tight to its own edge), so it renders at the frame's
+            // full size and BECOMES the circle — sized any smaller it floats
+            // as a circle-in-a-circle.
             var face = new Border
             {
                 WidthRequest = 104, HeightRequest = 104,
                 BackgroundColor = Theme.AccentSoft,
                 Stroke = Theme.Hairline.WithAlpha(0.5f), StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 52 },
-                Content = Ui.Mascot("mascot_pfp", 72),
+                Content = Ui.Mascot("mascot_pfp", 104),
                 HorizontalOptions = LayoutOptions.Center
             };
             stack.Add(face);
 
             stack.Add(new Label
             {
-                Text = "Junior Dino Explorer",
+                Text = "Explorer",
                 FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), TextColor = Theme.TextSecondary,
                 HorizontalOptions = LayoutOptions.Center, Margin = new Thickness(0, 0, 0, 6)
             });

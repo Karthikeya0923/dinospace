@@ -326,8 +326,8 @@ namespace dinospace.Views
             }, 16, new Thickness(16, 14)));
 
             // The referee's corner — reserved for the hand-drawn mascot.
-            if (Ui.HasImage("mascot_battle"))
-                _resultArea.Add(Ui.Mascot("mascot_battle", 110));
+            if (Ui.HasImage("mascot_nova"))
+                _resultArea.Add(Ui.Mascot("mascot_nova", 110));
 
             // ---- run it back ----
             _resultArea.Add(Ui.GhostButton("battle again", (_, _) =>

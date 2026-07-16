@@ -46,9 +46,9 @@ namespace dinospace.Views
 
             _stack.Add(Ui.PrimaryButton("Create something new", async (_, _) => await Nav.Push(() => new CreationEditorPage())));
 
-            // the cheering mascot's spot (mascot_draw.png), with its little
+            // Nova's spot (mascot_nova.png, the robot avatar), with its little
             // "can't wait to see your discovery!" bubble
-            if (Ui.HasImage("mascot_draw"))
+            if (Ui.HasImage("mascot_nova"))
             {
                 var bubble = new Border
                 {
@@ -61,7 +61,7 @@ namespace dinospace.Views
                 var row = new Grid { ColumnSpacing = 10, Margin = new Thickness(0, 2, 0, 0) };
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-                row.Add(Ui.Mascot("mascot_draw", 84), 0, 0);
+                row.Add(Ui.Mascot("mascot_nova", 84), 0, 0);
                 row.Add(bubble, 1, 0);
                 _stack.Add(row);
             }

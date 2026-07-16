@@ -206,13 +206,6 @@ namespace dinospace.Views
             SetLandscape(true);
             StartSensor();
 
-            // The sky HAS to be computed for where the phone really is. The
-            // cached fallback (latitude 45°, longitude guessed from the time
-            // zone) can be thousands of kilometres off — far enough to put
-            // the moon on the wrong side of the sky and name the wrong star
-            // under the crosshair. Ask once, then re-anchor everything.
-            _ = RefreshLocationAsync();
-
             // The timer gets exactly one Tick handler for the page's lifetime.
             // OnAppearing runs again every time a pushed page (Learn More) pops
             // back to us — resubscribing here is what used to pile up handlers
@@ -233,7 +226,20 @@ namespace dinospace.Views
             }
             _timer.Start();
 
+            // Permission prompts must run ONE AT A TIME: Android shows a
+            // single dialog, and a second request fired while the first is
+            // still pending comes back "denied" without ever asking — which
+            // is exactly how the camera prompt used to vanish (leaving the
+            // painted navy sky) when the location request raced it. So: the
+            // camera first, because it IS this view — then the location.
+            //
+            // The sky HAS to be computed for where the phone really is. The
+            // cached fallback (latitude 45°, longitude guessed from the time
+            // zone) can be thousands of kilometres off — far enough to put
+            // the moon on the wrong side of the sky and name the wrong star
+            // under the crosshair. Ask once, then re-anchor everything.
             await StartCameraAsync();
+            _ = RefreshLocationAsync();
         }
 
         protected override void OnDisappearing()
