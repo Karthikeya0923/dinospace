@@ -33,23 +33,36 @@ namespace dinospace.Views
         // and the automatic head-finder takes over.
         private static readonly Dictionary<string, (float cx, float cy, float side)> Overrides = new()
         {
-            ["allosaurus"] = (0.89f, 0.30f, 0.38f),
+            ["allosaurus"] = (0.875f, 0.22f, 0.34f),
             ["ankylosaurus"] = (0.87f, 0.52f, 0.28f),
             ["apatosaurus"] = (0.935f, 0.25f, 0.20f),
             ["archaeopteryx"] = (0.895f, 0.21f, 0.36f),
-            ["argentinosaurus"] = (0.945f, 0.26f, 0.20f),
+            ["argentinosaurus"] = (0.91f, 0.245f, 0.20f),
             ["baryonyx"] = (0.89f, 0.285f, 0.38f),
-            ["brachiosaurus"] = (0.925f, 0.10f, 0.20f),
+            ["brachiosaurus"] = (0.90f, 0.115f, 0.20f),
             ["carcharodontosaurus"] = (0.89f, 0.28f, 0.38f),
             ["carnotaurus"] = (0.885f, 0.28f, 0.40f),
-            ["compsognathus"] = (0.91f, 0.235f, 0.32f),
+            ["compsognathus"] = (0.875f, 0.265f, 0.30f),
             ["deinonychus"] = (0.90f, 0.215f, 0.36f),
             ["deinosuchus"] = (0.88f, 0.44f, 0.34f),
             ["dilophosaurus"] = (0.86f, 0.25f, 0.44f),
-            ["dimetrodon"] = (0.86f, 0.455f, 0.28f),
+            ["dimetrodon"] = (0.855f, 0.50f, 0.30f),
             ["diplodocus"] = (0.96f, 0.35f, 0.18f),
-            ["dreadnoughtus"] = (0.955f, 0.24f, 0.20f),
+            ["dreadnoughtus"] = (0.945f, 0.245f, 0.20f),
+            ["elasmosaurus"] = (0.935f, 0.175f, 0.22f),
+            ["gallimimus"] = (0.85f, 0.14f, 0.28f),
+            ["iguanodon"] = (0.875f, 0.33f, 0.28f),
+            ["kronosaurus"] = (0.82f, 0.42f, 0.34f),
+            ["liopleurodon"] = (0.84f, 0.46f, 0.34f),
+            ["mosasaurus"] = (0.85f, 0.31f, 0.32f),
+            ["plesiosaurus"] = (0.93f, 0.32f, 0.22f),
+            ["pteranodon"] = (0.665f, 0.35f, 0.34f),
+            ["stegosaurus"] = (0.875f, 0.53f, 0.30f),
+            ["therizinosaurus"] = (0.715f, 0.10f, 0.22f),
+            ["titanoboa"] = (0.895f, 0.45f, 0.26f),
+            ["titanosaurus"] = (0.945f, 0.20f, 0.20f),
             ["trex"] = (0.855f, 0.29f, 0.44f),
+            ["woollymammoth"] = (0.70f, 0.35f, 0.40f),
         };
 
         public sealed record Face(Microsoft.Maui.Graphics.IImage Image, RectF CropPx);
@@ -98,9 +111,77 @@ namespace dinospace.Views
             return set;
         });
 
+        // Warms every encyclopedia face once per launch (App kicks this off in
+        // the background), so the list scrolls with zero pop-in even on a cold
+        // start. Cheap on every launch after the first: each face is a tiny
+        // pre-cropped PNG in the cache dir (see LoadThumb / SaveThumb).
+        public static void WarmAll()
+        {
+            try
+            {
+                foreach (var d in dinospace.Data.DinoData.All) Get(d.ImageFile);
+                foreach (var s in dinospace.Data.SpaceData.All) Get(s.ImageFile);
+            }
+            catch { }
+        }
+
 #if ANDROID
+        // Face thumbs persist across launches: the first decode of each entry
+        // renders its crop window into a small square (≤192 px) and saves it
+        // in the app's cache dir, so a cold start re-reads tiny PNGs instead
+        // of re-running the head-finder over every 1280 px illustration. The
+        // folder is stamped with the APK's LastUpdateTime — any reinstall
+        // (which is how new art arrives) throws the cache away and it
+        // rebuilds in the background.
+        private const int ThumbMax = 192;
+
+        private static readonly Lazy<string?> ThumbDir = new(() =>
+        {
+            try
+            {
+                var ctx = Android.App.Application.Context;
+                long stamp = ctx.PackageManager?.GetPackageInfo(ctx.PackageName!, 0)?.LastUpdateTime ?? 0;
+                string dir = System.IO.Path.Combine(ctx.CacheDir!.AbsolutePath, "facethumbs");
+                string stampFile = System.IO.Path.Combine(dir, ".stamp");
+                System.IO.Directory.CreateDirectory(dir);
+                string want = stamp.ToString();
+                if (!System.IO.File.Exists(stampFile) || System.IO.File.ReadAllText(stampFile) != want)
+                {
+                    foreach (var f in System.IO.Directory.GetFiles(dir)) System.IO.File.Delete(f);
+                    System.IO.File.WriteAllText(stampFile, want);
+                }
+                return dir;
+            }
+            catch { return null; }
+        });
+
+        private static Face? LoadThumb(string baseName)
+        {
+            try
+            {
+                if (ThumbDir.Value is not string dir) return null;
+                string path = System.IO.Path.Combine(dir, baseName + ".png");
+                if (!System.IO.File.Exists(path)) return null;
+                using var fs = System.IO.File.OpenRead(path);
+                var img = Microsoft.Maui.Graphics.Platform.PlatformImage.FromStream(fs);
+                return img == null ? null : new Face(img, new RectF(0, 0, img.Width, img.Height));
+            }
+            catch { return null; }
+        }
+
+        private static void SaveThumb(string baseName, byte[] png)
+        {
+            try
+            {
+                if (ThumbDir.Value is not string dir) return;
+                System.IO.File.WriteAllBytes(System.IO.Path.Combine(dir, baseName + ".png"), png);
+            }
+            catch { }
+        }
+
         private static Face? Decode(string baseName)
         {
+            if (LoadThumb(baseName) is Face cached) return cached;
             try
             {
                 var ctx = Android.App.Application.Context;
@@ -123,11 +204,30 @@ namespace dinospace.Views
 
                 var crop = FindFace(bmp, baseName);
 
+                // Render just the crop window into its own little bitmap —
+                // that's all a thumbnail ever draws. It keeps ~40 KB per face
+                // in memory instead of the whole illustration, and it's what
+                // gets persisted for instant cold starts. Areas of the window
+                // that fall outside the art stay transparent.
+                float f = MathF.Min(1f, ThumbMax / MathF.Max(crop.Width, crop.Height));
+                int tw = Math.Max(1, (int)MathF.Round(crop.Width * f));
+                int th = Math.Max(1, (int)MathF.Round(crop.Height * f));
+                using var thumb = Android.Graphics.Bitmap.CreateBitmap(tw, th, Android.Graphics.Bitmap.Config.Argb8888!);
+                using (var canvas = new Android.Graphics.Canvas(thumb))
+                using (var m = new Android.Graphics.Matrix())
+                using (var paint = new Android.Graphics.Paint(Android.Graphics.PaintFlags.FilterBitmap))
+                {
+                    m.PostTranslate(-crop.X, -crop.Y);
+                    m.PostScale(f, f);
+                    canvas.DrawBitmap(bmp, m, paint);
+                }
+
                 using var ms = new System.IO.MemoryStream();
-                bmp.Compress(Android.Graphics.Bitmap.CompressFormat.Png!, 90, ms);
+                thumb.Compress(Android.Graphics.Bitmap.CompressFormat.Png!, 100, ms);
+                SaveThumb(baseName, ms.ToArray());
                 ms.Position = 0;
                 var img = Microsoft.Maui.Graphics.Platform.PlatformImage.FromStream(ms);
-                return img == null ? null : new Face(img, crop);
+                return img == null ? null : new Face(img, new RectF(0, 0, tw, th));
             }
             catch { return null; }
         }

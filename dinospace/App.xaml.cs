@@ -11,6 +11,11 @@ namespace dinospace
             Theme.ApplyCurrent();
             UserAppTheme = Theme.IsDark ? AppTheme.Dark : AppTheme.Light;
 
+            // Warm the face-thumb cache: on a cold start every encyclopedia
+            // thumbnail then draws straight from memory instead of popping in
+            // one by one as the list decodes them mid-swipe.
+            _ = System.Threading.Tasks.Task.Run(Views.FaceArt.WarmAll);
+
             // If the AI model is on the device, start loading and warming it
             // now, in the background — the cold load takes a while, and doing
             // it at launch means NovaSaur can answer with the full model by
