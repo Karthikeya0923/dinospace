@@ -1,4 +1,7 @@
-﻿<maui:MauiWinUIApplication
+﻿<!-- Windows (WinUI) application shell — intentionally empty: all resources
+     and startup logic live in the shared App.xaml / MauiProgram so the
+     desktop build stays identical to the phone build. -->
+<maui:MauiWinUIApplication
     x:Class="dinospace.WinUI.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"

@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- The whole app lives inside one Shell with a single route: RootPage hosts
+     its own tab bar and navigation stack, so Shell's flyout and nav bar are
+     switched off — it exists only to give MAUI a window to draw into. -->
 <Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:views="clr-namespace:dinospace.Views"
        x:Class="dinospace.AppShell"
        FlyoutBehavior="Disabled">
 
+    <!-- RootPage draws the five hand-made tabs and swaps their views itself. -->
     <ShellContent ContentTemplate="{DataTemplate views:RootPage}"
                   Route="Root"
                   Shell.NavBarIsVisible="False"/>

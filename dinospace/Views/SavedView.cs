@@ -44,6 +44,8 @@ namespace dinospace.Views
             Refresh();
         }
 
+        // Rebuilt from the store every time the tab is shown, so a star
+        // toggled anywhere in the app is reflected the moment you come back.
         private void Refresh()
         {
             _list.Children.Clear();
@@ -73,6 +75,8 @@ namespace dinospace.Views
                 return;
             }
 
+            // Bookmarks store only names; skip any that no longer resolve
+            // (an entry renamed between versions just drops off the list).
             foreach (var name in dinos)
             {
                 var d = DinoData.ByName(name);

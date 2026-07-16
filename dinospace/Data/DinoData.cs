@@ -3,7 +3,11 @@ using System.Linq;
 
 namespace dinospace.Data
 {
-
+    // The creature encyclopedia: 50 prehistoric animals — dinosaurs plus the
+    // sea reptiles, flyers and ice-age giants kids ask about — each with
+    // stats, story sections, fun facts and search aliases. Everything the
+    // entry pages, battles, collections and Nova's answers know about a
+    // creature starts here.
     public static class DinoData
     {
         // Lazy<T> so the first touch is thread-safe; the name lookup is a

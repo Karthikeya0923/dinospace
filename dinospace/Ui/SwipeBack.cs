@@ -35,7 +35,9 @@ namespace dinospace
                     case GestureStatus.Completed:
                     case GestureStatus.Canceled:
                         if (fired) break;
-                        // Rightward swipe, mostly horizontal.
+                        // Rightward swipe, mostly horizontal: 60dp of travel
+                        // filters out taps, and the 1.4x horizontal-dominance
+                        // test keeps vertical list scrolls from popping pages.
                         if (totalX > 60 && System.Math.Abs(totalX) > System.Math.Abs(totalY) * 1.4)
                         {
                             fired = true;

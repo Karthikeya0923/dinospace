@@ -61,12 +61,13 @@ namespace dinospace.Views
             mast.Add(sparkR);
             grid.Add(mast, 0, 0);
 
-            // ---- the mascot's spot ----
-            // Reserved for the hand-drawn hero (mascot_home.png). Until the
-            // art lands, the starred paper itself carries the middle of the
-            // cover — with a few quiet stickers keeping the space alive.
+            // ---- the hero's spot ----
+            // The cover art (mascot_home.png) — the app icon's ringed-planet
+            // painting, cropped tight so it fills this slot — sits dead
+            // centre between the wordmark and the pills. If the art ever
+            // goes missing, a few quiet stickers keep the space alive.
             var heroArea = new Grid { VerticalOptions = LayoutOptions.Center };
-            var hero = Ui.Mascot("mascot_home", 290);
+            var hero = Ui.Mascot("mascot_home", 330);
             heroArea.Add(hero);
             if (!Ui.HasImage("mascot_home"))
             {

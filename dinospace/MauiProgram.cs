@@ -3,6 +3,10 @@ using Microsoft.Extensions.Logging;
 
 namespace dinospace
 {
+    // Composition root shared by every platform: registers the app class,
+    // the camera toolkit, and the two Baloo fonts. Kept deliberately tiny —
+    // services in this app are plain static classes, not DI registrations,
+    // so a four-line builder is all the startup wiring there is.
     public static class MauiProgram
     {
         public static MauiApp CreateMauiApp()

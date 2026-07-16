@@ -1,4 +1,7 @@
 ﻿<?xml version = "1.0" encoding = "UTF-8" ?>
+<!-- Application root. Most styling happens in code (Ui/Theme.cs picks colours
+     at runtime so themes can switch live); these two dictionaries only carry
+     the baseline palette and control defaults MAUI wants declared in XAML. -->
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:dinospace"
@@ -6,6 +9,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- Named colours first: Styles.xaml refers to them. -->
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>

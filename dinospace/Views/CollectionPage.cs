@@ -34,6 +34,8 @@ namespace dinospace.Views
 
         private View Row(int rank, CollectionEntry e, Color accent)
         {
+            // Podium colours: gold, silver, bronze — everyone below third
+            // shares a quiet neutral badge so the top three stay special.
             Color medal = rank switch { 1 => Color.FromArgb("#FFD24A"), 2 => Color.FromArgb("#C9D4EE"), 3 => Color.FromArgb("#E0A46A"), _ => Theme.TextHint };
             var rankLabel = new Label
             {
@@ -61,6 +63,7 @@ namespace dinospace.Views
             info.Add(new Label { Text = e.Name, FontFamily = Ui.Display, FontSize = Ui.S(16), TextColor = Theme.TextPrimary });
             info.Add(new Label { Text = e.StatText, FontFamily = Ui.Fonts, FontSize = Ui.S(13), FontAttributes = FontAttributes.Bold, TextColor = accent });
 
+            // badge | face | name+stat — the text column takes the leftovers.
             var grid = new Grid { ColumnSpacing = 12, VerticalOptions = LayoutOptions.Center };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });

@@ -1,7 +1,11 @@
 namespace dinospace.Models
 {
+    // Difficulty drives both the badge on the question card and the ramp:
+    // QuizPage deals easy questions first and saves the hard ones for the end.
     public enum QuizDifficulty { Easy, Medium, Hard }
 
+    // One quiz question in either of the two formats the quiz plays:
+    // four-option multiple choice, or a true/false statement.
     public class QuizQuestion
     {
         public string Question { get; set; } = "";

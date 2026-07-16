@@ -59,6 +59,9 @@ namespace dinospace.Views
             stack.Add(DetailUi.Section("What's inside", _s.WhatsInsideText, Accent));
             stack.Add(DetailUi.FunFacts(_s.FunFactsText, Accent));
 
+            // "You might also like": siblings from the same category (moons
+            // next to moons, stars next to stars); any six others if the
+            // category has no one else in it.
             var related = SpaceData.All.Where(x => x.Name != _s.Name && x.Category == _s.Category).Take(6)
                 .Select(x => (x.ImageFile, x.Name, (object)x)).ToList();
             if (related.Count == 0)
@@ -84,6 +87,8 @@ namespace dinospace.Views
             try { if (Navigation.NavigationStack.Count > 1) await Navigation.PopAsync(); } catch { }
         }
 
+        // Star tap: flip the bookmark, buzz, and swap the outline/filled
+        // star in place — no page reload needed.
         private void OnSave()
         {
             bool nowSaved = SavedStore.ToggleSpace(_s.Name);

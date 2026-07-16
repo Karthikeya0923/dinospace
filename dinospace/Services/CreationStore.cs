@@ -62,6 +62,9 @@ namespace dinospace.Services
             Persist(All().Where(x => x.Id != id).ToList());
         }
 
+        // Storage failures are swallowed on purpose: losing one save beats
+        // crashing a four-year-old's drawing session. The next successful
+        // Save() rewrites the whole list anyway.
         private static void Persist(List<UserCreation> list)
         {
             try { Preferences.Set(Key, JsonSerializer.Serialize(list)); } catch { }

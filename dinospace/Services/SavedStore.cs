@@ -8,6 +8,9 @@ namespace dinospace
     // Saved screen shows the most recently bookmarked item at the top.
     public static class SavedStore
     {
+        // Two separate preference slots so each tab of the Saved screen can
+        // read its own list without filtering. The _v2 suffix left the old
+        // pre-release format behind without a migration.
         private const string DinoKey = "saved_dinos_v2";
         private const string SpaceKey = "saved_space_v2";
 
@@ -39,6 +42,9 @@ namespace dinospace
             return nowSaved;
         }
 
+        // Entries persist as one pipe-joined string ("Trex|Saturn|…") — entry
+        // names never contain '|', and it keeps the whole store one Preferences
+        // read with no JSON dependency.
         private static List<string> Read(string key)
         {
             var raw = Preferences.Get(key, "");
