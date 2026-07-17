@@ -261,6 +261,11 @@ namespace dinospace.Views
                     if (Match(q, s.Name, s.Aliases))
                         next.Add(new EntryRow { Image = s.ImageFile, Title = s.Name, Meta = $"{s.TypeLabel} · {s.Category}", Data = s });
 
+            // One strict A→Z regardless of kind, so "All" reads Allosaurus,
+            // Andromeda Galaxy, Ankylosaurus… — dinosaurs and space objects
+            // interleaved, not two alphabets stacked on top of each other.
+            next.Sort((a, b) => string.Compare(a.Title, b.Title, StringComparison.OrdinalIgnoreCase));
+
             _rows.ReplaceAll(next);
             _count.Text = next.Count == 1 ? "1 entry" : $"{next.Count} entries";
         }

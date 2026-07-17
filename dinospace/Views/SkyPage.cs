@@ -225,14 +225,15 @@ namespace dinospace.Views
             });
 
             // Nova's robot avatar (mascot_nova.png; the icon_ask slot covers
-            // if it's ever missing) — never a random star.
+            // if it's ever missing). The badge fills the whole dot so it IS
+            // the circle, not a smaller circle inside one.
             var dot = new Border
             {
                 WidthRequest = 38, HeightRequest = 38,
                 BackgroundColor = Ui.MultiplyAlpha(Theme.AccentNova, 0.18f),
                 Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 19 },
                 VerticalOptions = LayoutOptions.Center,
-                Content = Ui.Mascot("mascot_nova", 22, Ui.IconAsk)
+                Content = Ui.Mascot("mascot_nova", 38, Ui.IconAsk)
             };
 
             var grid = new Grid { ColumnSpacing = 12 };

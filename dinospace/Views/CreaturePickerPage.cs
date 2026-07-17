@@ -44,6 +44,8 @@ namespace dinospace.Views
                 ItemsSource = _items,
                 SelectionMode = SelectionMode.Single,
                 ItemTemplate = new DataTemplate(RowTemplate),
+                // Uniform rows: measure one, not fifty — the page opens instantly.
+                ItemSizingStrategy = ItemSizingStrategy.MeasureFirstItem,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Never,
                 Margin = new Thickness(16, 0, 16, 16)
             };
@@ -55,7 +57,10 @@ namespace dinospace.Views
             col.Add(searchWrap, 0, 0);
             col.Add(_list, 0, 1);
 
-            var content = Nav.DetailScaffold("Choose a creature", col, Theme.AccentDino, out _);
+            // Fixed scaffold, NOT the scrolling one: a CollectionView inside a
+            // ScrollView loses virtualization, builds every row up front, and
+            // was the whole "tap + and wait three seconds" freeze.
+            var content = Nav.DetailScaffoldFixed("Choose a creature", col);
             Content = Ui.PageRoot(content);
         }
 

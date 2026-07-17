@@ -302,6 +302,12 @@ namespace dinospace.Views
             foreach (var s in SpaceData.All.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
                 if (Match(q, s.Name, s.Aliases))
                     _items.Add(new EntryRow { Image = s.ImageFile, Title = s.Name, Meta = $"{s.TypeLabel} · {s.Category}", Data = s });
+
+            // Same strict A→Z as the encyclopedia: creatures and space
+            // objects in one alphabet.
+            var sorted = _items.OrderBy(r => r.Title, StringComparer.OrdinalIgnoreCase).ToList();
+            _items.Clear();
+            foreach (var r in sorted) _items.Add(r);
         }
 
         private static bool Match(string q, string name, string[] aliases)

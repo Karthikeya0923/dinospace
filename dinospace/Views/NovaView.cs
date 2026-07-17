@@ -151,15 +151,16 @@ namespace dinospace.Views
             });
             Ui.Describe(back, "Go back");
 
-            // NovaSaur's face — the mascot art when it lands, a chat-bubble
-            // sticker until then.
+            // Nova's face. The robot pfp is itself a round badge, so it
+            // renders at the frame's full size and BECOMES the circle —
+            // any smaller and it floats as a circle-in-a-circle.
             double dotSize = 46;
             var dot = new Border
             {
                 WidthRequest = dotSize, HeightRequest = dotSize,
                 BackgroundColor = Ui.MultiplyAlpha(Theme.AccentNova, 0.18f),
                 Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = dotSize / 2 },
-                Content = Ui.Mascot("mascot_nova", 28, Ui.IconAsk)
+                Content = Ui.Mascot("mascot_nova", dotSize, Ui.IconAsk)
             };
             var title = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
             title.Add(new Label { Text = "ask nova", FontFamily = Ui.Display, FontSize = 21, TextColor = Theme.TextPrimary });

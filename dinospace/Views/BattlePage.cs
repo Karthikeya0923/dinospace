@@ -325,10 +325,6 @@ namespace dinospace.Views
                 FontFamily = Ui.Fonts, FontSize = Ui.S(14), LineHeight = 1.5, TextColor = Theme.TextPrimary
             }, 16, new Thickness(16, 14)));
 
-            // The referee's corner — reserved for the hand-drawn mascot.
-            if (Ui.HasImage("mascot_nova"))
-                _resultArea.Add(Ui.Mascot("mascot_nova", 110));
-
             // ---- run it back ----
             _resultArea.Add(Ui.GhostButton("battle again", (_, _) =>
             {

@@ -222,11 +222,11 @@ namespace dinospace.Views
 
             var lines = funFacts.Split('\n');
 
-            // Nova the robot (mascot_nova.png) tells the
-            // first fun fact itself from a little speech bubble; the rest stay
-            // in the dotted list below.
+            // The light bulb (icon_funfact.png) presents the first fun fact
+            // in a little speech bubble; the rest stay in the dotted list
+            // below.
             int start = 0;
-            if (Ui.HasImage("mascot_nova"))
+            if (Ui.HasImage("icon_funfact"))
             {
                 string first = lines[0].TrimStart('•', ' ').Trim();
                 if (first.Length > 0)
@@ -244,7 +244,7 @@ namespace dinospace.Views
                     var row = new Grid { ColumnSpacing = 10 };
                     row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                     row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-                    row.Add(Ui.Mascot("mascot_nova", 84), 0, 0);
+                    row.Add(Ui.Icon("icon_funfact", 72), 0, 0);
                     row.Add(bubble, 1, 0);
                     col.Add(row);
                 }

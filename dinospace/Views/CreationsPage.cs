@@ -46,26 +46,6 @@ namespace dinospace.Views
 
             _stack.Add(Ui.PrimaryButton("Create something new", async (_, _) => await Nav.Push(() => new CreationEditorPage())));
 
-            // Nova's spot (mascot_nova.png, the robot avatar), with its little
-            // "can't wait to see your discovery!" bubble
-            if (Ui.HasImage("mascot_nova"))
-            {
-                var bubble = new Border
-                {
-                    Content = new Label { Text = "can't wait to see your discovery!", FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), TextColor = Theme.TextPrimary },
-                    BackgroundColor = Theme.Surface,
-                    Stroke = Theme.CardStroke, StrokeThickness = 1.4,
-                    StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 18 },
-                    Padding = new Thickness(14, 10), VerticalOptions = LayoutOptions.Center
-                };
-                var row = new Grid { ColumnSpacing = 10, Margin = new Thickness(0, 2, 0, 0) };
-                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-                row.Add(Ui.Mascot("mascot_nova", 84), 0, 0);
-                row.Add(bubble, 1, 0);
-                _stack.Add(row);
-            }
-
             var all = CreationStore.All();
             if (all.Count == 0)
             {
