@@ -7,7 +7,6 @@ DinoSpace blends the two things every kid (and plenty of adults) can't get enoug
 ![Platform](https://img.shields.io/badge/platform-Android-green)
 ![Language](https://img.shields.io/badge/language-C%23-blue)
 ![Framework](https://img.shields.io/badge/framework-.NET%20MAUI-purple)
-![Status](https://img.shields.io/badge/status-Play%20Store%20prep-orange)
 
 ## A look around
 
