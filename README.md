@@ -79,8 +79,6 @@ No accounts, no ads, no analytics, no data collection — everything runs and st
 
 ## Roadmap
 
-Tracked in detail on the [project board →](https://github.com/users/Karthikeya0923/projects/4)
-
 **Shipped**
 - [x] Core encyclopedia — 50 dinosaurs + 50 space objects (100 entries), hand-written and fact-checked
 - [x] Search, category filters, bookmarks, curated collections
