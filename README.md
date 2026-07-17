@@ -9,7 +9,27 @@ DinoSpace blends the two things every kid (and plenty of adults) can't get enoug
 ![Framework](https://img.shields.io/badge/framework-.NET%20MAUI-purple)
 ![Status](https://img.shields.io/badge/status-Play%20Store%20prep-orange)
 
-(add screenshot of the home cover) (add screenshot of the Scan Sky report) (add screenshot of Scan Sky in landscape with the camera + white star overlay) (add screenshot of the Nova chat) (add screenshot of a creature detail page) (add screenshot of Your Creations — the drawing studio) (add screenshot of Dino Battle) (add screenshot of a quiz) (add screenshot of the themes picker)
+## A look around
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/store-screenshots/01-home.png" width="195" alt="Home"><br><sub><b>Home</b></sub></td>
+    <td align="center"><img src="docs/store-screenshots/02-creature-entry.png" width="195" alt="Creature entry"><br><sub><b>Creature entries</b></sub></td>
+    <td align="center"><img src="docs/store-screenshots/03-fun-facts.png" width="195" alt="Fun facts"><br><sub><b>Fun facts</b></sub></td>
+    <td align="center"><img src="docs/store-screenshots/04-scan-sky.png" width="195" alt="Tonight's sky"><br><sub><b>Tonight's sky</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/store-screenshots/05-quiz.png" width="195" alt="Quiz"><br><sub><b>Quizzes</b></sub></td>
+    <td align="center"><img src="docs/store-screenshots/06-dino-battle.png" width="195" alt="Dino battle"><br><sub><b>Dino battle</b></sub></td>
+    <td align="center"><img src="docs/store-screenshots/07-home-twilight.png" width="195" alt="Twilight theme"><br><sub><b>Twilight theme</b></sub></td>
+    <td align="center"><img src="docs/store-screenshots/08-encyclopedia-twilight.png" width="195" alt="Encyclopedia"><br><sub><b>Encyclopedia</b></sub></td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/store-screenshots/10-scan-sky-ar.png" width="820" alt="Scan Sky live camera view"><br>
+  <sub><b>Scan Sky — the live camera view with tonight's stars overlaid</b></sub>
+</p>
 
 ---
 

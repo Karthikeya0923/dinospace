@@ -11,122 +11,157 @@
 <link rel="icon" type="image/png" href="assets/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --night:#111527; --night2:#1b2140; --cream:#F5F1E4; --muted:#B9BDD1;
-    --gold:#E3BE55; --sage:#7d9b76; --card:#1e2444;
+    --cream:#f5f1e4; --muted:#aab1c9; --gold:#e3be55;
+    --grass-text:#cfe0d2; --grass-muted:#93ab98;
   }
   *{margin:0;padding:0;box-sizing:border-box}
-  body{
-    font-family:'Baloo 2',system-ui,sans-serif; color:var(--cream);
-    background:linear-gradient(180deg,#0d1020 0%, #111527 40%, #1b1a38 75%, #2a1e3f 100%);
-    min-height:100vh; overflow-x:hidden;
+  html{scroll-behavior:smooth}
+  body{font-family:'Baloo 2',system-ui,sans-serif;background:#0b1710;color:var(--cream);overflow-x:hidden}
+
+  /* ---------- the night sky ---------- */
+  .sky{
+    position:relative;
+    background:linear-gradient(180deg,#060a1a 0%,#0d1230 46%,#1d1742 72%,#2b1e4e 100%);
+    padding:76px 20px 0;
+    text-align:center;
   }
-  /* a quiet star field, no scripts needed */
-  .stars{position:fixed;inset:0;pointer-events:none;opacity:.7;background-image:
-    radial-gradient(1.2px 1.2px at 12% 18%, #fff, transparent),
-    radial-gradient(1px 1px at 34% 8%, #ffffffcc, transparent),
-    radial-gradient(1.4px 1.4px at 58% 24%, #fff, transparent),
-    radial-gradient(1px 1px at 76% 12%, #ffffffaa, transparent),
-    radial-gradient(1.3px 1.3px at 89% 30%, #fff, transparent),
-    radial-gradient(1px 1px at 22% 42%, #ffffff99, transparent),
-    radial-gradient(1.2px 1.2px at 44% 55%, #fff, transparent),
-    radial-gradient(1px 1px at 68% 47%, #ffffffbb, transparent),
-    radial-gradient(1.3px 1.3px at 82% 66%, #fff, transparent),
-    radial-gradient(1px 1px at 8% 72%, #ffffffaa, transparent),
-    radial-gradient(1.2px 1.2px at 30% 85%, #fff, transparent),
-    radial-gradient(1px 1px at 55% 78%, #ffffff99, transparent),
-    radial-gradient(1.4px 1.4px at 91% 88%, #fff, transparent);}
-  .wrap{max-width:960px;margin:0 auto;padding:0 20px;position:relative}
-  header{padding:64px 0 28px;text-align:center}
-  header img.icon{width:120px;height:120px;border-radius:28px;box-shadow:0 12px 40px #00000066}
-  h1{font-size:clamp(44px,8vw,72px);font-weight:700;letter-spacing:-1px;margin-top:18px}
-  .tagline{font-size:clamp(17px,3vw,22px);color:var(--muted);max-width:560px;margin:6px auto 0;line-height:1.45}
-  .badge{display:inline-block;margin-top:26px;background:var(--gold);color:#241d06;font-weight:700;
-    padding:13px 26px;border-radius:100px;font-size:17px;text-decoration:none}
-  .badge.soon{background:#2c3358;color:var(--cream);border:1.5px solid #454e7c}
-  .trust{margin-top:14px;color:var(--muted);font-size:14px}
-  section{padding:44px 0 8px}
-  h2{font-size:clamp(26px,4.5vw,34px);margin-bottom:6px}
-  h2 + p.sub{color:var(--muted);margin-bottom:24px;font-size:16.5px}
-  .accent{display:inline-block;width:64px;height:5px;border-radius:3px;background:var(--gold);margin:8px 0 22px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-  .card{background:var(--card);border:1.4px solid #2c3358;border-radius:20px;padding:22px 20px}
-  .card h3{font-size:19px;margin-bottom:6px;color:var(--cream)}
-  .card p{color:var(--muted);font-size:15px;line-height:1.5}
-  .card .em{font-size:26px;display:block;margin-bottom:10px}
-  .buddy{display:flex;gap:20px;align-items:center;background:var(--card);border:1.4px solid #2c3358;
-    border-radius:24px;padding:24px;margin-top:8px;flex-wrap:wrap}
-  .buddy img{width:96px;height:96px;border-radius:50%}
-  .buddy p{color:var(--muted);line-height:1.55;flex:1;min-width:240px}
-  .shots{display:flex;gap:14px;overflow-x:auto;padding:6px 2px 22px;scroll-snap-type:x mandatory}
-  .shots img{width:230px;border-radius:22px;border:1.4px solid #2c3358;scroll-snap-align:start;flex:none}
-  footer{margin-top:56px;padding:30px 0 44px;border-top:1px solid #2c3358;color:var(--muted);font-size:14.5px;text-align:center;line-height:2}
+  .stars,.stars2{position:absolute;inset:0;pointer-events:none}
+  .stars{background-image:
+    radial-gradient(1.5px 1.5px at 8% 12%,#fff,transparent),
+    radial-gradient(1px 1px at 21% 34%,#dfe6ff,transparent),
+    radial-gradient(2px 2px at 33% 9%,#fff,transparent),
+    radial-gradient(1px 1px at 44% 27%,#cdd6ff,transparent),
+    radial-gradient(1.5px 1.5px at 57% 15%,#fff,transparent),
+    radial-gradient(1px 1px at 66% 39%,#dfe6ff,transparent),
+    radial-gradient(2px 2px at 78% 8%,#fff,transparent),
+    radial-gradient(1px 1px at 89% 29%,#cdd6ff,transparent),
+    radial-gradient(1.5px 1.5px at 95% 52%,#fff,transparent),
+    radial-gradient(1px 1px at 14% 58%,#dfe6ff,transparent),
+    radial-gradient(1.5px 1.5px at 48% 55%,#fff,transparent),
+    radial-gradient(1px 1px at 71% 62%,#cdd6ff,transparent);}
+  .stars2{background-image:
+    radial-gradient(1px 1px at 12% 22%,#ffffffb0,transparent),
+    radial-gradient(1.5px 1.5px at 27% 48%,#ffffffd0,transparent),
+    radial-gradient(1px 1px at 39% 68%,#ffffffa0,transparent),
+    radial-gradient(1.5px 1.5px at 53% 36%,#ffffffd0,transparent),
+    radial-gradient(1px 1px at 62% 12%,#ffffffb0,transparent),
+    radial-gradient(1.5px 1.5px at 83% 45%,#ffffffd0,transparent),
+    radial-gradient(1px 1px at 92% 18%,#ffffffa0,transparent);
+    animation:twinkle 3.6s ease-in-out infinite alternate;}
+  @keyframes twinkle{from{opacity:.25}to{opacity:1}}
+
+  .moon{
+    position:absolute;top:64px;right:8%;width:74px;height:74px;border-radius:50%;
+    background:radial-gradient(circle at 38% 36%,#fbf7e8,#e9e2c6 62%,#d9d0ae);
+    box-shadow:0 0 46px 12px rgba(245,241,228,.28);
+  }
+  @media(max-width:640px){.moon{width:52px;height:52px;right:10%;top:44px}}
+
+  .hero{position:relative;max-width:660px;margin:0 auto}
+  .hero img.icon{width:112px;height:112px;border-radius:26px;box-shadow:0 14px 44px rgba(0,0,0,.55)}
+  .hero h1{font-size:clamp(46px,9vw,76px);font-weight:700;letter-spacing:-1.5px;margin-top:16px;line-height:1}
+  .hero p.tag{font-size:clamp(17px,3.2vw,21px);color:var(--muted);margin:10px auto 0;max-width:520px;line-height:1.5}
+  .pill{display:inline-block;margin-top:26px;padding:13px 28px;border-radius:100px;font-weight:700;font-size:17px;
+    color:#241d06;background:var(--gold);text-decoration:none;box-shadow:0 8px 26px rgba(227,190,85,.25)}
+  .trust{margin-top:16px;font-size:15px;color:var(--muted);letter-spacing:.2px}
+  .trust b{color:var(--cream);font-weight:600}
+
+  /* ---------- grassy hills ---------- */
+  .hills{display:block;width:100%;height:190px;margin-top:44px}
+  @media(max-width:640px){.hills{height:120px;margin-top:34px}}
+
+  /* ---------- on the grass ---------- */
+  .grass{background:#0b1710;padding:8px 20px 30px}
+  .inner{max-width:960px;margin:0 auto}
+  h2{font-size:clamp(24px,4.5vw,32px);color:var(--grass-text);text-align:center;margin-top:38px}
+  .rule{width:56px;height:5px;border-radius:3px;background:var(--gold);margin:10px auto 26px}
+
+  .shots{display:flex;gap:14px;overflow-x:auto;padding:4px 4px 20px;scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch}
+  .shots img{width:224px;border-radius:20px;border:1px solid #1e3a28;scroll-snap-align:center;flex:none;
+    box-shadow:0 10px 30px rgba(0,0,0,.4)}
+
+  .feat{max-width:700px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:14px 34px}
+  @media(max-width:600px){.feat{grid-template-columns:1fr}}
+  .feat div{display:flex;gap:12px;align-items:baseline;font-size:16.5px;color:var(--grass-muted);line-height:1.45}
+  .feat b{color:var(--grass-text);font-weight:600}
+  .feat span.e{flex:none;font-size:19px}
+
+  .nova{max-width:640px;margin:40px auto 0;display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:left}
+  .nova img{width:84px;height:84px;border-radius:50%;flex:none}
+  .nova p{color:var(--grass-muted);font-size:16px;line-height:1.55;max-width:460px}
+  .nova b{color:var(--grass-text)}
+
+  footer{margin-top:52px;padding:26px 0 12px;border-top:1px solid #16281c;text-align:center;
+    color:var(--grass-muted);font-size:14.5px;line-height:2.1}
   footer a{color:var(--gold);text-decoration:none}
 </style>
 </head>
 <body>
-<div class="stars"></div>
-<div class="wrap">
 
-  <header>
+<div class="sky">
+  <div class="stars"></div>
+  <div class="stars2"></div>
+  <div class="moon"></div>
+
+  <div class="hero">
     <img class="icon" src="assets/icon.png" alt="DinoSpace app icon">
     <h1>dinospace</h1>
-    <p class="tagline">Dinosaurs &amp; space for curious kids — a hand-drawn encyclopedia that works entirely offline.</p>
-    <a class="badge soon" href="#" onclick="return false">coming soon to Google Play</a>
-    <p class="trust">No ads · No accounts · No data collected</p>
-  </header>
+    <p class="tag">Dinosaurs &amp; space for curious kids — a hand-drawn encyclopedia that works entirely offline.</p>
+    <a class="pill" href="#peek">coming soon to Google Play</a>
+    <p class="trust"><b>No ads</b> · <b>No accounts</b> · <b>No data collected</b></p>
+  </div>
 
-  <section>
-    <h2>Everything a young explorer needs</h2>
-    <span class="accent"></span>
-    <div class="grid">
-      <div class="card"><span class="em">🦖</span><h3>100 hand-drawn entries</h3><p>Fifty prehistoric creatures and fifty wonders of space, each with friendly stats, behaviour notes and fun facts written for young readers.</p></div>
-      <div class="card"><span class="em">🔭</span><h3>Scan the sky</h3><p>Point the phone at tonight's sky to find the moon, planets and bright stars — a live star chart with the moon drawn in its real phase.</p></div>
-      <div class="card"><span class="em">⚔️</span><h3>Dino battles</h3><p>Pick any two creatures and see who'd come out on top — stats compared side by side with a storybook play-by-play.</p></div>
-      <div class="card"><span class="em">❓</span><h3>Quizzes</h3><p>From a quick five-question warm-up to the full gauntlet, with gentle explanations for every answer.</p></div>
-      <div class="card"><span class="em">🎨</span><h3>Drawing studio</h3><p>Draw your own dinosaur or planet, name it, and add it to your very own collection.</p></div>
-      <div class="card"><span class="em">🌙</span><h3>Two beautiful themes</h3><p>A soft pastel storybook by day, a hand-painted twilight by night.</p></div>
-    </div>
-  </section>
+  <!-- grassy hills, three quiet layers -->
+  <svg class="hills" viewBox="0 0 1440 190" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0,120 C240,60 420,150 720,110 C1020,70 1200,140 1440,95 L1440,190 L0,190 Z" fill="#1d3826"/>
+    <path d="M0,150 C300,100 560,175 860,140 C1140,108 1300,165 1440,135 L1440,190 L0,190 Z" fill="#14281a"/>
+    <path d="M0,175 C360,140 760,190 1100,168 C1260,158 1380,172 1440,168 L1440,190 L0,190 Z" fill="#0b1710"/>
+  </svg>
+</div>
 
-  <section>
-    <h2>Meet Nova</h2>
-    <span class="accent"></span>
-    <div class="buddy">
-      <img src="assets/nova.png" alt="Nova, the DinoSpace robot buddy">
-      <p><strong style="color:var(--cream)">Nova is the resident dino &amp; space buddy.</strong> Ask how big a T.&nbsp;rex was, why Mars is red, or for a bedtime fact — Nova answers right on the phone, so it works on a road trip, on a plane, or anywhere else with no internet at all.</p>
-    </div>
-  </section>
+<div class="grass">
+  <div class="inner">
 
-  <section>
-    <h2>A peek inside</h2>
-    <span class="accent"></span>
+    <h2 id="peek">a peek inside</h2>
+    <div class="rule"></div>
     <div class="shots">
       <img src="store-screenshots/01-home.png" alt="DinoSpace home screen">
       <img src="store-screenshots/02-creature-entry.png" alt="A creature entry page">
-      <img src="store-screenshots/03-ask-novasaur.png" alt="Asking Nova a question">
-      <img src="store-screenshots/04-more-grid.png" alt="All activities">
-      <img src="store-screenshots/05-dinospace-theme.png" alt="The twilight theme">
-      <img src="store-screenshots/06-quiz-night-theme.png" alt="Quiz time">
+      <img src="store-screenshots/03-fun-facts.png" alt="Fun facts on an entry">
+      <img src="store-screenshots/04-scan-sky.png" alt="Scan sky with tonight's moon">
+      <img src="store-screenshots/05-quiz.png" alt="A quiz question">
+      <img src="store-screenshots/06-dino-battle.png" alt="Dino battle">
+      <img src="store-screenshots/07-home-twilight.png" alt="Home in the twilight theme">
+      <img src="store-screenshots/08-encyclopedia-twilight.png" alt="The encyclopedia in the twilight theme">
     </div>
-  </section>
 
-  <section>
-    <h2>Built for families</h2>
-    <span class="accent"></span>
-    <div class="grid">
-      <div class="card"><span class="em">🛡️</span><h3>Private by design</h3><p>Nothing is collected, nothing is shared, nothing ever leaves the phone. The whole app works with the internet switched off.</p></div>
-      <div class="card"><span class="em">✨</span><h3>No ads, ever</h3><p>No advertising, no purchases, no accounts, no links out to the open web. Just dinosaurs and space.</p></div>
+    <h2>what's inside</h2>
+    <div class="rule"></div>
+    <div class="feat">
+      <div><span class="e">🦖</span><p><b>100 hand-drawn entries</b> — 50 prehistoric creatures, 50 wonders of space</p></div>
+      <div><span class="e">🔭</span><p><b>Scan the sky</b> — point up to find the moon, planets and bright stars tonight</p></div>
+      <div><span class="e">⚔️</span><p><b>Dino battles</b> — pick two creatures and see who comes out on top</p></div>
+      <div><span class="e">❓</span><p><b>Quizzes</b> — a quick warm-up or the full gauntlet, with friendly explanations</p></div>
+      <div><span class="e">🎨</span><p><b>Drawing studio</b> — draw your own dinosaur or planet and keep it forever</p></div>
+      <div><span class="e">🌙</span><p><b>Two themes</b> — a soft pastel storybook and a hand-painted twilight</p></div>
     </div>
-  </section>
 
-  <footer>
-    <a href="privacy.html">Privacy policy</a> · <a href="mailto:dinospace.app@gmail.com">dinospace.app@gmail.com</a><br>
-    © 2026 DinoSpace
-  </footer>
+    <div class="nova">
+      <img src="assets/nova.png" alt="Nova, the DinoSpace robot buddy">
+      <p><b>Meet Nova.</b> Ask how big a T.&nbsp;rex was or why Mars is red — Nova answers right on the phone, so it works on road trips, planes, anywhere. No internet needed.</p>
+    </div>
 
+    <footer>
+      <a href="privacy.html">Privacy policy</a> · <a href="mailto:dinospace.app@gmail.com">dinospace.app@gmail.com</a><br>
+      © 2026 DinoSpace
+    </footer>
+
+  </div>
 </div>
+
 </body>
 </html>
