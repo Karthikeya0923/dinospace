@@ -108,13 +108,9 @@ Tracked in detail on the [project board →](https://github.com/users/Karthikeya
 - [x] In-app AI model manager — download / pause / resume / remove, in the chat and in Settings
 - [x] Creations are true entries — transparent-background drawings, full entry pages, edit and delete
 - [x] Zero-warning build; AI answer pipeline covered by an automated test harness
-
-**In progress**
-- [ ] Final artwork for all encyclopedia entries and the mascot slots
-- [ ] Play Store listing assets (feature graphic, store screenshots)
-- [ ] Google Play closed testing, then production release
-
----
+- [x] Final artwork for all encyclopedia entries and the mascot slots
+- [x] Play Store listing assets (feature graphic, store screenshots)
+- [x] Google Play closed testing, then production release
 
 ## About the developer
 
