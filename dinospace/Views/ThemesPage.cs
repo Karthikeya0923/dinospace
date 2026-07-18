@@ -160,6 +160,14 @@ namespace dinospace.Views
             Theme.ApplyCurrent();
             NovaPage.ResetShared();
 
+            // Flip the platform light/dark NOW, while the old page tree is
+            // still fully alive. Setting it after the swap made MAUI broadcast
+            // the theme-changed event across the half-disposed old tree, which
+            // brought the whole app down on the main looper. With the value
+            // already correct, the fresh RootPage's OnAppearing set is a no-op.
+            if (Application.Current != null)
+                Application.Current.UserAppTheme = Theme.IsDark ? AppTheme.Dark : AppTheme.Light;
+
             // Rebuild on the "more" tab (settings lives behind it) and hold
             // the freeze-frame until this page is pushed back on top.
             RootPage.LastTab = 4;
