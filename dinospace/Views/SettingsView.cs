@@ -25,6 +25,16 @@ namespace dinospace.Views
             stack.Add(Group(
                 IconRow(Ui.IconAppearance, "Appearance", async () => await Nav.Push(() => new ThemesPage())),
                 SoundRow(),
+                // Parent mode: open directly for setup; once it's on, the
+                // controls only open through the PIN pad.
+                IconRow(Ui.IconSettings, "Parent mode", async () =>
+                {
+                    if (!ParentMode.Enabled)
+                        await Nav.Push(() => new ParentModePage());
+                    else
+                        await Nav.Push(() => new ParentPinPage(ParentPinPage.PinMode.Unlock,
+                            async () => await Nav.Push(() => new ParentModePage())));
+                }),
                 IconRow(Ui.IconNovaAi, "Nova AI", async () => await Nav.Push(() => new HostPage("nova ai", NovaAiBody()))),
                 IconRow(Ui.IconPrivacy, "Privacy", OpenPrivacy),
                 IconRow(Ui.IconAbout, "About DinoSpace", ShowAbout),
@@ -34,7 +44,7 @@ namespace dinospace.Views
 
             stack.Add(new Label
             {
-                Text = "dinospace v1.0",
+                Text = $"dinospace v{AppInfo.Current.VersionString}",
                 FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint,
                 HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(0, 16, 0, 0)
             });
@@ -189,7 +199,7 @@ namespace dinospace.Views
         {
             var page = Application.Current?.Windows.FirstOrDefault()?.Page;
             if (page == null) return;
-            await page.DisplayAlertAsync("DinoSpace v1.0",
+            await page.DisplayAlertAsync($"DinoSpace v{AppInfo.Current.VersionString}",
                 "A fully offline dinosaur & space encyclopedia with its own on-device AI and a live sky scanner.\n\nA few of the creatures inside — like Megalodon, Titanoboa and the woolly mammoth — aren't true dinosaurs, just amazing prehistoric creatures who earned their page.",
                 "OK");
         }

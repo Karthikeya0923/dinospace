@@ -128,6 +128,7 @@ namespace dinospace.Views
             {
                 string name = _targetName.Text;
                 if (string.IsNullOrWhiteSpace(name)) return;
+                if (!await ParentMode.GateNova()) return;
                 string what = _targetKind.Text.StartsWith("Constellation") ? $"the constellation {name}" : name;
                 NovaView.Ask($"Tell me about {what}.");
                 await Nav.Push(() => new NovaPage());

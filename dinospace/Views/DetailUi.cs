@@ -278,6 +278,7 @@ namespace dinospace.Views
         public static View AskNovaButton(string name)
             => Ui.PrimaryButton($"ASK NOVA ABOUT {name.ToUpperInvariant()}", async (_, _) =>
             {
+                if (!await ParentMode.GateNova()) return;
                 NovaView.Ask($"Tell me an interesting fact about {name}.");
                 await Nav.Push(() => new NovaPage());
             });

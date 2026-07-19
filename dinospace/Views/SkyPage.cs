@@ -104,7 +104,7 @@ namespace dinospace.Views
                 HeightRequest = 58, Padding = new Thickness(20, 0),
                 Margin = new Thickness(0, 2, 0, 4)
             };
-            Ui.OnTap(pill, async (_, _) => await Nav.Push(() => new SkyViewPage()));
+            Ui.OnTap(pill, async (_, _) => { if (await ParentMode.GateSky()) await Nav.Push(() => new SkyViewPage()); });
             Ui.Describe(pill, "Scan your sky with the camera");
             return pill;
         }
@@ -245,6 +245,7 @@ namespace dinospace.Views
             var card = Ui.Card(grid, 16, new Thickness(16, 13));
             Ui.OnTap(card, async (_, _) =>
             {
+                if (!await ParentMode.GateNova()) return;
                 NovaView.Ask("What's in the sky tonight?");
                 await Nav.Push(() => new NovaPage());
             });
