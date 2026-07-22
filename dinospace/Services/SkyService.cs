@@ -50,10 +50,11 @@ namespace dinospace
         {
             try
             {
-                var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
-                if (status == PermissionStatus.Granted)
+                if (await HasLocationPermission())
                 {
-                    var loc = await Geolocation.Default.GetLastKnownLocationAsync();
+                    var loc = await FullyGranted()
+                        ? await Geolocation.Default.GetLastKnownLocationAsync()
+                        : await GetCoarseLastKnown();
                     if (loc != null) return Save(loc);
                 }
             }
@@ -61,25 +62,138 @@ namespace dinospace
             return Cached;
         }
 
+        // "Approximate" on Android 12+ grants ONLY coarse location, and the
+        // cross-platform check then reports the whole location group as not
+        // granted — which used to read as a denial and threw the "No
+        // location" alert at people who had just said yes. Coarse is all
+        // this app ever wants (positions are rounded to 0.1° anyway), so
+        // accept the raw coarse grant as a full yes.
+        private static async Task<bool> HasLocationPermission()
+        {
+            if (await FullyGranted()) return true;
+#if ANDROID
+            try
+            {
+                var ctx = Android.App.Application.Context;
+                return AndroidX.Core.Content.ContextCompat.CheckSelfPermission(
+                    ctx, Android.Manifest.Permission.AccessCoarseLocation)
+                    == Android.Content.PM.Permission.Granted;
+            }
+            catch { }
+#endif
+            return false;
+        }
+
+        // True only when the whole location group (precise included) is
+        // granted — the case where the cross-platform Geolocation API works
+        // without re-prompting.
+        private static async Task<bool> FullyGranted()
+        {
+            try { return await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>() == PermissionStatus.Granted; }
+            catch { return false; }
+        }
+
+#if ANDROID
+        // Coarse-only path: read the phone's location straight from Android's
+        // LocationManager. Needs nothing beyond ACCESS_COARSE_LOCATION and
+        // never shows a permission sheet.
+        private static Task<Location?> GetCoarseLastKnown()
+        {
+            try
+            {
+                var lm = (Android.Locations.LocationManager?)Android.App.Application.Context
+                    .GetSystemService(Android.Content.Context.LocationService);
+                if (lm == null) return Task.FromResult<Location?>(null);
+                foreach (var p in new[] { Android.Locations.LocationManager.NetworkProvider,
+                                          Android.Locations.LocationManager.PassiveProvider,
+                                          Android.Locations.LocationManager.GpsProvider })
+                {
+                    try
+                    {
+                        var l = lm.GetLastKnownLocation(p);
+                        if (l != null) return Task.FromResult<Location?>(new Location(l.Latitude, l.Longitude));
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+            return Task.FromResult<Location?>(null);
+        }
+
+        private sealed class OneShotListener : Java.Lang.Object, Android.Locations.ILocationListener
+        {
+            public TaskCompletionSource<Location?> Tcs { get; } = new();
+            public void OnLocationChanged(Android.Locations.Location location)
+                => Tcs.TrySetResult(new Location(location.Latitude, location.Longitude));
+            public void OnProviderDisabled(string provider) => Tcs.TrySetResult(null);
+            public void OnProviderEnabled(string provider) { }
+            public void OnStatusChanged(string? provider, Android.Locations.Availability status, Android.OS.Bundle? extras) { }
+        }
+
+        private static async Task<Location?> GetCoarseLocationAsync(TimeSpan timeout)
+        {
+            var last = await GetCoarseLastKnown();
+            if (last != null) return last;
+            try
+            {
+                var lm = (Android.Locations.LocationManager?)Android.App.Application.Context
+                    .GetSystemService(Android.Content.Context.LocationService);
+                if (lm == null) return null;
+                var listener = new OneShotListener();
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    try
+                    {
+#pragma warning disable CA1422 // deprecated but universally available; fine for a one-shot coarse fix
+                        lm.RequestSingleUpdate(Android.Locations.LocationManager.NetworkProvider,
+                            listener, Android.OS.Looper.MainLooper);
+#pragma warning restore CA1422
+                    }
+                    catch { listener.Tcs.TrySetResult(null); }
+                });
+                var done = await Task.WhenAny(listener.Tcs.Task, Task.Delay(timeout));
+                try { lm.RemoveUpdates(listener); } catch { }
+                return done == listener.Tcs.Task ? listener.Tcs.Task.Result : null;
+            }
+            catch { return null; }
+        }
+#else
+        private static Task<Location?> GetCoarseLastKnown() => Task.FromResult<Location?>(null);
+        private static Task<Location?> GetCoarseLocationAsync(TimeSpan timeout) => Task.FromResult<Location?>(null);
+#endif
+
         // Ask for permission (only from an explicit user tap) and fetch a
         // coarse fix. Null when the user says no or nothing comes back.
         public static async Task<SkyLocation?> RequestDeviceLocationAsync()
         {
             try
             {
-                var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
-                if (status != PermissionStatus.Granted)
-                    status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
-                if (status != PermissionStatus.Granted) return null;
+                if (!await HasLocationPermission())
+                {
+                    await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+                    if (!await HasLocationPermission()) return null;
+                }
 
                 // Last-known is instant when the phone has any recent fix; the
                 // live request is the fallback. Medium accuracy with a 15s
                 // window succeeds indoors far more often than a short Low
                 // request, which used to time out to a "No location" alert on
                 // the very first try after granting permission.
-                var loc = await Geolocation.Default.GetLastKnownLocationAsync();
-                loc ??= await Geolocation.Default.GetLocationAsync(
-                    new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(15)));
+                //
+                // With approximate-only permission the cross-platform
+                // Geolocation calls re-request the permission group and pop
+                // the system's "change to precise?" sheet EVERY time — so the
+                // coarse path reads the phone's location natively instead,
+                // which never prompts.
+                Location? loc;
+                if (await FullyGranted())
+                {
+                    loc = await Geolocation.Default.GetLastKnownLocationAsync();
+                    loc ??= await Geolocation.Default.GetLocationAsync(
+                        new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(15)));
+                }
+                else
+                    loc = await GetCoarseLocationAsync(TimeSpan.FromSeconds(15));
                 return loc == null ? null : Save(loc);
             }
             catch { return null; }
