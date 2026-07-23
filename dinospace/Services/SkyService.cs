@@ -104,7 +104,13 @@ namespace dinospace
                 var lm = (Android.Locations.LocationManager?)Android.App.Application.Context
                     .GetSystemService(Android.Content.Context.LocationService);
                 if (lm == null) return Task.FromResult<Location?>(null);
-                foreach (var p in new[] { Android.Locations.LocationManager.NetworkProvider,
+                // "fused" first: the system-wide cache other apps keep warm.
+                // It answers instantly even the moment after permission is
+                // granted — the bare network provider often has nothing yet,
+                // because coarse-only apps get freshly-computed fixes only at
+                // a throttled rate.
+                foreach (var p in new[] { "fused",
+                                          Android.Locations.LocationManager.NetworkProvider,
                                           Android.Locations.LocationManager.PassiveProvider,
                                           Android.Locations.LocationManager.GpsProvider })
                 {
@@ -153,7 +159,12 @@ namespace dinospace
                 });
                 var done = await Task.WhenAny(listener.Tcs.Task, Task.Delay(timeout));
                 try { lm.RemoveUpdates(listener); } catch { }
-                return done == listener.Tcs.Task ? listener.Tcs.Task.Result : null;
+                if (done == listener.Tcs.Task && listener.Tcs.Task.Result != null)
+                    return listener.Tcs.Task.Result;
+                // The wait itself often warms the system cache even when the
+                // one-shot request misses its throttled window — read it once
+                // more before giving up.
+                return await GetCoarseLastKnown();
             }
             catch { return null; }
         }
@@ -193,7 +204,7 @@ namespace dinospace
                         new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(15)));
                 }
                 else
-                    loc = await GetCoarseLocationAsync(TimeSpan.FromSeconds(15));
+                    loc = await GetCoarseLocationAsync(TimeSpan.FromSeconds(20));
                 return loc == null ? null : Save(loc);
             }
             catch { return null; }
