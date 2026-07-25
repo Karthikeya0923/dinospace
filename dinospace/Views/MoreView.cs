@@ -37,27 +37,39 @@ namespace dinospace.Views
             {
                 Text = "more",
                 FontFamily = Ui.Display,
-                FontSize = Ui.S(32),
+                FontSize = Ui.S(shortScreen ? 22 : 32),
                 TextColor = Theme.TextPrimary,
                 HorizontalOptions = LayoutOptions.Center,
                 HorizontalTextAlignment = TextAlignment.Center,
-                Margin = new Thickness(18, 14, 18, 4)
+                Margin = shortScreen ? new Thickness(18, 4, 18, 0) : new Thickness(18, 14, 18, 4)
             };
 
-            var grid = new Grid { ColumnSpacing = 14, RowSpacing = 14, Padding = new Thickness(18, 8, 18, 16) };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            // Three cases, and the short one matters most: a phone in
-            // landscape is wider than the 600dp tablet mark but far too short
-            // for five rows of tiles, so judging by width alone gave it the
-            // tablet's fixed 190dp rows and ran the bottom tiles off the
-            // screen with nothing to scroll. Short screens get compact rows
-            // inside a ScrollView instead; tablets keep their fixed cards;
-            // a portrait phone still stretches to fill the page exactly.
+            // A phone in landscape is WIDER than the 600dp tablet mark but
+            // only ~410dp tall, so sizing by width alone handed it the
+            // tablet's tall fixed rows and pushed most of the tiles off the
+            // bottom with nothing to scroll. It has width to spare and no
+            // height, so there the grid turns on its side: four short columns
+            // instead of two tall ones, which fits every tile and the
+            // settings bar on one screen with nothing to reach for.
             bool wide = Ui.IsWideScreen && !shortScreen;
-            double tileH = shortScreen ? 138 : 190;
-            double settingsH = shortScreen ? 86 : 110;
-            for (int r = 0; r < 4; r++)
+            // Landscape leaves roughly 300dp between the status bar and the
+            // tab bar, so the two tile rows and the settings bar are sized to
+            // land inside that with a little room to spare.
+            int cols = shortScreen ? 4 : 2;
+            double tileH = shortScreen ? 88 : 190;
+            double settingsH = shortScreen ? 54 : 110;
+
+            var grid = new Grid
+            {
+                ColumnSpacing = shortScreen ? 10 : 14,
+                RowSpacing = shortScreen ? 8 : 14,
+                Padding = shortScreen ? new Thickness(16, 2, 16, 6) : new Thickness(18, 8, 18, 16)
+            };
+            for (int c = 0; c < cols; c++)
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+
+            int tileRows = (8 + cols - 1) / cols;
+            for (int r = 0; r < tileRows; r++)
                 grid.RowDefinitions.Add(new RowDefinition
                 {
                     Height = (wide || shortScreen) ? new GridLength(tileH) : GridLength.Star
@@ -68,26 +80,31 @@ namespace dinospace.Views
             });
             if (wide || shortScreen) grid.VerticalOptions = LayoutOptions.Start;
 
-            grid.Add(Tile(Ui.Icon(Ui.IconScanSky, 44), "scan sky", async () => await Nav.Push(() => new SkyPage())), 0, 0);
-            grid.Add(Tile(Ui.Mascot("mascot_nova", 44, Ui.IconAsk), "ask nova", async () => { if (await ParentMode.GateNova()) await Nav.Push(() => new NovaPage()); }), 1, 0);
-            grid.Add(Tile(Ui.Icon(Ui.IconBattles, 44), "dino battle", () => { RootPage.Current?.SwitchTab(2); return System.Threading.Tasks.Task.CompletedTask; }), 0, 1);
-            grid.Add(Tile(Ui.Icon(Ui.IconDraw, 44), "draw entry", async () => await Nav.Push(() => new CreationsPage())), 1, 1);
-            grid.Add(Tile(Ui.Icon(Ui.IconEncyclopedia, 44), "encyclopedia", () => { RootPage.Current?.SwitchTab(1); return System.Threading.Tasks.Task.CompletedTask; }), 0, 2);
-            grid.Add(Tile(Ui.Icon(Ui.IconQuiz, 44), "quiz", async () => await Nav.Push(() => new QuizSetupPage())), 1, 2);
-            grid.Add(Tile(Ui.Icon(Ui.IconCollections, 44), "collections", async () => await Nav.Push(() => new CollectionsListPage())), 0, 3);
-            grid.Add(Tile(Ui.Icon(Ui.IconCollection, 44), "saved", () => { RootPage.Current?.SwitchTab(3); return System.Threading.Tasks.Task.CompletedTask; }), 1, 3);
+            var entries = new (View icon, string label, Func<System.Threading.Tasks.Task> tap)[]
+            {
+                (Ui.Icon(Ui.IconScanSky, 44), "scan sky", async () => await Nav.Push(() => new SkyPage())),
+                (Ui.Mascot("mascot_nova", 44, Ui.IconAsk), "ask nova", async () => { if (await ParentMode.GateNova()) await Nav.Push(() => new NovaPage()); }),
+                (Ui.Icon(Ui.IconBattles, 44), "dino battle", () => { RootPage.Current?.SwitchTab(2); return System.Threading.Tasks.Task.CompletedTask; }),
+                (Ui.Icon(Ui.IconDraw, 44), "draw entry", async () => await Nav.Push(() => new CreationsPage())),
+                (Ui.Icon(Ui.IconEncyclopedia, 44), "encyclopedia", () => { RootPage.Current?.SwitchTab(1); return System.Threading.Tasks.Task.CompletedTask; }),
+                (Ui.Icon(Ui.IconQuiz, 44), "quiz", async () => await Nav.Push(() => new QuizSetupPage())),
+                (Ui.Icon(Ui.IconCollections, 44), "collections", async () => await Nav.Push(() => new CollectionsListPage())),
+                (Ui.Icon(Ui.IconCollection, 44), "saved", () => { RootPage.Current?.SwitchTab(3); return System.Threading.Tasks.Task.CompletedTask; }),
+            };
+            for (int i = 0; i < entries.Length; i++)
+                grid.Add(Tile(entries[i].icon, entries[i].label, entries[i].tap, compact: shortScreen), i % cols, i / cols);
 
-            // settings: one wide tile across both columns, reaching the
+            // settings: one wide tile across the full width, reaching the
             // bottom of the page like the sheet's long panel.
             var settings = Tile(Ui.Icon(Ui.IconSettings, 36), "settings",
-                async () => await Nav.Push(() => new HostPage("settings", new SettingsView())), wide: true);
-            grid.Add(settings, 0, 4);
-            Grid.SetColumnSpan((BindableObject)settings, 2);
+                async () => await Nav.Push(() => new HostPage("settings", new SettingsView())), wide: true, compact: shortScreen);
+            grid.Add(settings, 0, tileRows);
+            Grid.SetColumnSpan((BindableObject)settings, cols);
 
-            // Fixed-height rows can add up to more than the window holds, so
-            // those layouts scroll. The stretching portrait layout fits by
-            // construction and stays put.
-            View tiles = (wide || shortScreen)
+            // The tablet's fixed rows can still add up to more than the window
+            // holds, so that layout scrolls. Landscape now fits by design, and
+            // portrait stretches to fit — neither needs to.
+            View tiles = wide
                 ? new ScrollView { Content = grid, VerticalScrollBarVisibility = ScrollBarVisibility.Never }
                 : grid;
 
@@ -96,10 +113,12 @@ namespace dinospace.Views
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
             root.Add(title, 0, 0);
             root.Add(tiles, 0, 1);
-            Content = Ui.CapWidth(root);
+            // Landscape needs its full width for four columns; capping it to a
+            // reading column is what squeezed the tiles in the first place.
+            Content = shortScreen ? root : Ui.CapWidth(root);
         }
 
-        private View Tile(View icon, string label, Func<System.Threading.Tasks.Task> onTap, bool wide = false)
+        private View Tile(View icon, string label, Func<System.Threading.Tasks.Task> onTap, bool wide = false, bool compact = false)
         {
             icon.HorizontalOptions = LayoutOptions.Center;
 
@@ -119,7 +138,7 @@ namespace dinospace.Views
                 {
                     Text = label,
                     FontFamily = Ui.Display,
-                    FontSize = Ui.S(19),
+                    FontSize = Ui.S(compact ? 17 : 19),
                     TextColor = Theme.TextPrimary,
                     VerticalOptions = LayoutOptions.Center
                 });
@@ -129,19 +148,21 @@ namespace dinospace.Views
             {
                 var col = new VerticalStackLayout
                 {
-                    Spacing = 12,
+                    Spacing = compact ? 6 : 12,
                     HorizontalOptions = LayoutOptions.Fill,
                     VerticalOptions = LayoutOptions.Center
                 };
-                var iconBox = new Grid { HeightRequest = 44 };
+                var iconBox = new Grid { HeightRequest = compact ? 34 : 44 };
                 iconBox.Add(icon);
                 col.Add(iconBox);
                 col.Add(new Label
                 {
                     Text = label,
                     FontFamily = Ui.Display,
-                    FontSize = Ui.S(17),
+                    FontSize = Ui.S(compact ? 14.5 : 17),
                     TextColor = Theme.TextPrimary,
+                    MaxLines = 1,
+                    LineBreakMode = LineBreakMode.TailTruncation,
                     HorizontalTextAlignment = TextAlignment.Center
                 });
                 content = col;

@@ -45,6 +45,8 @@ namespace dinospace.Views
                 VerticalScrollBarVisibility = ScrollBarVisibility.Never,
                 Margin = new Thickness(16, 0, 16, 16)
             };
+            // rows keep their width across a rotation without this
+            Ui.RemeasureOnResize(_list);
             _list.SelectionChanged += OnSelected;
 
             var col = new Grid { RowSpacing = 0 };

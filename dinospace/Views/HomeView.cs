@@ -11,12 +11,28 @@ namespace dinospace.Views
     // pills — scan sky and ask novasaur.
     public class HomeView : ContentView, ITabView
     {
-        public HomeView(Action<int> goTab) => Build();
+        private bool _built;
+        private bool _short;
+
+        public HomeView(Action<int> goTab)
+        {
+            Build(false);
+            // The cover is built for a tall page; turned sideways it needs a
+            // different arrangement entirely, so it is rebuilt whenever the
+            // window crosses the short/tall line.
+            SizeChanged += (_, _) =>
+            {
+                bool now = Ui.IsShort(Height);
+                if (!_built || now != _short) Build(now);
+            };
+        }
 
         public void OnSelected() => StatsStore.UpdateStreak();
 
-        private void Build()
+        private void Build(bool shortScreen)
         {
+            _built = true;
+            _short = shortScreen;
             // Pills sit at the very bottom of the page, right above the tab
             // bar, exactly like the cover sheet — the mascot owns everything
             // between the wordmark and them.
@@ -32,7 +48,7 @@ namespace dinospace.Views
             {
                 Text = "dinospace",
                 FontFamily = Ui.Display,
-                FontSize = Ui.S(44),
+                FontSize = Ui.S(shortScreen ? 34 : 44),
                 TextColor = Theme.TextPrimary,
                 HorizontalOptions = LayoutOptions.Center,
                 VerticalOptions = LayoutOptions.Center
@@ -59,7 +75,7 @@ namespace dinospace.Views
             mast.Add(planet);
             mast.Add(starL);
             mast.Add(sparkR);
-            grid.Add(mast, 0, 0);
+            if (shortScreen) mast.Margin = new Thickness(0, 0, 0, 10);
 
             // ---- the hero's spot ----
             // The cover art (mascot_home.png) — the app icon's ringed-planet
@@ -67,7 +83,7 @@ namespace dinospace.Views
             // centre between the wordmark and the pills. If the art ever
             // goes missing, a few quiet stickers keep the space alive.
             var heroArea = new Grid { VerticalOptions = LayoutOptions.Center };
-            var hero = Ui.Mascot("mascot_home", 330);
+            var hero = Ui.Mascot("mascot_home", shortScreen ? 210 : 330);
             heroArea.Add(hero);
             if (!Ui.HasImage("mascot_home"))
             {
@@ -82,7 +98,6 @@ namespace dinospace.Views
                 heroArea.Add(moon);
                 heroArea.Add(comet);
             }
-            grid.Add(heroArea, 0, 1);
 
             // ---- the two cover pills ----
             var buttons = new VerticalStackLayout { Spacing = 14, VerticalOptions = LayoutOptions.End };
@@ -90,6 +105,34 @@ namespace dinospace.Views
                 async () => await Nav.Push(() => new SkyPage())));
             buttons.Add(HomePill(Ui.Mascot("mascot_nova", 26, Ui.IconAsk), "ask nova",
                 async () => { if (await ParentMode.GateNova()) await Nav.Push(() => new NovaPage()); }));
+
+            if (shortScreen)
+            {
+                // Sideways there is no room to stack a wordmark, a tall hero
+                // and two pills — the art ended up swallowing the title and
+                // running under the buttons. Landscape has width instead, so
+                // the cover splits in two: the planet on one side, the
+                // wordmark and pills on the other, both fully visible.
+                buttons.VerticalOptions = LayoutOptions.Center;
+
+                var side = new VerticalStackLayout
+                {
+                    Spacing = 10,
+                    VerticalOptions = LayoutOptions.Center,
+                    Children = { mast, buttons }
+                };
+
+                var land = new Grid { Padding = new Thickness(24, 4, 24, 10), ColumnSpacing = 22 };
+                land.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+                land.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+                land.Add(heroArea, 0, 0);
+                land.Add(side, 1, 0);
+                Content = land;
+                return;
+            }
+
+            grid.Add(mast, 0, 0);
+            grid.Add(heroArea, 0, 1);
             grid.Add(buttons, 0, 2);
 
             Content = grid;

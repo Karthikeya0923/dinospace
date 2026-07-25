@@ -41,17 +41,33 @@ namespace dinospace.Views
             // side is already picked — so let the other slot pick yours too.
             if (preselect != null && preselect.Group == "Your creation") _includeMine = true;
             Build();
+            // Turning the phone changes how much room the match-up has, so
+            // the whole screen is rebuilt whenever it crosses the short/tall
+            // line — a landscape page can't afford the full-size heading.
+            SizeChanged += (_, _) =>
+            {
+                bool now = Ui.IsShort(Height);
+                if (now != _shortArena) { _shortArena = now; Build(); }
+            };
         }
+
+        private bool _shortArena;
 
         public void OnSelected() { }
 
         private void Build()
         {
-            var stack = new VerticalStackLayout { Spacing = 16, Padding = new Thickness(16, 4, 16, 24) };
-            stack.Add(new Label { Text = Ui.T("Dino Battle"), FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary, HorizontalOptions = LayoutOptions.Center, HorizontalTextAlignment = TextAlignment.Center });
-            stack.Add(new Label { Text = "Choose two creatures and see who would come out on top.", FontFamily = Ui.Fonts, FontSize = Ui.S(13.5), TextColor = Theme.TextSecondary, HorizontalOptions = LayoutOptions.Center, HorizontalTextAlignment = TextAlignment.Center });
+            bool shortScreen = Ui.IsShort(Height);
+            _shortArena = shortScreen;
+            var stack = new VerticalStackLayout
+            {
+                Spacing = shortScreen ? 8 : 16,
+                Padding = shortScreen ? new Thickness(16, 2, 16, 10) : new Thickness(16, 4, 16, 24)
+            };
+            stack.Add(new Label { Text = Ui.T("Dino Battle"), FontFamily = Ui.Display, FontSize = Ui.S(shortScreen ? 22 : 32), TextColor = Theme.TextPrimary, HorizontalOptions = LayoutOptions.Center, HorizontalTextAlignment = TextAlignment.Center });
+            stack.Add(new Label { Text = "Choose two creatures and see who would come out on top.", FontFamily = Ui.Fonts, FontSize = Ui.S(shortScreen ? 12 : 13.5), TextColor = Theme.TextSecondary, HorizontalOptions = LayoutOptions.Center, HorizontalTextAlignment = TextAlignment.Center });
 
-            _arena = new Grid { ColumnSpacing = 10, Margin = new Thickness(0, 6) };
+            _arena = new Grid { ColumnSpacing = 10, Margin = new Thickness(0, shortScreen ? 2 : 6) };
             _arena.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             _arena.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             _arena.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
@@ -134,6 +150,12 @@ namespace dinospace.Views
         {
             View inner;
             bool empty = d == null;
+            // Sideways there is only ~300dp of page, and a 240dp card pushed
+            // the battle button off the bottom. The slots shrink to keep the
+            // whole match-up — cards, VS and button — on one screen.
+            bool shortScreen = Ui.IsShort(Height);
+            double cardH = shortScreen ? 118 : 240;
+            double artH = shortScreen ? 58 : 130;
             if (empty)
             {
                 inner = new VerticalStackLayout
@@ -151,9 +173,9 @@ namespace dinospace.Views
                 // A drawn creature shows whole on its canvas colour; built-in
                 // art is a transparent full-body cutout, so it shows whole too.
                 View img = string.IsNullOrEmpty(d!.CreationBg)
-                    ? new Image { Source = d.ImageFile, Aspect = Aspect.AspectFit, HeightRequest = 130 }
-                    : EntryCards.Drawing(d.ImageFile, d.CreationBg, 130);
-                var imgWrap = new Border { Content = img, HeightRequest = 130, BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 12 } };
+                    ? new Image { Source = d.ImageFile, Aspect = Aspect.AspectFit, HeightRequest = artH }
+                    : EntryCards.Drawing(d.ImageFile, d.CreationBg, artH);
+                var imgWrap = new Border { Content = img, HeightRequest = artH, BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 12 } };
                 inner = new VerticalStackLayout
                 {
                     Spacing = 6,
@@ -170,7 +192,7 @@ namespace dinospace.Views
             {
                 Content = inner,
                 BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
-                StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(12), HeightRequest = 240
+                StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(12), HeightRequest = cardH
             };
             // Only empty slots are tappable; filled slots are just images.
             // No push animation - the picker should feel instant. Once one

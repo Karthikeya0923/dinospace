@@ -65,6 +65,26 @@ namespace dinospace
         // multiplies each piece of text by how much the size just changed.
         // The whole app resizes under your finger. Screens created later read
         // the new scale from S() themselves, so both paths agree.
+        // A list that measures only its first item reuses that one
+        // measurement for every row, which is what keeps long lists fast —
+        // but the size is taken at one window width, so turning the phone
+        // leaves every row stuck at the old width and squeezes the text out
+        // of them. Re-handing the list its items forces a fresh measure.
+        // Call this whenever a page carrying such a list changes width.
+        public static void RemeasureOnResize(CollectionView list)
+        {
+            double last = 0;
+            list.SizeChanged += (_, _) =>
+            {
+                if (list.Width <= 0 || System.Math.Abs(list.Width - last) < 1) return;
+                last = list.Width;
+                var items = list.ItemsSource;
+                if (items == null) return;
+                list.ItemsSource = null;
+                list.ItemsSource = items;
+            };
+        }
+
         // Views marked with this sit out live scaling. The tab bar is the
         // case that matters: five fixed columns cannot fit "encyclopedia" at
         // the largest setting, and a clipped "encyclope" reads as broken, so
