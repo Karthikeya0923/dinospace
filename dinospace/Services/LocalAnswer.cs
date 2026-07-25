@@ -444,12 +444,32 @@ namespace dinospace.Services
 
             if (Has(q, "where", "habitat", "continent", "country", "live", "lived", "found", "region"))
             {
-                // Entries usually open with "X lived in ..." already — don't
-                // say it twice ("Stegosaurus lived in stegosaurus lived in...").
                 string habitat = FirstSentence(d.LifeEnvironmentText);
-                if (habitat.StartsWith(d.Name, StringComparison.OrdinalIgnoreCase))
+                if (habitat.Length == 0)
+                    return Trim($"{d.Name} lived in a variety of habitats.");
+
+                // Most entries already introduce their own subject, so adding
+                // another "X lived in" in front says it twice. Matching the
+                // full name alone wasn't enough: a third of the entries open
+                // with a short form or a pronoun instead ("T. Rex lived in
+                // ...", "It lived on ..."), which slipped through and read
+                // "Tyrannosaurus Rex lived in t. Rex lived in river valleys".
+                if (StartsWithName(habitat, d))
                     return Trim(habitat);
-                return Trim($"{d.Name} lived in {LowerLead(habitat.Length > 0 ? habitat : "a variety of habitats.")}");
+
+                // A leading pronoun becomes the creature's name, so the answer
+                // stands on its own away from the entry page.
+                if (habitat.StartsWith("It ", StringComparison.OrdinalIgnoreCase))
+                    return Trim($"{d.Name}{habitat[2..]}");
+
+                // Any other sentence that already carries its own "lived in"
+                // clause is used as written rather than prefixed again.
+                if (habitat.Contains(" lived in ", StringComparison.OrdinalIgnoreCase)
+                    || habitat.Contains(" lived on ", StringComparison.OrdinalIgnoreCase)
+                    || habitat.Contains(" lives in ", StringComparison.OrdinalIgnoreCase))
+                    return Trim(habitat);
+
+                return Trim($"{d.Name} lived in {LowerLead(habitat)}");
             }
 
             return null;
@@ -874,6 +894,22 @@ namespace dinospace.Services
         }
 
         private static string FirstFunFact(string funFacts) => FunFactLines(funFacts).Select(Clean).FirstOrDefault() ?? "";
+
+        // True when a sentence already opens with the creature's name in any
+        // of the forms the entries use — the full name, or one of its
+        // nicknames ("T. Rex" for Tyrannosaurus Rex).
+        private static bool StartsWithName(string sentence, Dinosaur d)
+        {
+            if (sentence.StartsWith(d.Name, StringComparison.OrdinalIgnoreCase)) return true;
+            foreach (var alias in d.Aliases)
+            {
+                if (alias.Length < 3) continue;
+                if (sentence.StartsWith(alias, StringComparison.OrdinalIgnoreCase)) return true;
+                // entries write "T. Rex" where the alias is stored as "t rex"
+                if (sentence.StartsWith(alias.Replace(" ", ". "), StringComparison.OrdinalIgnoreCase)) return true;
+            }
+            return false;
+        }
 
         private static string LowerLead(string v)
         {

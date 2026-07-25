@@ -55,6 +55,7 @@ namespace dinospace.Views
         private Ui.IconToggle _sendIcon = null!;
         private HorizontalStackLayout _suggestions = null!;
         private ScrollView _suggestionScroll = null!;
+        private ContentView _modelCardHost = null!;
         private Grid _inputArea = null!;
 
         // answering
@@ -116,6 +117,7 @@ namespace dinospace.Views
             // The model card sits under the header until the model is
             // installed, then disappears — the chat itself never needs it.
             var modelCard = new NovaModelCard(hideWhenInstalled: true) { Margin = new Thickness(16, 2, 16, 4) };
+            _modelCardHost = new ContentView { Content = modelCard };
 
             var main = new Grid { RowSpacing = 0 };
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -124,12 +126,28 @@ namespace dinospace.Views
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             main.Add(header, 0, 0);
-            main.Add(modelCard, 0, 1);
+            main.Add(_modelCardHost, 0, 1);
             main.Add(_chatScroll, 0, 2);
             main.Add(_suggestionScroll, 0, 3);
             main.Add(_inputArea, 0, 4);
 
             Content = Ui.CapWidth(main);
+
+            SizeChanged += (_, _) => ApplyCompact();
+            ApplyCompact();
+        }
+
+        // A phone in landscape has about 410dp of height, and the header,
+        // model card, suggestion strip and input row together claimed nearly
+        // all of it — the conversation was left a sliver too small to read or
+        // scroll, which is exactly what testers hit. On a short screen the two
+        // optional rows step aside so the chat keeps the room it needs; they
+        // come straight back when the phone turns upright.
+        private void ApplyCompact()
+        {
+            bool shortScreen = Ui.IsShort(Height);
+            if (_modelCardHost != null) _modelCardHost.IsVisible = !shortScreen;
+            if (_suggestionScroll != null) _suggestionScroll.IsVisible = !shortScreen;
         }
 
         private View BuildHeader()

@@ -33,11 +33,13 @@ namespace dinospace.Services
             set => Preferences.Set("set_textsize", value);
         }
 
+        // Spread wide enough that every step is unmistakable at a glance —
+        // the old 0.9/1.0 pair was a 10% nudge testers couldn't see at all.
         public static double FontScale => TextSizeIndex switch
         {
-            0 => 0.9,
-            2 => 1.15,
-            3 => 1.3,
+            0 => 0.82,
+            2 => 1.20,
+            3 => 1.40,
             _ => 1.0,
         };
 

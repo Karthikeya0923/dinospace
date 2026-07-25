@@ -77,6 +77,14 @@ namespace dinospace
         // false, so any tablet-only layout tweak is a guaranteed no-op there.
         public static bool IsWideScreen => ScreenDpWidth >= 600;
 
+        // True when the window is too short to hold a page that fills the
+        // height — in practice, a phone turned landscape (~410dp tall). A
+        // phone in landscape is also WIDER than the 600dp tablet mark, so
+        // width alone can't tell the two apart: layouts that stretch or size
+        // themselves must check this too, or their content runs off the
+        // bottom with no way to reach it.
+        public static bool IsShort(double heightDp) => heightDp > 0 && heightDp < 560;
+
         // Centres content and caps it to a comfortable reading width on big
         // screens, so a tablet doesn't stretch phone-first layouts edge to
         // edge. Implemented as symmetric side padding rather than a width

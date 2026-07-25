@@ -77,7 +77,7 @@ namespace dinospace.Views
                     Stroke = Colors.Transparent,
                     StrokeShape = new RoundRectangle { CornerRadius = 12 }
                 };
-                Ui.OnTap(pill, (_, _) => { AppSettings.TextSizeIndex = idx; BuildSizePills(); });
+                Ui.OnTap(pill, (_, _) => ApplyTextSize(idx));
                 _sizePills.Add(pill);
             }
         }
@@ -135,9 +135,27 @@ namespace dinospace.Views
         // Same trick as the dark-mode toggle: freeze the screen, rebuild the
         // whole app in the new theme underneath, then come straight back here
         // and dissolve the freeze-frame. No flash, no losing your place.
-        private async void Apply(string id)
+        private void Apply(string id)
         {
-            if (_switching || id == Theme.CurrentId) return;
+            if (id == Theme.CurrentId) return;
+            RebuildApp(() => AppSettings.ThemeId = id);
+        }
+
+        // Text size takes the very same route. Every screen bakes its font
+        // sizes in through Ui.S() at the moment it is built, so changing the
+        // setting alone only reached screens created later — the tabs were
+        // already up, so the app looked completely unchanged. Rebuilding puts
+        // the new size on every screen at once, and the freeze-frame keeps it
+        // from looking like a restart.
+        private void ApplyTextSize(int index)
+        {
+            if (index == AppSettings.TextSizeIndex) return;
+            RebuildApp(() => AppSettings.TextSizeIndex = index);
+        }
+
+        private async void RebuildApp(Action applyChange)
+        {
+            if (_switching) return;
             _switching = true;
             AppSettings.Tap();
 
@@ -156,7 +174,7 @@ namespace dinospace.Views
             catch { }
             if (snap != null) ThemeFx.ShowThemeCover(snap);
 
-            AppSettings.ThemeId = id;
+            applyChange();
             Theme.ApplyCurrent();
             NovaPage.ResetShared();
 

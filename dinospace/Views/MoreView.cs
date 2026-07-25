@@ -12,12 +12,27 @@ namespace dinospace.Views
     // page. The grid stretches so there is no dead space under settings.
     public class MoreView : ContentView, ITabView
     {
-        public MoreView() => Build();
+        private bool _built;
+        private bool _short;      // the layout mode currently on screen
+
+        public MoreView()
+        {
+            Build(false);
+            // Rotating the phone changes which layout fits, so rebuild the
+            // grid whenever the page crosses the short/tall line.
+            SizeChanged += (_, _) =>
+            {
+                bool now = Ui.IsShort(Height);
+                if (!_built || now != _short) Build(now);
+            };
+        }
 
         public void OnSelected() { }
 
-        private void Build()
+        private void Build(bool shortScreen)
         {
+            _built = true;
+            _short = shortScreen;
             var title = new Label
             {
                 Text = "more",
@@ -32,15 +47,26 @@ namespace dinospace.Views
             var grid = new Grid { ColumnSpacing = 14, RowSpacing = 14, Padding = new Thickness(18, 8, 18, 16) };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-            // On a phone the tile rows are star-sized so they stretch to fill
-            // the page with no dead space. On a big screen that stretch turns
-            // the tiles into tall pills, so there they get a fixed card height
-            // and sit at the top instead.
-            bool wide = Ui.IsWideScreen;
+            // Three cases, and the short one matters most: a phone in
+            // landscape is wider than the 600dp tablet mark but far too short
+            // for five rows of tiles, so judging by width alone gave it the
+            // tablet's fixed 190dp rows and ran the bottom tiles off the
+            // screen with nothing to scroll. Short screens get compact rows
+            // inside a ScrollView instead; tablets keep their fixed cards;
+            // a portrait phone still stretches to fill the page exactly.
+            bool wide = Ui.IsWideScreen && !shortScreen;
+            double tileH = shortScreen ? 138 : 190;
+            double settingsH = shortScreen ? 86 : 110;
             for (int r = 0; r < 4; r++)
-                grid.RowDefinitions.Add(new RowDefinition { Height = wide ? new GridLength(190) : GridLength.Star });
-            grid.RowDefinitions.Add(new RowDefinition { Height = wide ? new GridLength(110) : new GridLength(0.62, GridUnitType.Star) });
-            if (wide) grid.VerticalOptions = LayoutOptions.Start;
+                grid.RowDefinitions.Add(new RowDefinition
+                {
+                    Height = (wide || shortScreen) ? new GridLength(tileH) : GridLength.Star
+                });
+            grid.RowDefinitions.Add(new RowDefinition
+            {
+                Height = (wide || shortScreen) ? new GridLength(settingsH) : new GridLength(0.62, GridUnitType.Star)
+            });
+            if (wide || shortScreen) grid.VerticalOptions = LayoutOptions.Start;
 
             grid.Add(Tile(Ui.Icon(Ui.IconScanSky, 44), "scan sky", async () => await Nav.Push(() => new SkyPage())), 0, 0);
             grid.Add(Tile(Ui.Mascot("mascot_nova", 44, Ui.IconAsk), "ask nova", async () => { if (await ParentMode.GateNova()) await Nav.Push(() => new NovaPage()); }), 1, 0);
@@ -58,11 +84,18 @@ namespace dinospace.Views
             grid.Add(settings, 0, 4);
             Grid.SetColumnSpan((BindableObject)settings, 2);
 
+            // Fixed-height rows can add up to more than the window holds, so
+            // those layouts scroll. The stretching portrait layout fits by
+            // construction and stays put.
+            View tiles = (wide || shortScreen)
+                ? new ScrollView { Content = grid, VerticalScrollBarVisibility = ScrollBarVisibility.Never }
+                : grid;
+
             var root = new Grid { RowSpacing = 0 };
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
             root.Add(title, 0, 0);
-            root.Add(grid, 0, 1);
+            root.Add(tiles, 0, 1);
             Content = Ui.CapWidth(root);
         }
 
