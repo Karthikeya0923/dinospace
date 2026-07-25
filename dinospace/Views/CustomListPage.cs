@@ -89,7 +89,7 @@ namespace dinospace.Views
                 thumbGrid.Add(new Label
                 {
                     Text = name[..1].ToUpperInvariant(),
-                    FontFamily = Ui.Display, FontSize = 18, TextColor = Color.FromArgb("#E3BE55"),
+                    FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Color.FromArgb("#E3BE55"),
                     HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
                 });
                 // User drawings show whole on their canvas colour; built-in

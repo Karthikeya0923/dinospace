@@ -83,7 +83,7 @@ namespace dinospace.Views
 
             Label Digit(string d) => new()
             {
-                Text = d, FontFamily = Ui.Display, FontSize = 26,
+                Text = d, FontFamily = Ui.Display, FontSize = Ui.S(26),
                 TextColor = Theme.TextPrimary,
                 HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
             };

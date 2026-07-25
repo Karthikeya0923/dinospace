@@ -26,7 +26,7 @@ namespace dinospace.Views
 
         private void Build()
         {
-            var search = new SearchBar { Placeholder = "Search everything…", BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint };
+            var search = new SearchBar { Placeholder = "Search everything…", FontFamily = Ui.Fonts, FontSize = Ui.S(15), BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint };
             search.TextChanged += (_, e) => Filter(e.NewTextValue ?? "");
             var searchWrap = new Border
             {
@@ -61,7 +61,7 @@ namespace dinospace.Views
         {
             var initial = new Label
             {
-                FontFamily = Ui.Display, FontSize = 18, TextColor = Color.FromArgb("#E3BE55"),
+                FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Color.FromArgb("#E3BE55"),
                 HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
             };
             initial.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Initial)));

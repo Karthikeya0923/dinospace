@@ -54,6 +54,91 @@ namespace dinospace
         public static double Scale => AppSettings.FontScale;
         public static double S(double size) => size * Scale;
 
+        // ---------- live text scaling ----------
+
+        // Every screen bakes its font sizes in through S() the moment it is
+        // built, so changing the size setting used to leave the screens that
+        // were already up untouched — you had to back out of the app's tabs
+        // and come back before anything moved. This walks everything that is
+        // alive right now (the page in front of you, the pages stacked behind
+        // it, and all five tabs, which are built together at launch) and
+        // multiplies each piece of text by how much the size just changed.
+        // The whole app resizes under your finger. Screens created later read
+        // the new scale from S() themselves, so both paths agree.
+        // Views marked with this sit out live scaling. The tab bar is the
+        // case that matters: five fixed columns cannot fit "encyclopedia" at
+        // the largest setting, and a clipped "encyclope" reads as broken, so
+        // the bar keeps its own size while everything inside the app scales.
+        public const string NoScaleTag = "noscale";
+
+        public static T NoScale<T>(T view) where T : Element
+        {
+            view.StyleId = NoScaleTag;
+            return view;
+        }
+
+        public static void RescaleText(double factor)
+        {
+            if (double.IsNaN(factor) || double.IsInfinity(factor) || System.Math.Abs(factor - 1) < 0.0001) return;
+
+            var seen = new System.Collections.Generic.HashSet<Element>();
+
+            static double Grow(double size, double f) => size > 0 ? size * f : size;
+
+            void Visit(Element? el)
+            {
+                // A view can be reached twice (a page is both the window's and
+                // the navigation stack's), so each one is only touched once —
+                // scaling something twice would double the jump.
+                if (el == null || !seen.Add(el)) return;
+
+                // Opted-out views keep their size, but their children are
+                // still walked — only this one element is left alone.
+                if (el.StyleId == NoScaleTag)
+                {
+                    if (el is IVisualTreeElement skipped)
+                        foreach (var child in skipped.GetVisualChildren())
+                            if (child is Element skippedChild) Visit(skippedChild);
+                    return;
+                }
+
+                switch (el)
+                {
+                    case Label l:
+                        l.FontSize = Grow(l.FontSize, factor);
+                        if (l.FormattedText != null)
+                            foreach (var span in l.FormattedText.Spans)
+                                span.FontSize = Grow(span.FontSize, factor);
+                        break;
+                    case Button b: b.FontSize = Grow(b.FontSize, factor); break;
+                    case Entry e: e.FontSize = Grow(e.FontSize, factor); break;
+                    case Editor ed: ed.FontSize = Grow(ed.FontSize, factor); break;
+                    case SearchBar s: s.FontSize = Grow(s.FontSize, factor); break;
+                }
+
+                if (el is IVisualTreeElement tree)
+                    foreach (var child in tree.GetVisualChildren())
+                        if (child is Element childEl) Visit(childEl);
+            }
+
+            try
+            {
+                if (Application.Current?.Windows is { } windows)
+                    foreach (var window in windows)
+                        Visit(window.Page);
+
+                // Pushed pages live on Shell's stack, and they are still alive
+                // behind whatever is on top — they have to resize too, or
+                // going back reveals the old size.
+                if (Shell.Current?.Navigation is { } nav)
+                {
+                    foreach (var page in nav.NavigationStack) Visit(page);
+                    foreach (var page in nav.ModalStack) Visit(page);
+                }
+            }
+            catch { }
+        }
+
         // Display-case for labels: the Playful layout writes everything in
         // friendly lowercase (like its storybook wordmark); Native keeps the
         // text exactly as authored.

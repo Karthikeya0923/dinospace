@@ -66,7 +66,7 @@ namespace dinospace.Views
                 var label = new Label
                 {
                     Text = labels[i],
-                    FontFamily = Ui.Fonts, FontSize = 14, FontAttributes = FontAttributes.Bold,
+                    FontFamily = Ui.Fonts, FontSize = Ui.S(14), FontAttributes = FontAttributes.Bold,
                     TextColor = active ? Theme.TextOnAccent : Theme.ChipText,
                     HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
                 };
@@ -141,16 +141,21 @@ namespace dinospace.Views
             RebuildApp(() => AppSettings.ThemeId = id);
         }
 
-        // Text size takes the very same route. Every screen bakes its font
-        // sizes in through Ui.S() at the moment it is built, so changing the
-        // setting alone only reached screens created later — the tabs were
-        // already up, so the app looked completely unchanged. Rebuilding puts
-        // the new size on every screen at once, and the freeze-frame keeps it
-        // from looking like a restart.
+        // Text size does NOT take the rebuild route. Swapping the whole app
+        // out meant the change only showed up after backing out of a couple
+        // of screens, which felt broken. Instead every live view is rescaled
+        // in place, so the text grows or shrinks the instant the pill is
+        // tapped — on this page and on every tab behind it.
         private void ApplyTextSize(int index)
         {
             if (index == AppSettings.TextSizeIndex) return;
-            RebuildApp(() => AppSettings.TextSizeIndex = index);
+
+            double before = AppSettings.FontScale;
+            AppSettings.TextSizeIndex = index;
+            AppSettings.Tap();
+
+            Ui.RescaleText(AppSettings.FontScale / before);
+            BuildSizePills();   // the pills themselves show the new selection
         }
 
         private async void RebuildApp(Action applyChange)

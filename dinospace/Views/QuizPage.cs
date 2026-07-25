@@ -56,8 +56,8 @@ namespace dinospace.Views
             var back = new Border { Content = Ui.Icon(Ui.IconBack, 24), BackgroundColor = Colors.Transparent, Stroke = Colors.Transparent, VerticalOptions = LayoutOptions.Center, Padding = new Thickness(4, 0, 12, 0) };
             Ui.OnTap(back, async (_, _) => await Close());
 
-            _counter = new Label { FontFamily = Ui.Fonts, FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center };
-            _scoreLabel = new Label { FontFamily = Ui.Fonts, FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = _accent, VerticalOptions = LayoutOptions.Center, HorizontalOptions = LayoutOptions.End };
+            _counter = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(14), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center };
+            _scoreLabel = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(14), FontAttributes = FontAttributes.Bold, TextColor = _accent, VerticalOptions = LayoutOptions.Center, HorizontalOptions = LayoutOptions.End };
 
             var barGrid = new Grid { Padding = new Thickness(8, 10, 16, 4) };
             barGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -129,7 +129,7 @@ namespace dinospace.Views
                     WidthRequest = 30, HeightRequest = 30,
                     BackgroundColor = Theme.SurfaceAlt, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                     StrokeShape = new RoundRectangle { CornerRadius = 9 }, VerticalOptions = LayoutOptions.Center,
-                    Content = new Label { Text = letter, FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
+                    Content = new Label { Text = letter, FontFamily = Ui.Fonts, FontSize = Ui.S(13), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center }
                 };
                 var g = new Grid { ColumnSpacing = 12 };
                 g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -201,7 +201,7 @@ namespace dinospace.Views
             });
 
             bool last = _index >= _questions.Count - 1;
-            var nextLabel = new Label { Text = last ? "See results" : "Next question", FontFamily = Ui.Fonts, FontSize = 15, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center };
+            var nextLabel = new Label { Text = last ? "See results" : "Next question", FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center };
             var next = new Border
             {
                 Content = nextLabel,
@@ -243,19 +243,19 @@ namespace dinospace.Views
                     VerticalOptions = LayoutOptions.Center, Spacing = 0,
                     Children =
                     {
-                        new Label { Text = $"{pct}%", FontFamily = Ui.Display, FontSize = 34, TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center },
-                        new Label { Text = $"{_score}/{_questions.Count}", FontFamily = Ui.Fonts, FontSize = 13, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center }
+                        new Label { Text = $"{pct}%", FontFamily = Ui.Display, FontSize = Ui.S(34), TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center },
+                        new Label { Text = $"{_score}/{_questions.Count}", FontFamily = Ui.Fonts, FontSize = Ui.S(13), TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center }
                     }
                 }
             };
 
-            _body.Add(new Label { Text = "quiz complete!", FontFamily = Ui.Display, FontSize = 26, TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(0, 20, 0, 8) });
+            _body.Add(new Label { Text = "quiz complete!", FontFamily = Ui.Display, FontSize = Ui.S(26), TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(0, 20, 0, 8) });
             _body.Add(ring);
-            _body.Add(new Label { Text = verdict, FontFamily = Ui.Fonts, FontSize = 15, LineHeight = 1.4, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(20, 8) });
+            _body.Add(new Label { Text = verdict, FontFamily = Ui.Fonts, FontSize = Ui.S(15), LineHeight = 1.4, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(20, 8) });
 
             var retry = new Border
             {
-                Content = new Label { Text = "Play again", FontFamily = Ui.Fonts, FontSize = 15, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center },
+                Content = new Label { Text = "Play again", FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextOnAccent, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center },
                 BackgroundColor = _accent, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(16, 14), Margin = new Thickness(0, 16, 0, 0)
             };
             Ui.OnTap(retry, async (_, _) => { await Navigation.PopAsync(); await Nav.Push(() => new QuizPage(_mode, _questions.Count)); });
@@ -263,7 +263,7 @@ namespace dinospace.Views
 
             var done = new Border
             {
-                Content = new Label { Text = "Done", FontFamily = Ui.Fonts, FontSize = 15, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center },
+                Content = new Label { Text = "Done", FontFamily = Ui.Fonts, FontSize = Ui.S(15), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextPrimary, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center },
                 BackgroundColor = Colors.Transparent, Stroke = Theme.Hairline, StrokeThickness = 1, StrokeShape = new RoundRectangle { CornerRadius = 16 }, Padding = new Thickness(16, 14)
             };
             Ui.OnTap(done, async (_, _) => await Close());

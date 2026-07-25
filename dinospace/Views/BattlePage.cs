@@ -142,7 +142,7 @@ namespace dinospace.Views
                     Children =
                     {
                         Ui.Icon(Ui.IconPlus, 34),
-                        new Label { Text = "Choose", FontFamily = Ui.Fonts, FontSize = 13, TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center }
+                        new Label { Text = "Choose", FontFamily = Ui.Fonts, FontSize = Ui.S(13), TextColor = Theme.TextSecondary, HorizontalTextAlignment = TextAlignment.Center }
                     }
                 };
             }

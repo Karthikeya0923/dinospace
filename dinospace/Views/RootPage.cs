@@ -135,6 +135,9 @@ namespace dinospace.Views
                     HorizontalTextAlignment = TextAlignment.Center,
                     LineBreakMode = LineBreakMode.NoWrap
                 };
+                // The bar sizes itself: five equal columns have no room to
+                // grow with the text-size setting.
+                Ui.NoScale(label);
                 _navIcons.Add(icon);
                 _navLabels.Add(label);
 

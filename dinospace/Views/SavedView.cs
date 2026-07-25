@@ -187,6 +187,7 @@ namespace dinospace.Views
             _entry = new Entry
             {
                 Placeholder = Ui.T("Search creatures, planets, stars…"),
+                FontFamily = Ui.Fonts, FontSize = Ui.S(15),
                 BackgroundColor = Colors.Transparent,
                 TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint,
                 ReturnType = ReturnType.Search
@@ -230,7 +231,7 @@ namespace dinospace.Views
         {
             var initial = new Label
             {
-                FontFamily = Ui.Display, FontSize = 18, TextColor = Color.FromArgb("#E3BE55"),
+                FontFamily = Ui.Display, FontSize = Ui.S(18), TextColor = Color.FromArgb("#E3BE55"),
                 HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
             };
             initial.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Initial)));

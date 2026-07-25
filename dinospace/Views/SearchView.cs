@@ -54,7 +54,7 @@ namespace dinospace.Views
                 HorizontalOptions = LayoutOptions.Center, Margin = new Thickness(0, 2, 0, 0)
             });
 
-            _entry = new Entry { Placeholder = Ui.T("Search creatures, planets, stars…"), BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Search };
+            _entry = new Entry { Placeholder = Ui.T("Search creatures, planets, stars…"), FontFamily = Ui.Fonts, FontSize = Ui.S(15), BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Search };
             _entry.TextChanged += (_, e) => { _query = e.NewTextValue ?? ""; Refresh(); };
             var glass = Ui.Icon(Ui.IconSearch, 22);
             glass.VerticalOptions = LayoutOptions.Center;
@@ -205,7 +205,7 @@ namespace dinospace.Views
             var img = new FaceThumbView { WidthRequest = 58, HeightRequest = 58 };
             img.SetBinding(FaceThumbView.ImageNameProperty, new Binding(nameof(EntryRow.Image)));
             img.SetBinding(FaceThumbView.FaceBgProperty, new Binding(nameof(EntryRow.Title), converter: _hue));
-            var initial = new Label { FontFamily = Ui.Display, FontSize = 22, TextColor = Colors.White.WithAlpha(0.92f), HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
+            var initial = new Label { FontFamily = Ui.Display, FontSize = Ui.S(22), TextColor = Colors.White.WithAlpha(0.92f), HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
             initial.SetBinding(Label.TextProperty, new Binding(nameof(EntryRow.Initial)));
             var thumbGrid = new Grid();
             thumbGrid.Add(initial);

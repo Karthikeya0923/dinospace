@@ -32,7 +32,7 @@ namespace dinospace.Views
             {
                 Text = "dinospace",
                 FontFamily = Ui.Display,
-                FontSize = 44,
+                FontSize = Ui.S(44),
                 TextColor = Theme.TextPrimary,
                 HorizontalOptions = LayoutOptions.Center,
                 VerticalOptions = LayoutOptions.Center
@@ -111,7 +111,7 @@ namespace dinospace.Views
             {
                 Text = text,
                 FontFamily = Ui.Display,
-                FontSize = 19,
+                FontSize = Ui.S(19),
                 TextColor = Theme.TextPrimary,
                 VerticalOptions = LayoutOptions.Center
             });

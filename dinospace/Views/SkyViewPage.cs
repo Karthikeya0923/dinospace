@@ -82,7 +82,7 @@ namespace dinospace.Views
             var title = new Label
             {
                 Text = "Scan Sky",
-                FontFamily = Ui.Display, FontSize = 22, TextColor = Colors.White,
+                FontFamily = Ui.Display, FontSize = Ui.S(22), TextColor = Colors.White,
                 HorizontalOptions = LayoutOptions.Start, VerticalOptions = LayoutOptions.Center
             };
 
@@ -159,7 +159,7 @@ namespace dinospace.Views
             _viewAllLabel = new Label
             {
                 Text = "view all",
-                FontFamily = Ui.Display, FontSize = 14,
+                FontFamily = Ui.Display, FontSize = Ui.S(14),
                 TextColor = Colors.White,
                 HorizontalTextAlignment = TextAlignment.Center,
                 VerticalTextAlignment = TextAlignment.Center

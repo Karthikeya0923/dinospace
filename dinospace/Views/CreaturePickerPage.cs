@@ -29,7 +29,7 @@ namespace dinospace.Views
 
         private void Build()
         {
-            var search = new SearchBar { Placeholder = "Search creatures...", BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint };
+            var search = new SearchBar { Placeholder = "Search creatures...", FontFamily = Ui.Fonts, FontSize = Ui.S(15), BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint };
             search.TextChanged += (_, e) => Filter(e.NewTextValue ?? "");
             var searchWrap = new Border
             {
@@ -85,9 +85,9 @@ namespace dinospace.Views
             };
             thumb.SetBinding(Border.BackgroundColorProperty, new Binding(nameof(Dinosaur.CreationBg), converter: new DrawingBgConverter()));
 
-            var name = new Label { FontFamily = Ui.Display, FontSize = 16, TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center };
+            var name = new Label { FontFamily = Ui.Display, FontSize = Ui.S(16), TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center };
             name.SetBinding(Label.TextProperty, new Binding(nameof(Dinosaur.Name)));
-            var sub = new Label { FontFamily = Ui.Fonts, FontSize = 12, TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.Center };
+            var sub = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.Center };
             sub.SetBinding(Label.TextProperty, new Binding(nameof(Dinosaur.ShortDescription)));
 
             var info = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };

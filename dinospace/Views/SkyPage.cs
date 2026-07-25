@@ -91,7 +91,7 @@ namespace dinospace.Views
             row.Add(new Label
             {
                 Text = "scan your sky",
-                FontFamily = Ui.Display, FontSize = 19,
+                FontFamily = Ui.Display, FontSize = Ui.S(19),
                 TextColor = Theme.TextPrimary, VerticalOptions = LayoutOptions.Center
             });
 

@@ -181,10 +181,10 @@ namespace dinospace.Views
                 Content = Ui.Mascot("mascot_nova", dotSize, Ui.IconAsk)
             };
             var title = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
-            title.Add(new Label { Text = "ask nova", FontFamily = Ui.Display, FontSize = 21, TextColor = Theme.TextPrimary });
-            title.Add(new Label { Text = Ui.T("Your dino & space buddy"), FontFamily = Ui.Fonts, FontSize = 11.5, TextColor = Theme.TextSecondary });
+            title.Add(new Label { Text = "ask nova", FontFamily = Ui.Display, FontSize = Ui.S(21), TextColor = Theme.TextPrimary });
+            title.Add(new Label { Text = Ui.T("Your dino & space buddy"), FontFamily = Ui.Fonts, FontSize = Ui.S(11.5), TextColor = Theme.TextSecondary });
 
-            var clear = new Label { Text = Ui.T("Clear"), FontFamily = Ui.Fonts, FontSize = 13, FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.Center };
+            var clear = new Label { Text = Ui.T("Clear"), FontFamily = Ui.Fonts, FontSize = Ui.S(13), FontAttributes = FontAttributes.Bold, TextColor = Theme.TextSecondary, VerticalOptions = LayoutOptions.Center };
             Ui.OnTap(clear, (_, _) => ClearChat());
 
             var grid = new Grid { Padding = new Thickness(10, 14, 16, 8), ColumnSpacing = 10 };
@@ -198,7 +198,7 @@ namespace dinospace.Views
 
         private Grid BuildInput()
         {
-            _entry = new Entry { Placeholder = Ui.T("Ask me anything…"), BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Send };
+            _entry = new Entry { Placeholder = Ui.T("Ask me anything…"), FontFamily = Ui.Fonts, FontSize = Ui.S(15), BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Send };
             _entry.Completed += (_, _) => OnSend();
             var entryWrap = new Border
             {
@@ -601,7 +601,7 @@ namespace dinospace.Views
             _suggestions.Children.Clear();
             foreach (var q in SuggestedQuestions.Pick(4))
             {
-                var label = new Label { Text = q, FontFamily = Ui.Fonts, FontSize = 12.5, TextColor = Theme.ChipText };
+                var label = new Label { Text = q, FontFamily = Ui.Fonts, FontSize = Ui.S(12.5), TextColor = Theme.ChipText };
                 var chip = new Border
                 {
                     Content = label,
