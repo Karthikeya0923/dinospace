@@ -154,7 +154,11 @@ namespace dinospace.Views
             // the battle button off the bottom. The slots shrink to keep the
             // whole match-up — cards, VS and button — on one screen.
             bool shortScreen = Ui.IsShort(Height);
-            double cardH = shortScreen ? 118 : 240;
+            // The slot carries the creature's name and a one-line description,
+            // so the card grows with the text-size setting — otherwise the
+            // description is the first thing clipped at the largest sizes.
+            // The art keeps its size so the extra room all goes to the words.
+            double cardH = Ui.S(shortScreen ? 118 : 240);
             double artH = shortScreen ? 58 : 130;
             if (empty)
             {

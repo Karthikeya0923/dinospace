@@ -56,8 +56,11 @@ namespace dinospace.Views
             // tab bar, so the two tile rows and the settings bar are sized to
             // land inside that with a little room to spare.
             int cols = shortScreen ? 4 : 2;
-            double tileH = shortScreen ? 88 : 190;
-            double settingsH = shortScreen ? 54 : 110;
+            // Tiles carry a label, so they grow with the text-size setting;
+            // at the biggest sizes the landscape grid then needs more than
+            // one screen, which is what the ScrollView below is for.
+            double tileH = Ui.S(shortScreen ? 88 : 190);
+            double settingsH = Ui.S(shortScreen ? 54 : 110);
 
             var grid = new Grid
             {
@@ -101,10 +104,11 @@ namespace dinospace.Views
             grid.Add(settings, 0, tileRows);
             Grid.SetColumnSpan((BindableObject)settings, cols);
 
-            // The tablet's fixed rows can still add up to more than the window
-            // holds, so that layout scrolls. Landscape now fits by design, and
-            // portrait stretches to fit — neither needs to.
-            View tiles = wide
+            // Landscape fits on one screen at normal text sizes and scrolls
+            // only when the largest sizes push it over; the tablet's fixed
+            // rows can overflow too. Portrait stretches to fit and never
+            // needs to scroll.
+            View tiles = (wide || shortScreen)
                 ? new ScrollView { Content = grid, VerticalScrollBarVisibility = ScrollBarVisibility.Never }
                 : grid;
 

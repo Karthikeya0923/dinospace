@@ -133,7 +133,10 @@ namespace dinospace.Views
                 StrokeThickness = 1,
                 StrokeShape = new RoundRectangle { CornerRadius = 14 },
                 Padding = 0,
-                HeightRequest = 196,
+                // The card holds a name and a meta line, so its height has to
+                // follow the text-size setting — at the largest sizes a fixed
+                // height cut the meta line off the bottom.
+                HeightRequest = Ui.S(196),
                 Shadow = Theme.CardShadow()
             };
             Ui.OnTap(card, (_, _) => onTap());
@@ -187,7 +190,7 @@ namespace dinospace.Views
             {
                 Content = col, BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
                 StrokeShape = new RoundRectangle { CornerRadius = 24 }, Padding = 0,
-                HeightRequest = 214, Shadow = Theme.CardShadow()
+                HeightRequest = Ui.S(214), Shadow = Theme.CardShadow()
             };
             Ui.OnTap(card, (_, _) => onTap());
             Ui.Describe(card, title);

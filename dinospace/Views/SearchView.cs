@@ -39,20 +39,45 @@ namespace dinospace.Views
         private string _query = "";
         private int _segment;
 
-        public SearchView() => Build();
+        private bool _built;
+        private bool _short;
+
+        public SearchView()
+        {
+            Build();
+            // Sideways the header has to give the list its room back, so the
+            // page is rebuilt whenever it crosses the short/tall line.
+            SizeChanged += (_, _) =>
+            {
+                bool now = Ui.IsShort(Height);
+                if (!_built || now != _short) Build();
+            };
+        }
 
         public void OnSelected() { }
 
         private void Build()
         {
-            var header = new VerticalStackLayout { Spacing = 14, Padding = new Thickness(18, 16, 18, 8) };
+            bool shortScreen = Ui.IsShort(Height);
+            _built = true;
+            _short = shortScreen;
 
-            header.Add(new Label
+            var header = new VerticalStackLayout
             {
-                Text = "encyclopedia",
-                FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary,
-                HorizontalOptions = LayoutOptions.Center, Margin = new Thickness(0, 2, 0, 0)
-            });
+                Spacing = shortScreen ? 8 : 14,
+                Padding = shortScreen ? new Thickness(18, 6, 18, 4) : new Thickness(18, 16, 18, 8)
+            };
+
+            // The big storybook title is the first thing to go sideways: it
+            // and the roomy spacing ate so much of a landscape page that only
+            // one entry was left showing.
+            if (!shortScreen)
+                header.Add(new Label
+                {
+                    Text = "encyclopedia",
+                    FontFamily = Ui.Display, FontSize = Ui.S(32), TextColor = Theme.TextPrimary,
+                    HorizontalOptions = LayoutOptions.Center, Margin = new Thickness(0, 2, 0, 0)
+                });
 
             _entry = new Entry { Placeholder = Ui.T("Search creatures, planets, stars…"), FontFamily = Ui.Fonts, FontSize = Ui.S(15), BackgroundColor = Colors.Transparent, TextColor = Theme.TextPrimary, PlaceholderColor = Theme.TextHint, ReturnType = ReturnType.Search };
             _entry.TextChanged += (_, e) => { _query = e.NewTextValue ?? ""; Refresh(); };
@@ -63,20 +88,44 @@ namespace dinospace.Views
             field.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             field.Add(glass, 0, 0);
             field.Add(_entry, 1, 0);
-            header.Add(new Border
+            var searchBox = new Border
             {
                 Content = field, BackgroundColor = Theme.Surface, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
-                StrokeShape = new RoundRectangle { CornerRadius = 14 }, MinimumHeightRequest = 52
-            });
+                StrokeShape = new RoundRectangle { CornerRadius = 14 },
+                MinimumHeightRequest = shortScreen ? 46 : 52,
+                VerticalOptions = LayoutOptions.Center
+            };
 
-            _segments = new HorizontalStackLayout { Spacing = AppLayout.Playful ? 8 : 22 };
+            _segments = new HorizontalStackLayout { Spacing = AppLayout.Playful ? 8 : 22, VerticalOptions = LayoutOptions.Center };
             _segments.Add(SegItem(Ui.T("All"), 0));
             _segments.Add(SegItem(Ui.T("Dinosaurs"), 1));
             _segments.Add(SegItem(Ui.T("Space"), 2));
-            header.Add(_segments);
 
-            _count = new Label { FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint };
-            header.Add(_count);
+            _count = new Label
+            {
+                FontFamily = Ui.Fonts, FontSize = Ui.S(12), TextColor = Theme.TextHint,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            if (shortScreen)
+            {
+                // Landscape has width to spare: the search box, the filters
+                // and the count share one line instead of stacking four deep.
+                var row = new Grid { ColumnSpacing = 14 };
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                row.Add(searchBox, 0, 0);
+                row.Add(_segments, 1, 0);
+                row.Add(_count, 2, 0);
+                header.Add(row);
+            }
+            else
+            {
+                header.Add(searchBox);
+                header.Add(_segments);
+                header.Add(_count);
+            }
 
             _list = new CollectionView
             {
@@ -204,7 +253,12 @@ namespace dinospace.Views
         // initial letter shows only until real art exists for the entry.
         private View PlayfulRowTemplate()
         {
-            var img = new FaceThumbView { WidthRequest = 58, HeightRequest = 58 };
+            // Sideways the rows slim down as well, so a landscape page shows a
+            // handful of entries instead of one and a half.
+            bool shortScreen = Ui.IsShort(Height);
+            double thumbSize = shortScreen ? 46 : 58;
+
+            var img = new FaceThumbView { WidthRequest = thumbSize, HeightRequest = thumbSize };
             img.SetBinding(FaceThumbView.ImageNameProperty, new Binding(nameof(EntryRow.Image)));
             img.SetBinding(FaceThumbView.FaceBgProperty, new Binding(nameof(EntryRow.Title), converter: _hue));
             var initial = new Label { FontFamily = Ui.Display, FontSize = Ui.S(22), TextColor = Colors.White.WithAlpha(0.92f), HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
@@ -212,7 +266,7 @@ namespace dinospace.Views
             var thumbGrid = new Grid();
             thumbGrid.Add(initial);
             thumbGrid.Add(img);
-            var thumb = new Border { Content = thumbGrid, WidthRequest = 58, HeightRequest = 58, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = 18 } };
+            var thumb = new Border { Content = thumbGrid, WidthRequest = thumbSize, HeightRequest = thumbSize, Stroke = Colors.Transparent, StrokeShape = new RoundRectangle { CornerRadius = shortScreen ? 14 : 18 } };
             thumb.SetBinding(Border.BackgroundColorProperty, new Binding(nameof(EntryRow.Title), converter: _hue));
 
             var title = new Label { FontFamily = Ui.Display, FontSize = Ui.S(17.5), TextColor = Theme.TextPrimary };
@@ -225,7 +279,7 @@ namespace dinospace.Views
             var chevron = Ui.Icon(Ui.IconChevron, 22);
             chevron.VerticalOptions = LayoutOptions.Center;
 
-            var row = new Grid { ColumnSpacing = 13, Padding = new Thickness(10, 9) };
+            var row = new Grid { ColumnSpacing = 13, Padding = new Thickness(10, shortScreen ? 5 : 9) };
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -234,8 +288,8 @@ namespace dinospace.Views
             return new Border
             {
                 Content = row, BackgroundColor = Theme.AccentSoft, Stroke = Theme.CardStroke, StrokeThickness = 1.4,
-                StrokeShape = new RoundRectangle { CornerRadius = 20 }, Padding = 0,
-                Margin = new Thickness(0, 5), Shadow = Theme.CardShadow()
+                StrokeShape = new RoundRectangle { CornerRadius = shortScreen ? 16 : 20 }, Padding = 0,
+                Margin = new Thickness(0, shortScreen ? 3 : 5), Shadow = Theme.CardShadow()
             };
         }
 
