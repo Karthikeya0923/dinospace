@@ -61,8 +61,7 @@
 - **All-code UI** — every screen is C# on .NET MAUI; no XAML pages, one small component kit, themed at runtime.
 - **[SkyScanner](https://github.com/Karthikeya0923/SkyScanner)** — the in-house astronomy engine behind every sky feature. Positions verified against NASA JPL's Horizons ephemeris to within hundredths of a degree, fully offline.
 - **[NovaSaur](https://github.com/Karthikeya0923/novasaur)** — the in-house inference engine that runs Google's Gemma locally through LiteRT-LM. Nothing typed in the chat ever leaves the device.
-- **A billion-question gate** — every release replays 1.3 billion generated questions through the production answer pipeline (`tools/AnswerHarness`); a build ships only when it passes clean.
-
+  
 ## Privacy
 
 Built for kids, so the bar is absolute:
