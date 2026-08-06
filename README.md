@@ -5,7 +5,7 @@
 <h1 align="center">DinoSpace</h1>
 
 <p align="center">
-  A hand-drawn dinosaur &amp; space encyclopedia for kids.<br>
+  A dinosaur &amp; space encyclopedia for kids.<br>
   Fully offline. No ads, no accounts, no data collected.
 </p>
 
