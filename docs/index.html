@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DinoSpace — dinosaurs &amp; space for curious kids</title>
-<meta name="description" content="A hand-drawn dinosaur and space encyclopedia for kids. 100 entries, quizzes, dino battles, a live sky scanner and a friendly robot buddy — entirely offline, no ads, no accounts.">
+<meta name="description" content="A hand-drawn dinosaur and space encyclopedia for kids. 100 entries, quizzes, dino battles, a live sky scanner and a friendly robot buddy — entirely offline, no ads, no accounts. Free on Google Play.">
 <meta property="og:title" content="DinoSpace — dinosaurs &amp; space for curious kids">
 <meta property="og:description" content="A hand-drawn dinosaur and space encyclopedia for kids. Entirely offline. No ads, no accounts, no data collected.">
 <meta property="og:image" content="https://karthikeya0923.github.io/dinospace/assets/feature.png">
@@ -66,7 +66,8 @@
   .hero p.tag{font-size:clamp(17px,3.2vw,21px);color:var(--muted);margin:10px auto 0;max-width:520px;line-height:1.5}
   .pill{display:inline-block;margin-top:26px;padding:13px 28px;border-radius:100px;font-weight:700;font-size:17px;
     color:#241d06;background:var(--gold);text-decoration:none;box-shadow:0 8px 26px rgba(227,190,85,.25)}
-  .trust{margin-top:16px;font-size:15px;color:var(--muted);letter-spacing:.2px}
+  .sub{margin-top:12px;font-size:14.5px;color:var(--muted)}
+  .trust{margin-top:14px;font-size:15px;color:var(--muted);letter-spacing:.2px}
   .trust b{color:var(--cream);font-weight:600}
 
   /* ---------- grassy hills ---------- */
@@ -76,24 +77,41 @@
   /* ---------- on the grass ---------- */
   .grass{background:#0b1710;padding:8px 20px 30px}
   .inner{max-width:960px;margin:0 auto}
-  h2{font-size:clamp(24px,4.5vw,32px);color:var(--grass-text);text-align:center;margin-top:38px}
+  h2{font-size:clamp(24px,4.5vw,32px);color:var(--grass-text);text-align:center;margin-top:44px}
   .rule{width:56px;height:5px;border-radius:3px;background:var(--gold);margin:10px auto 26px}
+  .lede{max-width:560px;margin:-12px auto 26px;text-align:center;color:var(--grass-muted);font-size:16px;line-height:1.5}
 
   .shots{display:flex;gap:14px;overflow-x:auto;padding:4px 4px 20px;scroll-snap-type:x mandatory;
     -webkit-overflow-scrolling:touch}
   .shots img{width:224px;border-radius:20px;border:1px solid #1e3a28;scroll-snap-align:center;flex:none;
     box-shadow:0 10px 30px rgba(0,0,0,.4)}
 
-  .feat{max-width:700px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:14px 34px}
+  /* ---------- the five tabs ---------- */
+  .tabs{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:2px}
+  .tabs div{display:grid;grid-template-columns:132px 1fr;gap:16px;padding:13px 4px;
+    border-bottom:1px solid #16281c;font-size:16px;color:var(--grass-muted);line-height:1.45}
+  .tabs div:last-child{border-bottom:none}
+  .tabs b{color:var(--gold);font-weight:600}
+  @media(max-width:520px){.tabs div{grid-template-columns:1fr;gap:3px}}
+  .gestures{max-width:640px;margin:22px auto 0;color:var(--grass-muted);font-size:15.5px;
+    line-height:1.7;text-align:center}
+  .gestures b{color:var(--grass-text);font-weight:600}
+
+  /* ---------- what's inside ---------- */
+  .feat{max-width:700px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px 34px}
   @media(max-width:600px){.feat{grid-template-columns:1fr}}
   .feat div{display:flex;gap:12px;align-items:baseline;font-size:16.5px;color:var(--grass-muted);line-height:1.45}
   .feat b{color:var(--grass-text);font-weight:600}
-  .feat span.e{flex:none;font-size:19px}
+  .feat span.dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--gold);
+    position:relative;top:-3px}
 
-  .nova{max-width:640px;margin:40px auto 0;display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:left}
+  .nova{max-width:640px;margin:44px auto 0;display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:left}
   .nova img{width:84px;height:84px;border-radius:50%;flex:none}
   .nova p{color:var(--grass-muted);font-size:16px;line-height:1.55;max-width:460px}
   .nova b{color:var(--grass-text)}
+
+  .closing{text-align:center;margin-top:48px}
+  .closing .pill{margin-top:0}
 
   footer{margin-top:52px;padding:26px 0 12px;border-top:1px solid #16281c;text-align:center;
     color:var(--grass-muted);font-size:14.5px;line-height:2.1}
@@ -111,7 +129,8 @@
     <img class="icon" src="assets/icon.png" alt="DinoSpace app icon">
     <h1>dinospace</h1>
     <p class="tag">Dinosaurs &amp; space for curious kids — a hand-drawn encyclopedia that works entirely offline.</p>
-    <a class="pill" href="#peek">coming soon to Google Play</a>
+    <a class="pill" href="https://play.google.com/store/apps/details?id=com.dinospace.kids">Get it on Google Play</a>
+    <p class="sub">Free · Android 8.0 and up · rated for everyone</p>
     <p class="trust"><b>No ads</b> · <b>No accounts</b> · <b>No data collected</b></p>
   </div>
 
@@ -139,24 +158,46 @@
       <img src="store-screenshots/08-encyclopedia-twilight.png" alt="The encyclopedia in the twilight theme">
     </div>
 
+    <h2>finding your way</h2>
+    <div class="rule"></div>
+    <p class="lede">There is no sign-up and no setup. Open it and the bar along the bottom is the whole app.</p>
+    <div class="tabs">
+      <div><b>home</b><p>The cover page — two buttons: scan sky and ask nova.</p></div>
+      <div><b>encyclopedia</b><p>All 100 entries. Search, or filter to creatures or space, or just scroll A&nbsp;to&nbsp;Z.</p></div>
+      <div><b>battles</b><p>Pick two creatures and see who would come out on top.</p></div>
+      <div><b>saved</b><p>Everything you tapped the star on, in one place.</p></div>
+      <div><b>more</b><p>Quizzes, the drawing studio, collections and settings.</p></div>
+    </div>
+    <p class="gestures">
+      <b>Swipe left or right</b> to move between tabs.<br>
+      <b>Swipe in from the left edge</b> of any page to go back.<br>
+      Anything that isn't on a tab is on the <b>more</b> grid.
+    </p>
+
     <h2>what's inside</h2>
     <div class="rule"></div>
     <div class="feat">
-      <div><span class="e">🦖🪐</span><p><b>100 hand-drawn entries</b> — 50 prehistoric creatures, 50 wonders of space</p></div>
-      <div><span class="e">🔭</span><p><b>Scan the sky</b> — point up to find the moon, planets and bright stars tonight</p></div>
-      <div><span class="e">⚔️</span><p><b>Dino battles</b> — pick two creatures and see who comes out on top</p></div>
-      <div><span class="e">❓</span><p><b>Quizzes</b> — a quick warm-up or the full gauntlet, with friendly explanations</p></div>
-      <div><span class="e">🎨</span><p><b>Drawing studio</b> — draw your own dinosaur or planet and keep it forever</p></div>
-      <div><span class="e">🌙</span><p><b>Two themes</b> — a soft pastel storybook and a hand-painted twilight</p></div>
+      <div><span class="dot"></span><p><b>100 hand-drawn entries</b> — 50 prehistoric creatures, 50 wonders of space, each with stats, fun facts and a story</p></div>
+      <div><span class="dot"></span><p><b>Scan the sky</b> — hold the phone up and it names the moon, the planets and the bright stars really above you</p></div>
+      <div><span class="dot"></span><p><b>Dino battles</b> — pick two creatures, or one you drew yourself, and see who wins on size, speed and bite</p></div>
+      <div><span class="dot"></span><p><b>Quizzes</b> — anywhere from five questions to a hundred, with a friendly explanation every time</p></div>
+      <div><span class="dot"></span><p><b>Drawing studio</b> — draw your own dinosaur or planet, give it stats, and send it into battle</p></div>
+      <div><span class="dot"></span><p><b>Two themes</b> — a soft pastel storybook by day, a hand-painted twilight for bedtime</p></div>
     </div>
 
     <div class="nova">
       <img src="assets/nova.png" alt="Nova, the DinoSpace robot buddy">
-      <p><b>Meet Nova.</b> Ask how big a T.&nbsp;rex was or why Mars is red — Nova answers right on the phone, so it works on road trips, planes, anywhere. No internet needed.</p>
+      <p><b>Meet Nova.</b> Ask how big a T.&nbsp;rex was or why Mars is red — Nova answers right on the phone, so it works on road trips, planes, anywhere. No internet needed, and nothing typed there ever leaves the device.</p>
+    </div>
+
+    <div class="closing">
+      <a class="pill" href="https://play.google.com/store/apps/details?id=com.dinospace.kids">Get it on Google Play</a>
     </div>
 
     <footer>
-      <a href="privacy.html">Privacy policy</a> · <a href="mailto:dinospace.app@gmail.com">dinospace.app@gmail.com</a><br>
+      <a href="https://play.google.com/store/apps/details?id=com.dinospace.kids">Google Play</a> ·
+      <a href="privacy.html">Privacy policy</a> ·
+      <a href="mailto:dinospace.app@gmail.com">dinospace.app@gmail.com</a><br>
       © 2026 DinoSpace
     </footer>
 
