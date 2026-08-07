@@ -12,113 +12,21 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --cream:#f5f1e4; --muted:#aab1c9; --gold:#e3be55;
-    --grass-text:#cfe0d2; --grass-muted:#93ab98;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{font-family:'Baloo 2',system-ui,sans-serif;background:#0b1710;color:var(--cream);overflow-x:hidden}
-
-  /* ---------- the night sky ---------- */
-  .sky{
-    position:relative;
-    background:linear-gradient(180deg,#060a1a 0%,#0d1230 46%,#1d1742 72%,#2b1e4e 100%);
-    padding:76px 20px 0;
-    text-align:center;
-  }
-  .stars,.stars2{position:absolute;inset:0;pointer-events:none}
-  .stars{background-image:
-    radial-gradient(1.5px 1.5px at 8% 12%,#fff,transparent),
-    radial-gradient(1px 1px at 21% 34%,#dfe6ff,transparent),
-    radial-gradient(2px 2px at 33% 9%,#fff,transparent),
-    radial-gradient(1px 1px at 44% 27%,#cdd6ff,transparent),
-    radial-gradient(1.5px 1.5px at 57% 15%,#fff,transparent),
-    radial-gradient(1px 1px at 66% 39%,#dfe6ff,transparent),
-    radial-gradient(2px 2px at 78% 8%,#fff,transparent),
-    radial-gradient(1px 1px at 89% 29%,#cdd6ff,transparent),
-    radial-gradient(1.5px 1.5px at 95% 52%,#fff,transparent),
-    radial-gradient(1px 1px at 14% 58%,#dfe6ff,transparent),
-    radial-gradient(1.5px 1.5px at 48% 55%,#fff,transparent),
-    radial-gradient(1px 1px at 71% 62%,#cdd6ff,transparent);}
-  .stars2{background-image:
-    radial-gradient(1px 1px at 12% 22%,#ffffffb0,transparent),
-    radial-gradient(1.5px 1.5px at 27% 48%,#ffffffd0,transparent),
-    radial-gradient(1px 1px at 39% 68%,#ffffffa0,transparent),
-    radial-gradient(1.5px 1.5px at 53% 36%,#ffffffd0,transparent),
-    radial-gradient(1px 1px at 62% 12%,#ffffffb0,transparent),
-    radial-gradient(1.5px 1.5px at 83% 45%,#ffffffd0,transparent),
-    radial-gradient(1px 1px at 92% 18%,#ffffffa0,transparent);
-    animation:twinkle 3.6s ease-in-out infinite alternate;}
-  @keyframes twinkle{from{opacity:.25}to{opacity:1}}
-
-  .moon{
-    position:absolute;top:64px;right:8%;width:74px;height:74px;border-radius:50%;
-    background:radial-gradient(circle at 38% 36%,#fbf7e8,#e9e2c6 62%,#d9d0ae);
-    box-shadow:0 0 46px 12px rgba(245,241,228,.28);
-  }
-  @media(max-width:640px){.moon{width:52px;height:52px;right:10%;top:44px}}
-
-  .hero{position:relative;max-width:660px;margin:0 auto}
-  .hero img.icon{width:112px;height:112px;border-radius:26px;box-shadow:0 14px 44px rgba(0,0,0,.55)}
-  .hero h1{font-size:clamp(46px,9vw,76px);font-weight:700;letter-spacing:-1.5px;margin-top:16px;line-height:1}
-  .hero p.tag{font-size:clamp(17px,3.2vw,21px);color:var(--muted);margin:10px auto 0;max-width:520px;line-height:1.5}
-  .pill{display:inline-block;margin-top:26px;padding:13px 28px;border-radius:100px;font-weight:700;font-size:17px;
-    color:#241d06;background:var(--gold);text-decoration:none;box-shadow:0 8px 26px rgba(227,190,85,.25)}
-  .sub{margin-top:12px;font-size:14.5px;color:var(--muted)}
-  .trust{margin-top:14px;font-size:15px;color:var(--muted);letter-spacing:.2px}
-  .trust b{color:var(--cream);font-weight:600}
-
-  /* ---------- grassy hills ---------- */
-  .hills{display:block;width:100%;height:190px;margin-top:44px}
-  @media(max-width:640px){.hills{height:120px;margin-top:34px}}
-
-  /* ---------- on the grass ---------- */
-  .grass{background:#0b1710;padding:8px 20px 30px}
-  .inner{max-width:960px;margin:0 auto}
-  h2{font-size:clamp(24px,4.5vw,32px);color:var(--grass-text);text-align:center;margin-top:44px}
-  .rule{width:56px;height:5px;border-radius:3px;background:var(--gold);margin:10px auto 26px}
-  .lede{max-width:560px;margin:-12px auto 26px;text-align:center;color:var(--grass-muted);font-size:16px;line-height:1.5}
-
-  .shots{display:flex;gap:14px;overflow-x:auto;padding:4px 4px 20px;scroll-snap-type:x mandatory;
-    -webkit-overflow-scrolling:touch}
-  .shots img{width:224px;border-radius:20px;border:1px solid #1e3a28;scroll-snap-align:center;flex:none;
-    box-shadow:0 10px 30px rgba(0,0,0,.4)}
-
-  /* ---------- the five tabs ---------- */
-  .tabs{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:2px}
-  .tabs div{display:grid;grid-template-columns:132px 1fr;gap:16px;padding:13px 4px;
-    border-bottom:1px solid #16281c;font-size:16px;color:var(--grass-muted);line-height:1.45}
-  .tabs div:last-child{border-bottom:none}
-  .tabs b{color:var(--gold);font-weight:600}
-  @media(max-width:520px){.tabs div{grid-template-columns:1fr;gap:3px}}
-  .gestures{max-width:640px;margin:22px auto 0;color:var(--grass-muted);font-size:15.5px;
-    line-height:1.7;text-align:center}
-  .gestures b{color:var(--grass-text);font-weight:600}
-
-  /* ---------- what's inside ---------- */
-  .feat{max-width:700px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px 34px}
-  @media(max-width:600px){.feat{grid-template-columns:1fr}}
-  .feat div{display:flex;gap:12px;align-items:baseline;font-size:16.5px;color:var(--grass-muted);line-height:1.45}
-  .feat b{color:var(--grass-text);font-weight:600}
-  .feat span.dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--gold);
-    position:relative;top:-3px}
-
-  .nova{max-width:640px;margin:44px auto 0;display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:left}
-  .nova img{width:84px;height:84px;border-radius:50%;flex:none}
-  .nova p{color:var(--grass-muted);font-size:16px;line-height:1.55;max-width:460px}
-  .nova b{color:var(--grass-text)}
-
-  .closing{text-align:center;margin-top:48px}
-  .closing .pill{margin-top:0}
-
-  footer{margin-top:52px;padding:26px 0 12px;border-top:1px solid #16281c;text-align:center;
-    color:var(--grass-muted);font-size:14.5px;line-height:2.1}
-  footer a{color:var(--gold);text-decoration:none}
-</style>
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <a class="brand" href="index.html"><img src="assets/icon.png" alt=""><span>dinospace</span></a>
+    <div class="nav-links">
+      <a class="here" href="index.html">Home</a>
+      <a href="guide.html">How to use it</a>
+      <a href="privacy.html">Privacy</a>
+      <a class="cta" href="https://play.google.com/store/apps/details?id=com.dinospace.kids">Get the app</a>
+    </div>
+  </div>
+</nav>
 
 <div class="sky">
   <div class="stars"></div>
@@ -129,9 +37,11 @@
     <img class="icon" src="assets/icon.png" alt="DinoSpace app icon">
     <h1>dinospace</h1>
     <p class="tag">Dinosaurs &amp; space for curious kids — an illustrated encyclopedia that works entirely offline.</p>
-    <a class="pill" href="https://play.google.com/store/apps/details?id=com.dinospace.kids">Get it on Google Play</a>
-    <p class="sub">Free · Android 8.0 and up · rated for everyone</p>
-    <p class="trust"><b>No ads</b> · <b>No accounts</b> · <b>No data collected</b></p>
+    <div class="btn-row">
+      <a class="btn btn-gold" href="https://play.google.com/store/apps/details?id=com.dinospace.kids">Get it on Google Play</a>
+      <a class="btn btn-ghost" href="guide.html">How to use it</a>
+    </div>
+    <p class="sub">Free · Android 8.0 and up · rated for everyone · no ads, no accounts, no data collected</p>
   </div>
 
   <!-- grassy hills, three quiet layers -->
@@ -143,59 +53,78 @@
 </div>
 
 <div class="grass">
-  <div class="inner">
+  <div class="wrap">
 
-    <h2 id="peek">a peek inside</h2>
-    <div class="rule"></div>
-    <div class="shots">
-      <img src="store-screenshots/01-home.png" alt="DinoSpace home screen">
-      <img src="store-screenshots/02-creature-entry.png" alt="A creature entry page">
-      <img src="store-screenshots/03-fun-facts.png" alt="Fun facts on an entry">
-      <img src="store-screenshots/04-scan-sky.png" alt="Scan sky with tonight's moon">
-      <img src="store-screenshots/05-quiz.png" alt="A quiz question">
-      <img src="store-screenshots/06-dino-battle.png" alt="Dino battle">
-      <img src="store-screenshots/07-home-twilight.png" alt="Home in the twilight theme">
-      <img src="store-screenshots/08-encyclopedia-twilight.png" alt="The encyclopedia in the twilight theme">
+    <h2 class="reveal" id="peek">a peek inside</h2>
+    <div class="rule reveal"></div>
+    <div class="shots reveal">
+      <img src="store-screenshots/01-home.png" alt="DinoSpace home screen" loading="lazy">
+      <img src="store-screenshots/02-creature-entry.png" alt="A creature entry page" loading="lazy">
+      <img src="store-screenshots/03-fun-facts.png" alt="Fun facts on an entry" loading="lazy">
+      <img src="store-screenshots/04-scan-sky.png" alt="Scan sky with tonight's moon" loading="lazy">
+      <img src="store-screenshots/05-quiz.png" alt="A quiz question" loading="lazy">
+      <img src="store-screenshots/06-dino-battle.png" alt="Dino battle" loading="lazy">
+      <img src="store-screenshots/07-home-twilight.png" alt="Home in the twilight theme" loading="lazy">
+      <img src="store-screenshots/08-encyclopedia-twilight.png" alt="The encyclopedia in the twilight theme" loading="lazy">
     </div>
 
-    <h2>finding your way</h2>
-    <div class="rule"></div>
-    <p class="lede">There is no sign-up and no setup. Open it and the bar along the bottom is the whole app.</p>
-    <div class="tabs">
-      <div><b>home</b><p>The cover page — two buttons: scan sky and ask nova.</p></div>
-      <div><b>encyclopedia</b><p>All 100 entries. Search, or filter to creatures or space, or just scroll A&nbsp;to&nbsp;Z.</p></div>
-      <div><b>battles</b><p>Pick two creatures and see who would come out on top.</p></div>
-      <div><b>saved</b><p>Everything you tapped the star on, in one place.</p></div>
-      <div><b>more</b><p>Quizzes, the drawing studio, collections and settings.</p></div>
-    </div>
-    <p class="gestures">
-      <b>Swipe left or right</b> to move between tabs.<br>
-      <b>Swipe in from the left edge</b> of any page to go back.<br>
-      Anything that isn't on a tab is on the <b>more</b> grid.
-    </p>
-
-    <h2>what's inside</h2>
-    <div class="rule"></div>
+    <h2 class="reveal">what's inside</h2>
+    <div class="rule reveal"></div>
     <div class="feat">
-      <div><span class="dot"></span><p><b>100 illustrated entries</b> — 50 prehistoric creatures, 50 wonders of space, each with stats, fun facts and a story</p></div>
-      <div><span class="dot"></span><p><b>Scan the sky</b> — hold the phone up and it names the moon, the planets and the bright stars really above you</p></div>
-      <div><span class="dot"></span><p><b>Dino battles</b> — pick two creatures, or one you drew yourself, and see who wins on size, speed and bite</p></div>
-      <div><span class="dot"></span><p><b>Quizzes</b> — anywhere from five questions to a hundred, with a friendly explanation every time</p></div>
-      <div><span class="dot"></span><p><b>Drawing studio</b> — draw your own dinosaur or planet, give it stats, and send it into battle</p></div>
-      <div><span class="dot"></span><p><b>Two themes</b> — a soft pastel storybook by day, a hand-painted twilight for bedtime</p></div>
+      <div class="reveal"><span class="dot"></span><p><b>100 illustrated entries</b> — 50 prehistoric creatures, 50 wonders of space, each with stats, fun facts and a story</p></div>
+      <div class="reveal d1"><span class="dot"></span><p><b>Scan the sky</b> — hold the phone up and it names the moon, the planets and the bright stars really above you</p></div>
+      <div class="reveal"><span class="dot"></span><p><b>Dino battles</b> — pick two creatures, or one you drew yourself, and see who wins on size, speed and bite</p></div>
+      <div class="reveal d1"><span class="dot"></span><p><b>Quizzes</b> — anywhere from five questions to a hundred, with a friendly explanation every time</p></div>
+      <div class="reveal"><span class="dot"></span><p><b>Drawing studio</b> — draw your own dinosaur or planet, give it stats, and send it into battle</p></div>
+      <div class="reveal d1"><span class="dot"></span><p><b>Two themes</b> — a soft pastel storybook by day, a hand-painted twilight for bedtime</p></div>
     </div>
 
-    <div class="nova">
-      <img src="assets/nova.png" alt="Nova, the DinoSpace robot buddy">
-      <p><b>Meet Nova.</b> Ask how big a T.&nbsp;rex was or why Mars is red — Nova answers right on the phone, so it works on road trips, planes, anywhere. No internet needed, and nothing typed there ever leaves the device.</p>
+    <h2 class="reveal">finding your way</h2>
+    <div class="rule reveal"></div>
+    <p class="lede reveal">There is no sign-up and no setup. Open it and the bar along the bottom is the whole app.</p>
+    <div class="tabs">
+      <div class="row reveal"><b>home</b><p>The front page. Two big buttons: scan sky and ask nova.</p></div>
+      <div class="row reveal"><b>encyclopedia</b><p>All 100 entries, A to Z. Search for one, or show only creatures or only space.</p></div>
+      <div class="row reveal"><b>battles</b><p>Pick two creatures and see who would win.</p></div>
+      <div class="row reveal"><b>saved</b><p>Everything you starred, kept in one place.</p></div>
+      <div class="row reveal"><b>more</b><p>Everything else: quiz, drawing studio, collections and settings.</p></div>
+    </div>
+    <p class="gestures reveal">
+      <b>Swipe left or right</b> to slide between tabs.<br>
+      <b>Swipe in from the left edge</b> of the screen to go back.<br>
+      If you can't find something, it's on the <b>more</b> grid.
+    </p>
+    <div class="closing reveal">
+      <a class="btn btn-ghost" href="guide.html">Read the full guide</a>
     </div>
 
-    <div class="closing">
-      <a class="pill" href="https://play.google.com/store/apps/details?id=com.dinospace.kids">Get it on Google Play</a>
+    <h2 class="reveal">meet Nova</h2>
+    <div class="rule reveal"></div>
+    <div class="nova reveal">
+      <img src="assets/nova.png" alt="Nova, the DinoSpace robot buddy" loading="lazy">
+      <p><b>Nova is an AI chatbot that lives inside the app.</b> Ask how big a T.&nbsp;rex was or why Mars is red, and
+      Nova does its thinking right on the phone — so it works on road trips, planes and campsites, and nothing you
+      type ever leaves the device.</p>
+    </div>
+
+    <h2 class="reveal">the one-page guide</h2>
+    <div class="rule reveal"></div>
+    <div class="grab reveal">
+      <div>
+        <h3>Everything on one sheet</h3>
+        <p>Every tab, every button and every setting, written for all ages. Print it or keep it on your phone.</p>
+      </div>
+      <a class="btn btn-gold" href="DinoSpace-Guide.pdf" download>Download the PDF</a>
+    </div>
+
+    <div class="closing reveal">
+      <a class="btn btn-gold" href="https://play.google.com/store/apps/details?id=com.dinospace.kids">Get it on Google Play</a>
     </div>
 
     <footer>
-      <a href="https://play.google.com/store/apps/details?id=com.dinospace.kids">Google Play</a> ·
+      <span class="made">Created by Karthikeya Arikirevula</span><br>
+      <a href="guide.html">How to use it</a> ·
+      <a href="DinoSpace-Guide.pdf">One-page guide</a> ·
       <a href="privacy.html">Privacy policy</a> ·
       <a href="mailto:dinospace.app@gmail.com">dinospace.app@gmail.com</a><br>
       © 2026 DinoSpace
@@ -204,5 +133,6 @@
   </div>
 </div>
 
+<script src="assets/site.js"></script>
 </body>
 </html>
