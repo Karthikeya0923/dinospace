@@ -71,17 +71,34 @@ namespace dinospace
         // leaves every row stuck at the old width and squeezes the text out
         // of them. Re-handing the list its items forces a fresh measure.
         // Call this whenever a page carrying such a list changes width.
+        // The swap has to wait for the layout pass that raised SizeChanged to
+        // finish. Handing the list a new source mid-pass leaves the recycler
+        // with nothing realised, and on a phone that never showed because
+        // CapWidth's padding is always zero there, so the width settles on the
+        // first measure and the swap happens once, harmlessly. A tablet is
+        // past CapWidth's 600dp threshold, so the padding lands a SECOND width
+        // change after the rows were measured — and every CollectionView in
+        // the app came up empty: the whole encyclopedia, and the creature
+        // pickers that battles needs. Deferring one tick fixes it.
         public static void RemeasureOnResize(CollectionView list)
         {
             double last = 0;
+            bool queued = false;
             list.SizeChanged += (_, _) =>
             {
                 if (list.Width <= 0 || System.Math.Abs(list.Width - last) < 1) return;
                 last = list.Width;
+                if (queued) return;
                 var items = list.ItemsSource;
                 if (items == null) return;
-                list.ItemsSource = null;
-                list.ItemsSource = items;
+                queued = true;
+                list.Dispatcher.Dispatch(() =>
+                {
+                    queued = false;
+                    if (!ReferenceEquals(list.ItemsSource, items)) return;
+                    list.ItemsSource = null;
+                    list.ItemsSource = items;
+                });
             };
         }
 
