@@ -55,7 +55,7 @@ namespace dinospace.Views
         private Ui.IconToggle _sendIcon = null!;
         private HorizontalStackLayout _suggestions = null!;
         private ScrollView _suggestionScroll = null!;
-        private ContentView _modelCardHost = null!;
+        private NovaModelCard _modelCard = null!;
         private Grid _inputArea = null!;
 
         // answering
@@ -116,8 +116,15 @@ namespace dinospace.Views
 
             // The model card sits under the header until the model is
             // installed, then disappears — the chat itself never needs it.
-            var modelCard = new NovaModelCard(hideWhenInstalled: true) { Margin = new Thickness(16, 2, 16, 4) };
-            _modelCardHost = new ContentView { Content = modelCard };
+            //
+            // It goes into the row on its own, with no wrapper view: the card
+            // decides its own visibility, and a ContentView around it answered
+            // the Auto row with the height it last measured instead of the
+            // height it has now. That stale answer is what left a card-shaped
+            // hole between the header and Nova's first line once the model was
+            // installed. The Grid asks the card directly and collapses the row
+            // properly, in both directions.
+            _modelCard = new NovaModelCard(hideWhenInstalled: true) { Margin = new Thickness(16, 2, 16, 4) };
 
             var main = new Grid { RowSpacing = 0 };
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -126,7 +133,7 @@ namespace dinospace.Views
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             main.Add(header, 0, 0);
-            main.Add(_modelCardHost, 0, 1);
+            main.Add(_modelCard, 0, 1);
             main.Add(_chatScroll, 0, 2);
             main.Add(_suggestionScroll, 0, 3);
             main.Add(_inputArea, 0, 4);
@@ -146,7 +153,7 @@ namespace dinospace.Views
         private void ApplyCompact()
         {
             bool shortScreen = Ui.IsShort(Height);
-            if (_modelCardHost != null) _modelCardHost.IsVisible = !shortScreen;
+            if (_modelCard != null) _modelCard.Suppressed = shortScreen;
             if (_suggestionScroll != null) _suggestionScroll.IsVisible = !shortScreen;
         }
 

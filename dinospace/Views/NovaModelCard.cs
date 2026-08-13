@@ -18,6 +18,20 @@ namespace dinospace.Views
         // the model can be removed to free space.
         private readonly bool _hideWhenInstalled;
 
+        // A host can park the card for reasons of its own — the chat does it
+        // on a short screen. Kept here rather than in a wrapper view so the
+        // card's own IsVisible stays the single source of truth: a ContentView
+        // around it would answer its parent with a stale height whenever the
+        // card collapsed or came back, which is what left a card-shaped hole
+        // above the first chat bubble.
+        private bool _suppressed;
+
+        public bool Suppressed
+        {
+            get => _suppressed;
+            set { if (_suppressed == value) return; _suppressed = value; Refresh(); }
+        }
+
         private Label _title = null!;
         private Label _caption = null!;
         private ProgressBar _bar = null!;
@@ -86,7 +100,7 @@ namespace dinospace.Views
         private void Refresh()
         {
             bool installed = ModelManager.IsModelDownloaded();
-            if (!NovaSaurService.SupportedPlatform || (installed && _hideWhenInstalled))
+            if (_suppressed || !NovaSaurService.SupportedPlatform || (installed && _hideWhenInstalled))
             {
                 IsVisible = false;
                 return;
