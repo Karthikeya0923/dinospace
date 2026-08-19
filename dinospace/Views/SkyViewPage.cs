@@ -38,7 +38,10 @@ namespace dinospace.Views
         private double _az = 180, _alt = 30;
         private bool _sensorMode, _cameraOn;
         private bool _starting;
-        private bool _warned;
+        // Static: once per app session, not per visit. Opening Scan Sky,
+        // ducking out to the encyclopedia and coming back should not re-ask.
+        // The standing strip below keeps the warning on screen regardless.
+        private static bool _warned;
         private View? _safety;
         private int _tick;
         private IDispatcherTimer? _timer;
@@ -187,12 +190,35 @@ namespace dinospace.Views
             // camera slot is index 0 (inserted on demand); overlay stack above it
             _root.Add(_view);
             _root.Add(topBar);
+            _root.Add(SafetyStrip());
             _root.Add(_targetCard);
             _root.Add(_compass);
             _root.Add(viewAll);
             Content = _root;
             Shell.SetNavBarIsVisible(this, false);
         }
+
+        // The notice is a one-off; this is the part that is always true and
+        // always on screen, so the AR view is never without its warning even
+        // when the notice has already been dismissed this session.
+        private static View SafetyStrip() => new Border
+        {
+            Content = new Label
+            {
+                Text = "A grown-up should be nearby · be aware of your surroundings",
+                FontFamily = Ui.Fonts, FontSize = Ui.S(11.5),
+                TextColor = Color.FromArgb("#DCE2F0"),
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Center
+            },
+            BackgroundColor = Color.FromArgb("#66000000"),
+            Stroke = Color.FromArgb("#33FFFFFF"), StrokeThickness = 1,
+            StrokeShape = new RoundRectangle { CornerRadius = 100 },
+            Padding = new Thickness(16, 6),
+            HorizontalOptions = LayoutOptions.Center,
+            VerticalOptions = LayoutOptions.Start,
+            Margin = new Thickness(0, 10, 0, 0)
+        };
 
         private static Border ChromeButton(View inner) => new()
         {
