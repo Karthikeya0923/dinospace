@@ -38,6 +38,8 @@ namespace dinospace.Views
         private double _az = 180, _alt = 30;
         private bool _sensorMode, _cameraOn;
         private bool _starting;
+        private bool _warned;
+        private View? _safety;
         private int _tick;
         private IDispatcherTimer? _timer;
         private CancellationTokenSource? _camCts;
@@ -239,8 +241,82 @@ namespace dinospace.Views
             // zone) can be thousands of kilometres off — far enough to put
             // the moon on the wrong side of the sky and name the wrong star
             // under the crosshair. Ask once, then re-anchor everything.
+            // The live camera view is AR, so Families policy wants a safety
+            // notice greeting it — parental supervision, and eyes on your
+            // surroundings — BEFORE any AR content appears. The camera stays
+            // off until it is acknowledged, so there is nothing to see behind
+            // it. Coming back from Learn More or Ask Nova re-enters
+            // OnAppearing but is not a fresh launch, so the notice shows once
+            // per visit to Scan Sky rather than after every detour.
+            if (!_warned) { ShowSafetyNotice(); return; }
+
             await StartCameraAsync();
             _ = RefreshLocationAsync();
+        }
+
+        private void ShowSafetyNotice()
+        {
+            _safety ??= BuildSafetyNotice();
+            if (!_root.Contains(_safety)) _root.Add(_safety);
+        }
+
+        private async void OnSafetyAccepted()
+        {
+            _warned = true;
+            if (_safety != null) { try { _root.Remove(_safety); } catch { } }
+            await StartCameraAsync();
+            _ = RefreshLocationAsync();
+        }
+
+        private View BuildSafetyNotice()
+        {
+            Label Point(string text) => new()
+            {
+                Text = text, FontFamily = Ui.Fonts, FontSize = Ui.S(14.5), LineHeight = 1.45,
+                TextColor = Color.FromArgb("#E4E9F5"), HorizontalTextAlignment = TextAlignment.Center
+            };
+
+            var title = new Label
+            {
+                Text = "Before you scan the sky",
+                FontFamily = Ui.Display, FontSize = Ui.S(22), TextColor = Colors.White,
+                HorizontalTextAlignment = TextAlignment.Center
+            };
+            var one = Point("A grown-up should be with you while the camera is on.");
+            var two = Point("Be aware of your surroundings. Watch out for people, roads, steps and anything else around you while you move the phone.");
+
+            var okLabel = new Label
+            {
+                Text = "I understand", FontFamily = Ui.Fonts, FontSize = Ui.S(15),
+                FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#0B1220"),
+                HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center
+            };
+            var ok = new Border
+            {
+                Content = okLabel, BackgroundColor = Colors.White, Stroke = Colors.Transparent,
+                StrokeShape = new RoundRectangle { CornerRadius = 26 },
+                Padding = new Thickness(34, 13), HorizontalOptions = LayoutOptions.Center,
+                Margin = new Thickness(0, 6, 0, 0)
+            };
+            Ui.OnTap(ok, (_, _) => OnSafetyAccepted());
+            Ui.Describe(ok, "I understand, start Scan Sky");
+
+            var col = new VerticalStackLayout
+            {
+                Spacing = 12, MaximumWidthRequest = 560,
+                HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center,
+                Padding = new Thickness(26, 22),
+                Children = { title, one, two, ok }
+            };
+
+            // Solid, full-bleed and on top: nothing from the AR view is visible
+            // underneath while the notice is up.
+            return new Grid
+            {
+                BackgroundColor = Color.FromArgb("#070B14"),
+                Padding = new Thickness(24, 16),
+                Children = { col }
+            };
         }
 
         protected override void OnDisappearing()
